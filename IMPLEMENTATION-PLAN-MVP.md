@@ -266,6 +266,10 @@ npm run verify
 
 ## Task 1.5 — Configure Expo Router and Navigation Shell
 
+### Status
+
+✅ Complete
+
 ### Objective
 
 Create the initial route structure without implementing final authentication behavior.
@@ -2461,7 +2465,7 @@ This first plan assumes:
 
 ## Next Task
 
-**Task 1.5 — Configure Expo Router and Navigation Shell**
+**Task 1.6 — Create the Base Theme and Shared UI Primitives**
 
 ---
 
@@ -2473,7 +2477,7 @@ This first plan assumes:
 - [x] Task 1.2 — Add Required Project Documentation
 - [x] Task 1.3 — Configure Project Structure
 - [x] Task 1.4 — Configure Code Quality and Test Tooling
-- [ ] Task 1.5 — Configure Expo Router and Navigation Shell
+- [x] Task 1.5 — Configure Expo Router and Navigation Shell
 - [ ] Task 1.6 — Create the Base Theme and Shared UI Primitives
 - [ ] Task 1.7 — Configure Environment Management
 - [ ] Task 1.8 — Verify Architectural Compliance of the Foundation

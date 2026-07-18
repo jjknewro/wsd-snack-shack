@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation
 
 ## Current Task
 
-Task 1.5 — Configure Expo Router and Navigation Shell
+Task 1.6 — Create the Base Theme and Shared UI Primitives
 
 ---
 
@@ -144,3 +144,35 @@ Established the full quality/verification baseline:
 **Notes / Deviations**
 
 - `render()` from `@testing-library/react-native@14` returns a **Promise**, not a synchronous result — a change from older RNTL versions, presumably to support React 19's concurrent rendering. The baseline test (and any future component tests) must `await render(...)`; forgetting this produces a confusing `getByText is not a function` (destructuring off a Promise) or, if using the `screen` global without awaiting, a `` `render` function has not been called `` error, since `screen`'s internal state hasn't been set yet at that point. Worth remembering for every test written from EPIC 4 onward.
+
+  **Update (Task 1.5, 2026-07-18): this was reverted.** See Task 1.5's entry below — `@testing-library/react-native@14`'s async `render()` turned out to be incompatible with `expo-router`'s bundled `renderRouter` test helper, so the package was downgraded to `13.3.3` (synchronous `render()`, matching what `expo-router@57` itself was tested against). The note above remains accurate as a historical record of what was true when Task 1.4 landed, but it no longer describes the currently installed version.
+
+---
+
+### Task 1.5 — Configure Expo Router and Navigation Shell
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+Built the initial navigation shell from `ARCHITECTURE.md` §7/§8, intentionally without any real authentication logic (that's EPIC 3):
+
+- `app/index.tsx` — repurposed from Task 1.1's static "WSD Snack Shack" placeholder into the "initial loading/index route": now a bare `<Redirect href="/sign-in" />`, matching architecture §8.1 ("unauthenticated users must not access operational screens").
+- `app/sign-in.tsx` — placeholder Sign In screen. Real sign-in UI/logic is explicitly Task 3.2's scope, so this only shows the WSD Snack Shack name, a "Sign In" heading, and two clearly-labeled **temporary** links ("Continue as Staff (temporary)" / "Continue as Administrator (temporary)") that exist solely so navigation is real and testable before authentication exists. Not business functionality — explicitly called out in-UI and in code as scaffolding to be replaced.
+- `app/(staff)/_layout.tsx` + `app/(staff)/today.tsx` — the staff route group with the required placeholder Today screen, plus a temporary "Sign Out" link back to `/sign-in`.
+- `app/(admin)/_layout.tsx` + `app/(admin)/index.tsx` — the administrator route group with the required placeholder Administration screen (singular, per this task's own requirement list — the full breakdown into bunks/requirements/inventory/users screens shown in `ARCHITECTURE.md`'s structure diagram belongs to their owning epics: 4, 5, 9, and 3/12 respectively), plus the same temporary "Sign Out" link.
+- Root `app/_layout.tsx` unchanged (still just `SafeAreaProvider` + a headerless `Stack`); each group has its own headerless `Stack` layout, and screens render their own in-content heading text rather than relying on native header chrome — deliberately avoiding building header/title conventions here since that's `ScreenHeader`'s job in Task 1.6.
+
+**Verification**
+
+- `npm run lint`, `npm run typecheck` — pass.
+- **Real navigation integration test** (`tests/navigation.test.tsx`), using `expo-router/testing-library`'s `renderRouter` against the actual `app/` directory (not a mock): confirms `/` redirects to sign-in, tapping the staff link from sign-in reaches Today, tapping the admin link reaches Administration, and tapping Today's sign-out link returns to sign-in. This is stronger evidence than isolated per-screen render tests would have been, since it exercises the real `<Link>`/`<Redirect>` components through actual route transitions rather than mocking them — decided not to also add separate isolated screen-render tests, since they'd just duplicate what these four tests already cover.
+- `npx expo-doctor` — 20/20 checks passed.
+- `npx expo export --platform web` — all 7 expected static routes exported (`/`, `/sign-in`, `/today` + `/(staff)/today`, `/(admin)`, `/_sitemap`, `/+not-found`); spot-checked the exported HTML for `/sign-in`, `/today`, and `/(admin)/index` and confirmed each contains its expected heading text.
+- Dev server restarted and confirmed reachable again for manual click-through.
+
+**Notes / Deviations**
+
+- **Downgraded `@testing-library/react-native` from `14.0.1` to `13.3.3`.** `expo-router@57.0.7`'s bundled `renderRouter` test helper calls RNTL's `render()` synchronously and reads results immediately after — but v14's `render()` is `async` (see Task 1.4's note above), so `renderRouter` under v14 always hit `` `render` function has not been called ``, even though `expo-router`'s own `peerDependencies` claims `>=13.2.0` is supported. `expo-router`'s own `devDependencies` pins `@testing-library/react-native@^13.3.0` — i.e., 14.x is what it's declared compatible with but not actually what it was built/tested against. Downgrading to `13.3.3` (the latest 13.x, synchronous `render()`) fixed this cleanly; `react-test-renderer` stayed pinned to `19.2.3` to match `react`. This is a real upstream version-skew issue, not a mistake in how the helper was used — worth revisiting if a future `expo-router` patch updates its bundled testing-library to handle async `render()`.
+- `app/(staff)/today.tsx` and `app/(admin)/index.tsx`'s "Sign Out" links are placeholders with no actual session to clear — there's no auth state yet. They exist purely to make the navigation shell round-trip testable; EPIC 3 replaces them with real sign-out behavior.
