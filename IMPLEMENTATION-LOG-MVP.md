@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation
 
 ## Current Task
 
-Task 1.7 — Configure Environment Management
+Task 1.8 — Verify Architectural Compliance of the Foundation
 
 ---
 
@@ -214,3 +214,29 @@ Established the design foundation in `src/theme/` and `src/components/`:
 
 - **Phone vs. tablet layout verification was not done on real devices.** As with prior tasks, this environment has no simulators/physical devices attached. All layouts use flexible/percentage-based sizing (no hardcoded fixed widths beyond padding/gap values), which is the practical substitute available now; real responsive verification is deferred to manual device testing (Task 12.4) same as noted in Task 1.1's entry.
 - Dark mode / theming beyond a single light palette was intentionally not built — nothing in `ARCHITECTURE.md` or the README requires it for the MVP, and adding it now would be unrequested scope.
+
+---
+
+### Task 1.7 — Configure Environment Management
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+- **Fixed a real gap in `.gitignore`**: it only excluded `.env*.local`, not a plain `.env` — meaning a developer's real local Supabase credentials in `.env` (the file Expo actually loads for local dev) would have been committable. Changed to `.env*` with a `!.env.example` negation, so every real env file is ignored except the tracked example.
+- Added a one-line comment to `.env.example` (still names-only, no values, per this task's own rule) pointing at where to get real values and warning not to commit real values into it.
+- **`src/lib/env.ts`**: `getEnv()` reads `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`, throwing a single clear error listing every missing variable by name plus a fix-it instruction ("copy .env.example to .env...") if any are absent. Not wired into any screen yet — nothing consumes it until `src/lib/supabase.ts` exists (Task 2.10); built and tested standalone, same pattern as `LoadingState`/`ErrorState` in Task 1.6.
+- Development vs. production environment support (this task's other requirement) is **not custom-built** — Expo CLI already loads `.env`, `.env.local`, `.env.development`, `.env.production`, etc. automatically based on build profile for any `EXPO_PUBLIC_*`-prefixed variable. `getEnv()` just validates whatever Expo already loaded; there was nothing to build here beyond the validator + the `.gitignore` fix.
+
+**Verification**
+
+- `npm run verify` — 21 tests total now (4 new for `getEnv`): valid config returns both values; missing URL / missing anon key / missing both each throw an error naming the specific missing variable(s).
+- **Hit and fixed a real, non-obvious bug while writing the "valid configuration" test**: `babel-preset-expo` ships an `inline-env-vars` Babel plugin (`node_modules/babel-preset-expo/build/plugins/inline-env-vars.js`) that statically rewrites any literal `process.env.EXPO_PUBLIC_*` member expression — in production it's inlined to a build-time literal, in development it's rewritten to reference a virtual `expo/virtual/env` module — in **both** cases decoupling the read from whatever `process.env` actually holds at runtime. My first draft used bracket access (`process.env[name]`) for the missing-variable check (which works, since a *variable* key isn't statically analyzable and the plugin skips it) but literal dot access (`process.env.EXPO_PUBLIC_SUPABASE_URL`) for the actual returned values — so the "both set" test got back `undefined` for both fields even though `process.env` genuinely had the values, while the "missing" tests happened to pass because they only exercised the (correctly dynamic) bracket-access check. Fixed by reading everything through the same bracket-access pattern into a local object first, then returning from that local object (plain property access on a non-`process.env` object isn't touched by the plugin at all). Worth remembering for any future code that reads `EXPO_PUBLIC_*` vars dynamically rather than as one-time static config.
+- Manually confirmed the `.gitignore` fix: created a throwaway `.env` with fake values, confirmed `git status`/`git check-ignore` treats it as ignored, confirmed `git check-ignore` reports `.env.example` as *not* ignored, then deleted the throwaway file (never committed).
+- `npx expo-doctor` — 20/20.
+- `npx expo export --platform web` — still builds; nothing consumes `env.ts` yet so this was just a regression check.
+
+**Notes / Deviations**
+
+- No `.env` file was created for this machine's actual Supabase credentials — there's no real Supabase project yet (that's Task 2.1). `.env.example` plus the now-correct `.gitignore` is the complete, correct state until then.

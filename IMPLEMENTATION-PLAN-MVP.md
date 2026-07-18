@@ -366,6 +366,10 @@ Status information must never rely on color alone.
 
 ## Task 1.7 — Configure Environment Management
 
+### Status
+
+✅ Complete
+
 ### Objective
 
 Create safe environment-specific configuration.
@@ -2469,7 +2473,7 @@ This first plan assumes:
 
 ## Next Task
 
-**Task 1.7 — Configure Environment Management**
+**Task 1.8 — Verify Architectural Compliance of the Foundation**
 
 ---
 
@@ -2483,7 +2487,7 @@ This first plan assumes:
 - [x] Task 1.4 — Configure Code Quality and Test Tooling
 - [x] Task 1.5 — Configure Expo Router and Navigation Shell
 - [x] Task 1.6 — Create the Base Theme and Shared UI Primitives
-- [ ] Task 1.7 — Configure Environment Management
+- [x] Task 1.7 — Configure Environment Management
 - [ ] Task 1.8 — Verify Architectural Compliance of the Foundation
 
 ## EPIC 2 — Supabase Foundation and Core Data Model
