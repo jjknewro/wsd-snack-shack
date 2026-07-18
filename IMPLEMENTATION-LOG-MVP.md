@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation
 
 ## Current Task
 
-Task 1.4 — Configure Code Quality and Test Tooling
+Task 1.5 — Configure Expo Router and Navigation Shell
 
 ---
 
@@ -113,3 +113,34 @@ Every newly created directory that has no real content yet contains a single `.g
 **Notes / Deviations**
 
 - None beyond the stray-directory cleanup noted above, which was anticipated and flagged in Task 1.1's log entry.
+
+---
+
+### Task 1.4 — Configure Code Quality and Test Tooling
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+Established the full quality/verification baseline:
+
+- **ESLint**: `expo lint`'s auto-setup (`eslint@^9`, `eslint-config-expo`) via flat config in `eslint.config.js`. Switched the `lint` script from `expo lint` to plain `eslint .` — `expo lint` explicitly targets `src/` as a positional argument and errors ("all matching files are ignored") because `src/` currently holds only `.gitkeep` placeholders from Task 1.3; running the underlying `eslint` binary against the whole project doesn't have this problem and behaves identically once real files land in `src/`.
+- **Prettier**: added `.prettierrc.json` (single quotes, trailing commas, 100-char width), plus `eslint-config-prettier` appended last in the ESLint flat config to disable stylistic rules that would otherwise conflict with Prettier.
+- **`.prettierignore`**: scoped Prettier to actual source — excluded all `*.md` docs (reformatting the hand-crafted planning docs would create noisy, low-value diffs) and the Expo-generated `assets/expo.icon/icon.json`.
+- **Jest**: `jest.config.js` using the `jest-expo` preset (SDK-57-matched version), plus `jest`, `@testing-library/react-native`, `react-test-renderer` (pinned to `19.2.3` to exactly match the project's `react` version — `react-test-renderer@latest` requires a newer `react` peer and fails to resolve otherwise), and `@types/jest` (pinned to `29.5.14`, matching `jest@29`; `expo-doctor` caught `@types/jest@30` as a version mismatch on the first pass and it was corrected).
+- **Baseline test**: `tests/app-index.test.tsx`, a real smoke test rendering `app/index.tsx` and asserting the "WSD Snack Shack" text is visible — not a placeholder. Removed `tests/.gitkeep` since the directory now has real content.
+- **Scripts**: `lint`, `typecheck` (`tsc --noEmit`), `test` (`jest`), `format` / `format:check` (`prettier --write/--check .`), and `verify` (`lint && typecheck && test`).
+- **tsconfig.json**: added `"types": ["jest"]` so `describe`/`it`/`expect` globals type-check in test files.
+
+**Verification**
+
+- `npm run lint`, `npm run typecheck`, `npm run test` — all pass individually.
+- `npm run verify` — passes end-to-end.
+- **Confirmed `verify` actually fails on a real failure** (the acceptance criterion, not just passing on the happy path): temporarily changed the test's expected text to a wrong string, ran `npm run verify` with output redirected to a file so the real exit code could be checked directly (piping through `tail` otherwise reports `tail`'s exit code, not `npm`'s) — got exit code `1` with a clear Jest failure report. Reverted the test text and reran — exit code `0`, all green.
+- `npx expo-doctor` — 20/20 checks passed after the `@types/jest` version correction.
+- `npx expo export --platform web` — still bundles and renders "WSD Snack Shack" correctly; none of the added tooling affects the running app.
+
+**Notes / Deviations**
+
+- `render()` from `@testing-library/react-native@14` returns a **Promise**, not a synchronous result — a change from older RNTL versions, presumably to support React 19's concurrent rendering. The baseline test (and any future component tests) must `await render(...)`; forgetting this produces a confusing `getByText is not a function` (destructuring off a Promise) or, if using the `screen` global without awaiting, a `` `render` function has not been called `` error, since `screen`'s internal state hasn't been set yet at that point. Worth remembering for every test written from EPIC 4 onward.
