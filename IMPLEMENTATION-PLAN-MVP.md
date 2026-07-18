@@ -123,6 +123,10 @@ Create the initial Expo application using TypeScript and the approved project na
 
 ## Task 1.2 — Add Required Project Documentation
 
+### Status
+
+✅ Complete
+
 ### Objective
 
 Add and validate the project’s core documentation files.
@@ -2449,7 +2453,7 @@ This first plan assumes:
 
 ## Next Task
 
-**Task 1.2 — Add Required Project Documentation**
+**Task 1.3 — Configure Project Structure**
 
 ---
 
@@ -2458,7 +2462,7 @@ This first plan assumes:
 ## EPIC 1 — Project Foundation
 
 - [x] Task 1.1 — Create the React Native Expo Project
-- [ ] Task 1.2 — Add Required Project Documentation
+- [x] Task 1.2 — Add Required Project Documentation
 - [ ] Task 1.3 — Configure Project Structure
 - [ ] Task 1.4 — Configure Code Quality and Test Tooling
 - [ ] Task 1.5 — Configure Expo Router and Navigation Shell
