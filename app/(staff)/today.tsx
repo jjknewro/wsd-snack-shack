@@ -1,18 +1,26 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/AppButton';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { colors, spacing, typography } from '@/theme';
+
 export default function Today() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Today</Text>
+        <ScreenHeader title="Today" />
         <Text style={styles.note}>
           The daily snack-day dashboard and pickup workflow are built in later epics.
         </Text>
-        <Link href="/sign-in" style={styles.link}>
-          Sign Out (temporary)
-        </Link>
+        <AppButton
+          label="Sign Out (temporary)"
+          onPress={() => router.push('/sign-in')}
+          variant="secondary"
+        />
       </View>
     </SafeAreaView>
   );
@@ -26,21 +34,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   note: {
+    ...typography.caption,
+    color: colors.textMuted,
     textAlign: 'center',
-    fontSize: 14,
-    color: '#555',
-  },
-  link: {
-    fontSize: 16,
-    color: '#1a5fb4',
-    paddingVertical: 8,
   },
 });

@@ -312,6 +312,10 @@ The app must have one clear startup route.
 
 ## Task 1.6 — Create the Base Theme and Shared UI Primitives
 
+### Status
+
+✅ Complete
+
 ### Objective
 
 Establish a consistent mobile design foundation.
@@ -2465,7 +2469,7 @@ This first plan assumes:
 
 ## Next Task
 
-**Task 1.6 — Create the Base Theme and Shared UI Primitives**
+**Task 1.7 — Configure Environment Management**
 
 ---
 
@@ -2478,7 +2482,7 @@ This first plan assumes:
 - [x] Task 1.3 — Configure Project Structure
 - [x] Task 1.4 — Configure Code Quality and Test Tooling
 - [x] Task 1.5 — Configure Expo Router and Navigation Shell
-- [ ] Task 1.6 — Create the Base Theme and Shared UI Primitives
+- [x] Task 1.6 — Create the Base Theme and Shared UI Primitives
 - [ ] Task 1.7 — Configure Environment Management
 - [ ] Task 1.8 — Verify Architectural Compliance of the Foundation
 

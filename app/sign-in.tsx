@@ -1,23 +1,32 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/AppButton';
+import { ScreenHeader } from '@/components/ScreenHeader';
+import { colors, spacing, typography } from '@/theme';
+
 export default function SignIn() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.appName}>WSD Snack Shack</Text>
-        <Text style={styles.title}>Sign In</Text>
+        <ScreenHeader title="Sign In" />
         <Text style={styles.note}>
-          Real sign-in is implemented in EPIC 3. The links below are a temporary way to reach the
+          Real sign-in is implemented in EPIC 3. The buttons below are a temporary way to reach the
           staff and administrator areas until then.
         </Text>
-        <Link href="/(staff)/today" style={styles.link}>
-          Continue as Staff (temporary)
-        </Link>
-        <Link href="/(admin)" style={styles.link}>
-          Continue as Administrator (temporary)
-        </Link>
+        <AppButton
+          label="Continue as Staff (temporary)"
+          onPress={() => router.push('/(staff)/today')}
+        />
+        <AppButton
+          label="Continue as Administrator (temporary)"
+          onPress={() => router.push('/(admin)')}
+          variant="secondary"
+        />
       </View>
     </SafeAreaView>
   );
@@ -31,25 +40,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    paddingHorizontal: 24,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   appName: {
-    fontSize: 28,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '500',
+    ...typography.appName,
+    color: colors.text,
   },
   note: {
+    ...typography.caption,
+    color: colors.textMuted,
     textAlign: 'center',
-    fontSize: 14,
-    color: '#555',
-  },
-  link: {
-    fontSize: 16,
-    color: '#1a5fb4',
-    paddingVertical: 8,
   },
 });
