@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation
 
 ## Current Task
 
-Task 1.3 — Configure Project Structure
+Task 1.4 — Configure Code Quality and Test Tooling
 
 ---
 
@@ -80,3 +80,36 @@ Validated and normalized the project's core documentation set. All five required
 **Notes / Deviations**
 
 - The task's requirement that "the implementation log must start with... empty completed-task history" describes the log's state when first scaffolded. In practice this log was already populated with Task 1.1's entry before this task ran (Task 1.1 was completed and logged first, per actual project execution order). Re-emptying it to match the literal instruction would discard real history for no benefit, so the log was left populated — the intent (a working, ready-to-use log) is already satisfied.
+
+---
+
+### Task 1.3 — Configure Project Structure
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+Built out the folder structure from `ARCHITECTURE.md` §7 exactly as Task 1.3 enumerates it:
+
+- `src/components/`, `src/hooks/`, `src/lib/`, `src/services/`, `src/theme/`, `src/types/`, `src/utils/`
+- `src/features/` with the nine required feature folders: `authentication`, `dashboard`, `bunks`, `special-requirements`, `snack-days`, `pickups`, `inventory`, `history`, `administration`
+- `supabase/migrations/`, `supabase/tests/`
+- `tests/` (already existed at root, empty; preserved)
+- `app/` and `assets/` already existed with real content from Task 1.1; untouched.
+
+Removed the four stray root-level `components/`, `constants/`, `services/`, `types/` directories left over from before `ARCHITECTURE.md` was written (flagged as a known deviation in Task 1.1's log entry) — they predated the `src/`-based layout and don't appear anywhere in it; confirmed empty before deleting.
+
+Every newly created directory that has no real content yet contains a single `.gitkeep` file. This is a deliberate reading of the task's instruction — "do not add placeholder files that provide no value" rules out fake/stub component or service files, while the very next sentence ("add only the minimum files required to preserve directories and establish boundaries") is describing exactly this kind of minimal directory-preservation marker, since git does not track empty directories on its own. Real content will replace these `.gitkeep` files directory-by-directory as later epics land (e.g. `src/lib/supabase.ts` in Task 2.10, `src/theme/*` in Task 1.6, each `src/features/*` subtree in its owning epic).
+
+**Verification**
+
+- `npx tsc --noEmit` — passes with no errors.
+- `npx expo-doctor` — 20/20 checks passed.
+- `npx expo export --platform web` — still bundles and renders "WSD Snack Shack" correctly; the restructuring is additive and doesn't touch anything the running app depends on.
+- Confirmed the `@/*` → `./src/*` path alias actually resolves through the new structure: added a throwaway `src/utils/_verify.ts` exporting a const and a throwaway root file importing it via `@/utils/_verify`, ran `tsc --noEmit` clean, then deleted both temporary files (not committed).
+- Full project tree reviewed by hand against `ARCHITECTURE.md` §7's proposed structure — matches.
+
+**Notes / Deviations**
+
+- None beyond the stray-directory cleanup noted above, which was anticipated and flagged in Task 1.1's log entry.
