@@ -88,7 +88,4 @@ Of the three sheets, `Allergies` is the closest thing to a structured source of 
 
 ## Open Questions for the Operator
 
-1. Was bunk `SB` intentionally not running the day this snapshot was taken, or is `snack shack today` out of sync with `Master Roster` and needs fixing?
-2. What does the `Allergies` row with `Bunk = "?"` refer to — which bunk actually needs the "3 Cholov Yisreol - Parve only" order?
-3. Is the `Allergies` row with only `Quantity = "17"` (no bunk, no requirement) a running total that should be excluded from the data range going forward, or does it mean something else?
-4. Was the `Campers` column (present but empty in both `Master Roster` and `snack shack today`) ever used, or intended to be used, for a camper count? If camper counts matter to the MVP, where does that number currently live (paper, memory, elsewhere)?
+Tracked centrally in `open-questions.md` (alongside any non-workbook questions from other tasks), not duplicated here. As of this writing: the `SB` gap, the unresolved `"?"` bunk, the stray `Quantity = "17"` row, and what the unused `Campers` column was ever meant to hold.
