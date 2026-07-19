@@ -281,6 +281,41 @@ Added `WORKBOOK-SCHEMA.md` to `README-MVP.md`'s "Project Documentation" list for
 
 ---
 
+### Ad hoc: Visualize the real workbook data in the app (before Task 2.2)
+
+**Date:** 2026-07-19
+**Status:** Done — **not a numbered plan task**, done at the user's request so they could see the real data while thinking through Task 2.1's open questions, before committing to Task 2.2's data models.
+
+**Summary**
+
+Generated `public/data/workbook-snapshot.json` from the workbook export (same throwaway `xlsx` parsing script as Task 2.1, re-run to also emit the row data itself this time, not just structural metadata) and wired the three existing placeholder pages to render it:
+
+- `MasterRoster` → `Master Roster` sheet (Division, Bunk, Counselors, Special Snack, Notes).
+- `Today` → `snack shack today` sheet, using the new `StatusBadge` (Pending/Picked Up) for the previously-unlabeled checkbox column.
+- `Requirements` → `Allergies` sheet, including both anomalous rows (the `"?"` bunk and the stray total) exactly as documented, rather than filtering them out.
+
+**This is explicitly temporary, throwaway visualization tooling, not the real data pipeline** — it will be fully replaced when EPIC 4 builds the actual Apps Script repository/API client. Labeled as such directly in each page's UI copy ("Temporary local snapshot... not live data").
+
+**New permanent additions** (these ARE real, kept regardless of the throwaway wiring around them):
+- `LoadingState`, `ErrorState`, `EmptyState` components — Task 1.6 under this plan never actually built these (unlike the retired track, which had them as an explicit requirement); needed them now for real, so built them properly with tests rather than as one-off inline JSX.
+- The **`@/*` → `./src/*` path alias** — hadn't been configured anywhere in this Vite project until now (the retired Expo track had it; this one didn't). Added to both `tsconfig.app.json`'s `paths` and `vite.config.ts`'s `resolve.alias` (Vite doesn't read `tsconfig.json` paths on its own without a plugin — both need to agree independently). Hit and fixed a real deprecation warning along the way: this TypeScript version rejects/warns on `baseUrl`, which isn't actually required for `paths` to work under `moduleResolution: "bundler"` — removed it rather than suppressing the warning.
+- `useWorkbookSnapshot` hook and `src/types/workbookSnapshot.ts` — will be deleted, not evolved, once EPIC 4 exists; not designed as a foundation to build on.
+
+**Privacy handling** — same standard as the `.xlsx` file itself: `public/data/workbook-snapshot.json` (contains real counselor names) added to `.gitignore` immediately after generating it, before touching anything else. Confirmed via `git status`/`git check-ignore` that it's excluded.
+
+**Verification**
+
+- Confirmed the production build succeeds **identically with the snapshot file present and absent** (temporarily moved it out and rebuilt) — this is the whole point of fetching from `public/` at runtime rather than statically importing the JSON: a fresh clone without the (gitignored, real-data) file must still build successfully, just show an empty/error state at runtime instead of failing to compile.
+- `npm run verify` — 25/25 tests (6 new: `LoadingState` ×2, `ErrorState` ×3, `EmptyState` ×1), lint and typecheck clean.
+- Visually verified all three pages with Playwright screenshots against the real data: `Master Roster` renders all 35 bunks; `Today` shows all "Pending" status badges and **visibly ends at `IG4/SG` with no `SB` row**, confirming the documented gap by direct observation, not just the earlier programmatic diff; `Requirements` renders both anomalous rows (`"?"` bunk, stray total) exactly as `WORKBOOK-SCHEMA.md` describes them.
+- Did not write automated tests for the three page components' data-rendering logic itself (`MasterRoster`/`Today`/`Requirements`), since this is explicitly throwaway code being discarded at EPIC 4 — testing code that's about to be deleted isn't a good use of effort. The three *shared components* it depends on (`LoadingState`/`ErrorState`/`EmptyState`) are properly tested since those are permanent.
+
+**Notes / Deviations**
+
+- Real people's names (counselors) are visible in the live app now, in this development environment, sourced from a gitignored local file. This is fine for local development review — the same handling as opening the spreadsheet directly — but worth remembering this isn't something to screenshot/share externally without the same care as the source spreadsheet itself.
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project

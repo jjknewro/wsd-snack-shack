@@ -1,0 +1,5 @@
+.loading-state {
+  padding: var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}

@@ -40,3 +40,4 @@ yarn-error.*
 # data) - reference-only, never committed. See WORKBOOK-SCHEMA.md.
 *.xlsx
 *.xls
+public/data/workbook-snapshot.json
