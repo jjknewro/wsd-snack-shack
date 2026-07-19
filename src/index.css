@@ -11,6 +11,42 @@
     'Segoe UI',
     Roboto,
     sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Border radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Minimum practical touch target - see Task 1.6 acceptance criteria */
+  --touch-target-min: 44px;
+
+  /* Typography */
+  --font-size-body: 16px;
+  --font-size-title: 22px;
+  --font-size-caption: 14px;
+
+  /* Text and surface colors */
+  --color-text: #111111;
+  --color-text-muted: #555555;
+  --color-background: #ffffff;
+  --color-background-muted: #f2f2f2;
+  --color-border: #d8d8d8;
+  --color-primary: #1a5fb4;
+  --color-disabled: #a6a6a6;
+
+  /* Status colors. Pair every use with a text label or icon - never rely on
+     color alone (see IMPLEMENTATION-PLAN-MVP.md Task 5.1). */
+  --color-status-pending: #757575;
+  --color-status-completed: #2e7d32;
+  --color-status-warning: #c77800;
+  --color-status-critical: #c62828;
 }
 
 body {

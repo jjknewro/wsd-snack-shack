@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.6 — Establish Mobile-First Design Foundation
+Task 1.7 — Create Project Documentation Baseline
 
 ---
 
@@ -184,6 +184,34 @@ Added:
 Re-verified after the addition: 8/8 tests pass, and re-ran the Playwright phone/tablet overflow check specifically (this is exactly where the box-sizing bug bit earlier, and a 5th nav item is the kind of change that could plausibly reintroduce overflow) — zero overflow at both sizes, confirmed via screenshot.
 
 Amended `IMPLEMENTATION-PLAN-MVP.md`'s Task 1.5 route list to include `/roster` with a note explaining it was a post-approval addition, rather than silently editing the original list as if it had always been there.
+
+---
+
+### Task 1.6 — Establish Mobile-First Design Foundation
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+- **Design tokens**: added as CSS custom properties in `src/index.css`'s `:root` — spacing scale (`--space-xs` through `--space-xl`), border radii, `--touch-target-min: 44px`, typography sizes, text/surface colors, and status colors (`pending`/`completed`/`warning`/`critical`, with a comment pointing at Task 5.1's "never rely on color alone" requirement). Centralizing these avoids the alternative of every component hardcoding its own spacing/color values.
+- Refactored `AppShell.css` (from Task 1.5) to consume the new tokens instead of its original hardcoded values (`#ddd`, `16px`, `44px`, etc.) — same "don't leave duplicate styling lying around once a shared primitive exists" principle used throughout this project.
+- **`Button`**: primary/secondary variants, disabled and loading states (loading swaps the label for "Loading…" and sets `aria-busy` + blocks clicks), `--touch-target-min`-sized hit area.
+- **`TextField`**: labeled text input using `useId()` for automatic label/input association (no manual `id` wiring required by callers), optional `errorMessage` that sets `aria-invalid` and `aria-describedby` together so screen readers announce the error.
+- **`StatusBadge`**: pairs a colored dot with a required text `label` prop — there's no way to render just a color, by construction, directly enforcing the "never color alone" rule rather than just documenting it as a convention.
+- None of the three new components are wired into any page yet — same reasoning as every prior "build the primitive, don't force premature usage" decision in this project (retired track's `LoadingState`/`ErrorState`, this track's `MasterRoster` placeholder, etc.). Real usage starts once EPIC 5+ builds actual data-driven pages.
+
+**Verification**
+
+- `npm run test` — 19/19 passing across 5 suites (12 new: 3 for `Button`, 3 for `TextField`, 5 for `StatusBadge` incl. a parameterized `it.each` over all four variants).
+- `npx tsc -b`, `npm run lint`, `npm run format:check` — all clean.
+- `npm run build` — succeeds.
+- **Explicitly verified the 320px acceptance criterion** (narrower than anything checked in Task 1.5, which only went down to 390px) using Playwright: zero horizontal overflow at 320×568, and confirmed via `getBoundingClientRect()` that every nav link in the shell measures exactly 44px tall (the touch-target minimum, not just "close enough").
+- Reconfirmed the same instance-per-worker Playwright approach as before (ad hoc from the OS temp dir, not a project dependency).
+
+**Notes / Deviations**
+
+- None. No new issues found this task — likely because the box-sizing reset and token-based approach from Task 1.5's bug fix already eliminated the class of layout bug that would otherwise show up here.
 
 ---
 

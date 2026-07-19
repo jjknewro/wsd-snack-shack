@@ -190,7 +190,7 @@ Acceptance criteria:
 
 ### Task 1.6 — Establish Mobile-First Design Foundation
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create the initial responsive layout, spacing rules, form controls, buttons, and status styles.
 
