@@ -35,3 +35,8 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# real operational workbook exports (contain counselor names / live camp
+# data) - reference-only, never committed. See WORKBOOK-SCHEMA.md.
+*.xlsx
+*.xls

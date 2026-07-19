@@ -187,8 +187,9 @@ The project consists of:
 - ARCHITECTURE.md
 - IMPLEMENTATION-PLAN-MVP.md
 - IMPLEMENTATION-LOG-MVP.md
+- WORKBOOK-SCHEMA.md
 
-These documents together define the vision, architecture, implementation roadmap, and development history of the project.
+These documents together define the vision, architecture, implementation roadmap, development history, and existing-workbook structure of the project.
 
 ---
 

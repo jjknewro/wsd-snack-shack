@@ -10,11 +10,11 @@ wsd-snack-shack
 
 ## Current Epic
 
-EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pivoted architecture — see "Architecture Pivot" below)
+EPIC 2 — Workbook Schema and Data Contract
 
 ## Current Task
 
-Task 2.1 — Document the Existing Workbook Structure
+Task 2.2 — Define Stable Application Data Models
 
 ---
 
@@ -240,6 +240,44 @@ Audited all four required docs against this task's two acceptance criteria, rath
 **Sign-off**
 
 EPIC 1 — Project Foundation is complete under the pivoted React + Vite + Google Sheets architecture. All seven tasks (1.1–1.7) are done, reviewed, and approved. Proceeding to **EPIC 2 — Workbook Schema and Data Contract**, starting with **Task 2.1 — Document the Existing Workbook Structure**. Note that Task 2.1 requires access to the actual Google Sheets workbook (worksheet names, columns, data types, business meaning) — this will need the user to provide that access/information, similar to how Task 2.1 under the retired Supabase track needed real account setup before it could proceed.
+
+---
+
+# EPIC 2 — Workbook Schema and Data Contract
+
+### Task 2.1 — Document the Existing Workbook Structure
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+The user placed a real workbook export (`Snack Shack today.xlsx`) at the project root. Inspected it with a throwaway Node script (the `xlsx`/SheetJS package, installed ad hoc in the OS temp scratchpad — **not** added to this project's dependencies, since it's a one-time documentation aid, not something the shipped app needs; Google Apps Script handles the real Sheets API in production) and documented the actual structure in a new **`WORKBOOK-SCHEMA.md`**.
+
+Key findings — the real workbook is messier than `ARCHITECTURE.md`'s assumptions in several concrete ways:
+
+- **`Master Roster`**: 35 bunks across 6 divisions. Its `Campers` column exists (has a header) but is **entirely empty** — no camper count or camper list is tracked anywhere in this workbook today, contradicting `README-MVP.md`'s "MVP Goals" listing camper counts as something the operator can view.
+- **`snack shack today`**: header row's column A is an actual **checkbox cell**, not a text label. More importantly, it has only **34 bunks vs. `Master Roster`'s 35** — bunk `SB` is missing entirely. This sheet was not regenerated from the current roster; it's drifted. Flagged as an open question for the operator rather than assumed either way.
+- **`Allergies`**: not a flat table from row 1 — real headers are on row 3, preceded by a blank row and a decorative banner row. Contains 11 real per-bunk records plus two anomalous rows: one with `Bunk = "?"` (an orphaned/unassigned special order) and one with only a `Quantity` value and no bunk or requirement (almost certainly a stray running total that ended up inside the data range).
+- Special/dietary requirement information is **redundantly encoded in three different free-text formats** across `Master Roster.Special Snack`, `snack shack today.Special Snack` (independently retyped, already inconsistent with `Master Roster`'s wording for the same data), and `Allergies.Requirement`/`Quantity`. Recommended `Allergies` as the eventual single source of truth in the document, since it's the most structured of the three.
+- No stable bunk ID separate from the bunk-code string exists anywhere — directly relevant to Task 2.3.
+
+Four open questions were written directly into `WORKBOOK-SCHEMA.md` for the operator to answer before EPIC 3+ builds logic on top of this data (the `SB` gap, the orphaned `"?"` bunk, the stray `Quantity=17` row, and what the unused `Campers` column was ever meant to hold).
+
+**Security/privacy handling**: the workbook export contains real counselor first names (personal data). Added `*.xlsx`/`*.xls` to `.gitignore` and confirmed via `git check-ignore` that the file is excluded — it stays on disk for local reference but is never committed. `WORKBOOK-SCHEMA.md` itself avoids quoting any real counselor names verbatim (describes the `Counselors` column's format generically instead); no camper names exist anywhere in the workbook to begin with.
+
+Added `WORKBOOK-SCHEMA.md` to `README-MVP.md`'s "Project Documentation" list for consistency with the other four docs.
+
+**Verification**
+
+- Confirmed the `.xlsx` file does not appear in `git status` and `git check-ignore -v` reports it matched.
+- `npm run verify` — 19/19 tests, lint and typecheck clean (sanity check only; this task's changes were documentation and `.gitignore`, no application code touched).
+- Cross-checked the `Master Roster` vs. `snack shack today` bunk lists programmatically (not by eye) to find the `SB` gap with certainty rather than approximating from a sample.
+
+**Notes / Deviations**
+
+- This task's deliverable choice was a dedicated `WORKBOOK-SCHEMA.md` rather than a section inside `ARCHITECTURE.md` — the task's own text explicitly offers both as valid options, and the amount of detail here (three worksheets, several real data-quality findings, open questions) would have made `ARCHITECTURE.md` unwieldy if inlined.
+- The ~36-bunk count assumption referenced elsewhere in the docs holds up: 35 real bunks in `Master Roster`, consistent with prior references to "approximately 36 bunks."
 
 ---
 
