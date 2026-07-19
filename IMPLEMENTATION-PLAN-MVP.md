@@ -56,7 +56,7 @@ A task is complete only when:
 
 # 4. MVP Epic Summary
 
-- [ ] EPIC 1 — Project Foundation
+- [x] EPIC 1 — Project Foundation
 - [ ] EPIC 2 — Supabase Foundation and Core Data Model
 - [ ] EPIC 3 — Authentication and Role-Based Access
 - [ ] EPIC 4 — Master Bunk Roster
@@ -410,6 +410,10 @@ Rules:
 ---
 
 ## Task 1.8 — Verify Architectural Compliance of the Foundation
+
+### Status
+
+✅ Complete
 
 ### Objective
 
@@ -2469,11 +2473,11 @@ This first plan assumes:
 
 ## Current Epic
 
-**EPIC 1 — Project Foundation**
+**EPIC 2 — Supabase Foundation and Core Data Model**
 
 ## Next Task
 
-**Task 1.8 — Verify Architectural Compliance of the Foundation**
+**Task 2.1 — Create and Configure the Development Supabase Project**
 
 ---
 
@@ -2488,7 +2492,7 @@ This first plan assumes:
 - [x] Task 1.5 — Configure Expo Router and Navigation Shell
 - [x] Task 1.6 — Create the Base Theme and Shared UI Primitives
 - [x] Task 1.7 — Configure Environment Management
-- [ ] Task 1.8 — Verify Architectural Compliance of the Foundation
+- [x] Task 1.8 — Verify Architectural Compliance of the Foundation
 
 ## EPIC 2 — Supabase Foundation and Core Data Model
 

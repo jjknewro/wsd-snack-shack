@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation
 
 ## Current Task
 
-Task 1.8 — Verify Architectural Compliance of the Foundation
+Task 2.1 — Create and Configure the Development Supabase Project
 
 ---
 
@@ -240,3 +240,44 @@ Established the design foundation in `src/theme/` and `src/components/`:
 **Notes / Deviations**
 
 - No `.env` file was created for this machine's actual Supabase credentials — there's no real Supabase project yet (that's Task 2.1). `.env.example` plus the now-correct `.gitignore` is the complete, correct state until then.
+
+---
+
+### Task 1.8 — Verify Architectural Compliance of the Foundation
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete — **EPIC 1 (Project Foundation) is complete.**
+
+**Summary**
+
+Audit of the completed EPIC 1 foundation against `ARCHITECTURE.md`, item by item from this task's own requirements list:
+
+| Requirement | Finding |
+|---|---|
+| One React Native Expo codebase | ✅ Single `wsd-snack-shack` Expo + Expo Router project targeting iPhone/iPad/Android from one codebase; no platform-forked business logic anywhere. |
+| TypeScript enabled | ✅ `tsconfig.json` has `"strict": true`; every source file is `.ts`/`.tsx`; `npm run typecheck` passes clean. |
+| Expo Router structure | ✅ Route files live under root `app/` (not `src/app/`, matching §7 exactly): `_layout.tsx`, `index.tsx` (redirect), `sign-in.tsx`, `(staff)/` and `(admin)/` route groups each with their own layout. |
+| Feature-based organization | ✅ `src/features/` has all nine required folders (`authentication`, `dashboard`, `bunks`, `special-requirements`, `snack-days`, `pickups`, `inventory`, `history`, `administration`) ready for their owning epics; currently empty (`.gitkeep` only) because no feature work has started yet — expected, not a gap. |
+| No custom backend introduced | ✅ No server/API code anywhere in the repo. `supabase/{migrations,tests}/` exist only as version-controlled config placeholders for Supabase itself (Task 2.x), not a custom backend. |
+| No global state library introduced without need | ✅ `package.json` dependencies checked directly — no Redux/Zustand/MobX/Recoil/Jotai/etc. Only React built-ins so far; TanStack Query arrives with real server state in EPIC 2+, per architecture. |
+| No service-role key exposure | ✅ `.env.example` lists only the two public `EXPO_PUBLIC_*` vars; `src/lib/env.ts` reads only those two. Grepped the whole repo for `service_role`, `SERVICE_ROLE`, `SUPABASE_SERVICE`, and JWT-shaped strings (`eyJhbGciOi...`) — no matches. Confirmed via `git ls-files` that no `.env` file is tracked, only `.env.example`. |
+| Test and quality tooling operational | ✅ `npm run verify` (lint + typecheck + test) passes clean: 21 tests across 7 suites. `npx expo-doctor` reports 20/20. |
+| Documentation present | ✅ `README-MVP.md`, `ARCHITECTURE.md`, `IMPLEMENTATION-PLAN-MVP.md`, `IMPLEMENTATION-LOG-MVP.md` all present at root with consistent naming (Task 1.2). |
+
+**Approved variances carried forward from earlier EPIC 1 tasks** (none are architecture violations — all previously documented in their originating task's log entry, consolidated here for the EPIC sign-off):
+
+- Physical iPhone/iPad/Android device and simulator testing has not been possible in this development environment (no devices/simulators attached) — substituted with `expo export --platform web` throughout (Task 1.1 onward). Real device testing remains required no later than Task 12.4.
+- The pre-existing stray root-level `components/`/`constants/`/`services/`/`types/` directories (present before `ARCHITECTURE.md` existed) were removed in Task 1.3 once the real `src/`-based structure landed; `src/constants/` itself was intentionally never created, since Task 1.3's own folder list omits it (matching §7's structure diagram, even though §6.3's prose list includes it — a minor internal inconsistency in the architecture doc resolved by following the more specific, authoritative structure diagram).
+- `@testing-library/react-native` is pinned to `13.3.3` rather than the newest `14.x`, because `expo-router@57`'s bundled test helper (`renderRouter`) isn't compatible with v14's async `render()` (Task 1.5's log entry has the full root-cause analysis). This is a test-tooling version pin, not an application dependency or architecture decision.
+- `lint` runs `eslint .` directly rather than `expo lint`, because `expo lint` errors on `src/`'s still-partially-empty directories (Task 1.4). Cosmetic script difference; same underlying ESLint config either way.
+
+**Verification**
+
+- `npm run verify` — 21/21 tests pass, lint and typecheck clean.
+- `npx expo-doctor` — 20/20.
+- Dev server started (`npx expo start`) and confirmed reachable.
+- **Phone- and tablet-sized layout verification — upgraded from prior tasks' code-review-only approach to actual rendered evidence**: used Playwright (installed ad hoc via `npx`, run from the OS temp scratchpad directory — deliberately *not* added to this project's `package.json`/`package-lock.json`, confirmed via `git status` and grepping both files for "playwright" with zero matches, so as not to violate this very task's "no unnecessary dependency introduced" check) to load all three real screens (`/sign-in`, `/(staff)/today`, `/(admin)`) against the running dev server at an iPhone-ish viewport (390×844) and an iPad-ish viewport (820×1180). Confirmed programmatically that `document.documentElement.scrollWidth` never exceeds `clientWidth` at either size on any screen (no horizontal overflow), and visually confirmed via screenshots that all three screens render correctly, legibly, and with properly sized buttons at both sizes.
+
+**Sign-off**
+
+EPIC 1 — Project Foundation is complete. All eight tasks (1.1–1.8) are done, reviewed, and approved. The foundation conforms to `ARCHITECTURE.md` with no unapproved deviations. Proceeding to **EPIC 2 — Supabase Foundation and Core Data Model**, starting with **Task 2.1 — Create and Configure the Development Supabase Project**.
