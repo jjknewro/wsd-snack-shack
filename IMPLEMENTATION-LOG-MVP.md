@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.1 — Create React, Vite, and TypeScript Project
+Task 1.2 — Establish Project Structure
 
 ---
 
@@ -28,11 +28,44 @@ Task 1.1 — Create React, Vite, and TypeScript Project
 - `ARCHITECTURE.md` and `IMPLEMENTATION-PLAN-MVP.md` were replaced by the user with a new architecture and a new 12-EPIC plan describing the PWA/Google-Sheets approach. `README-MVP.md` was updated by the assistant in this same session to match, since it still described the old multi-user native-app vision and directly contradicted the new architecture.
 - The new plan's EPIC 1 was found marked "✅ Complete" (React + Vite + TypeScript project, Vitest, React Router, etc.) despite none of that work actually existing in the repository — confirmed by inspection (the repo was 100% Expo/React Native at the time). After explicit user confirmation, this was corrected: EPIC 1's status (and every one of its 7 tasks) was reset to "⬜ Not Started" in `IMPLEMENTATION-PLAN-MVP.md`, and the plan's "Recommended Execution Order" section (which started at EPIC 2, assuming EPIC 1 was done) was corrected to start at EPIC 1.
 - The in-progress Task 2.1 work under the old plan (deploying a self-hosted Supabase instance on the user's Railway account) is abandoned — the new architecture does not use Supabase. Nothing had been deployed yet beyond planning/discussion, so there is nothing to tear down.
-- Going forward, "Task 1.1", "Task 2.1", etc. in this log refer to the **new** plan's numbering (React/Vite/Google-Sheets track), not the retired Expo/Supabase track's identically-numbered tasks above. Where ambiguous, entries below are dated after 2026-07-18 and refer to the new plan.
+- Going forward, "Task 1.1", "Task 2.1", etc. in this log refer to the **new** plan's numbering (React/Vite/Google-Sheets track). The retired Expo/Supabase track below reused the same numbering under the old plan — the two are distinguished by section heading, not by date, since both include entries from 2026-07-18.
 
 ---
 
-## Completed Task History
+## Completed Task History — Active Track (React + Vite + Google Sheets)
+
+### Task 1.1 — Create React, Vite, and TypeScript Project
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+Scaffolded `wsd-snack-shack-web` using `npm create vite@latest` with the `react-ts` template, then stripped the tutorial/demo content per the same "no business functionality, no demo content" discipline used throughout this project:
+
+- Removed the default counter demo (`App.tsx`'s hero section, framework logos, docs/social links) and its assets (`react.svg`, `vite.svg`, `hero.png`, `public/icons.svg`) — replaced with a minimal `App.tsx` rendering just the "WSD Snack Shack" heading.
+- Replaced the generated `App.css`/`index.css` (all tutorial-specific styling — hero positioning, docs/social grid, ticks decorations) with a minimal baseline (centered flex layout, system font stack).
+- Removed the template's generic `README.md` (this project uses `README-MVP.md` at the root; a second, contradictory README would be confusing).
+- Set the page `<title>` to "WSD Snack Shack" (was the generic project-name default).
+- **Added `"strict": true`** to both `tsconfig.app.json` and `tsconfig.node.json` — neither was set by the Vite template despite `noUnusedLocals`/`noUnusedParameters` etc. being on; this task's own requirement ("TypeScript strict mode is enabled") would not otherwise have been met.
+- Rewrote the root `.gitignore` for a Vite/Node project (removed all Expo/native-specific entries — `.expo/`, `expo-env.d.ts`, `.kotlin/`, `*.jks`/`*.p8`/`*.p12`/`*.mobileprovision`, `.metro-health-check*`, `/ios`, `/android`; added `dist-ssr/`, `*.local`, standard editor-directory entries); kept the `.env*` / `!.env.example` protection from the retired track's Task 1.7 since it's still correct for any framework.
+- Left linting as the Vite template's default (`oxlint`, a zero-config Rust-based linter) rather than introducing ESLint immediately — deciding the actual lint tool/rule set belongs to Task 1.3 ("Configure Code Quality Tooling"), not this task.
+
+**Verification**
+
+- `npx tsc -b` — passes with no errors (confirms strict mode is genuinely active, not just declared).
+- `npm run lint` (`oxlint`) — clean.
+- `npm run build` — succeeds; inspected `dist/index.html` and confirmed the "WSD Snack Shack" title is present in the production build.
+- `npm run dev` — started successfully; confirmed via `curl` that the dev server serves the correct title.
+- All of the above were first verified in a scratchpad copy, then re-verified identically after copying the finalized scaffold into the actual project directory and running `npm install` there — same pattern used for the original (now-retired) Expo Task 1.1.
+
+**Notes / Deviations**
+
+- **Dev-server port confusion, resolved, not a real issue**: starting the dev server on port 5173 and curling `http://localhost:5173/` returned an unrelated project's page ("schmucks-studio"). Investigated via `Get-NetTCPConnection`: `localhost` resolved to `::1` (IPv6), where an unrelated, already-running Node process (a different, pre-existing project of the user's) happened to also be listening on port 5173. Our Vite server had bound cleanly to `0.0.0.0` (IPv4) on the same port number — IPv4 and IPv6 sockets are independent, so no actual `EADDRINUSE` conflict occurred. Confirmed our server directly via `http://127.0.0.1:5173/`. Worth remembering: prefer `127.0.0.1` over `localhost` when verifying a dev server on this machine, since `localhost` may resolve to an unrelated already-running IPv6 service.
+
+---
+
+## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project
 

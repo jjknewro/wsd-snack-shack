@@ -88,7 +88,7 @@ Any earlier EPIC 1 wording that referenced Expo, React Native, or Expo Router mu
 
 ### Task 1.1 — Create React, Vite, and TypeScript Project
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create the frontend project using React, Vite, and TypeScript.
 
