@@ -152,7 +152,7 @@ Acceptance criteria:
 
 ### Task 1.4 — Configure Test Framework
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Configure Vitest and React Testing Library.
 

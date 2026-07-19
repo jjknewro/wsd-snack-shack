@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.4 — Configure Test Framework
+Task 1.5 — Configure Routing and Application Shell
 
 ---
 
@@ -114,6 +114,39 @@ Every folder is currently empty except for a `.gitkeep` marker, since none of th
 **Notes / Deviations**
 
 - This task's own acceptance criteria don't require demonstrating that `verify` fails on a real failure (unlike the retired track's equivalent task) — skipped that extra check since it isn't asked for here and the `&&`-chained script mechanics are already proven correct from the retired track's identical pattern.
+
+---
+
+### Task 1.4 — Configure Test Framework
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+- Installed `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/jest-dom`.
+- Configured Vitest via the `test` block in `vite.config.ts` (switched `defineConfig` import from `'vite'` to `'vitest/config'`, which re-exports Vite's config typed with the `test` extension — avoids a separate `vitest.config.ts`). `environment: 'jsdom'`, `setupFiles: ['./src/tests/setup.ts']`.
+- `src/tests/setup.ts` imports `@testing-library/jest-dom/vitest` (the Vitest-specific entry point, which augments Vitest's `Assertion` type automatically — no manual `.d.ts` type declaration needed, unlike the plain `@testing-library/jest-dom` import).
+- Used explicit imports (`describe`/`it`/`expect` from `'vitest'`) rather than `globals: true` — keeps `tsconfig` simpler, no ambient global types to wire up, and is the currently-recommended pattern.
+- `src/tests/App.test.tsx`: a real sample test rendering the actual `App` component and asserting the "WSD Snack Shack" heading is visible — not a placeholder/dummy test.
+- Scripts: `test` (`vitest run`, single-shot for CI/verify), `test:watch` (`vitest`, interactive). `verify` now chains `lint && typecheck && test`.
+
+**Verification**
+
+- `npm run test` — `1 passed (1)`.
+- `npx tsc -b` — clean (confirms the test files and Vitest/jest-dom type augmentations all type-check correctly within the same `tsconfig.app.json` project as the app code).
+- `npm run lint`, `npm run format:check` — clean.
+- `npm run verify` — full chain (lint + typecheck + test) passes end-to-end.
+- `npm run build` — still succeeds; confirmed the dev server (port 5180) still serves correctly.
+
+**Notes / Deviations**
+
+- Test files live under `src/tests/` per Task 1.2's structure decision, not co-located next to source (e.g. `src/App.test.tsx`) — consistent with the plan's explicit tree.
+- Corrected a mistake from the previous log entry: an earlier edit accidentally deleted the "## Completed Task History — Retired Track" section header when inserting Task 1.3's entry, leaving the retired track's Task 1.1 entry without its section heading. Restored it in this same editing session, before writing this entry.
+
+---
+
+## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project
 
