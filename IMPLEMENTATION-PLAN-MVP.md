@@ -173,9 +173,12 @@ Implement the application shell using React Router.
 Initial routes:
 
 - `/` — Today
+- `/roster` — Master Roster
 - `/requirements` — Special Requirements
 - `/history` — Pickup History
 - `/settings` — Settings
+
+**Amendment (2026-07-19):** `/roster` (Master Roster) was added after this task's initial approval, at the user's request — a read-only view of bunks/campers/counselors. Consistent with the already-planned `roster` GET action in `ARCHITECTURE.md`'s API section; this route just wasn't included in the original four. See `IMPLEMENTATION-LOG-MVP.md` for the follow-up entry.
 
 Acceptance criteria:
 

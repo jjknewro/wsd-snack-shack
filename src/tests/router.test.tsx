@@ -15,9 +15,18 @@ describe('router', () => {
 
     expect(screen.getByRole('heading', { name: 'Today', level: 2 })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Today' })).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Master Roster' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Special Requirements' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Pickup History' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Settings' })).toBeVisible()
+  })
+
+  it('navigates to Master Roster', () => {
+    renderAt('/')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Master Roster' }))
+
+    expect(screen.getByRole('heading', { name: 'Master Roster', level: 2 })).toBeVisible()
   })
 
   it('navigates to Special Requirements', () => {

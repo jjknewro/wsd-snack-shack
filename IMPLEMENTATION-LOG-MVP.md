@@ -174,6 +174,17 @@ Every folder is currently empty except for a `.gitkeep` marker, since none of th
 
 - None beyond the two bugs above, both found via real verification (not assumed) and both fixed at the root cause rather than patched around.
 
+**Follow-up (2026-07-19): added the Master Roster tab.** The user asked, after reviewing Task 1.5, whether there should be a tab for viewing the Master Roster (bunks/campers/counselors) — the original four routes didn't include one, since `README-MVP.md` states roster maintenance happens directly in Google Sheets, not through the app. Clarified that "view" was wanted (not editing), and that `ARCHITECTURE.md`'s API section already lists a `roster` GET action, so this fits the existing design rather than being a new architectural direction.
+
+Added:
+- `src/pages/MasterRoster.tsx` — placeholder, same pattern as the other four pages (no data yet; real roster data arrives with EPIC 2's workbook schema and EPIC 4's repository/API client).
+- Route `/roster` in `src/router.tsx`, positioned right after Today in both the route list and the nav order.
+- Nav link and test coverage (`src/tests/router.test.tsx`): asserts the link appears alongside the other four at the index route, and that clicking it navigates to the Master Roster heading.
+
+Re-verified after the addition: 8/8 tests pass, and re-ran the Playwright phone/tablet overflow check specifically (this is exactly where the box-sizing bug bit earlier, and a 5th nav item is the kind of change that could plausibly reintroduce overflow) — zero overflow at both sizes, confirmed via screenshot.
+
+Amended `IMPLEMENTATION-PLAN-MVP.md`'s Task 1.5 route list to include `/roster` with a note explaining it was a post-approval addition, rather than silently editing the original list as if it had always been there.
+
 ---
 
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)

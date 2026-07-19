@@ -4,6 +4,7 @@ import './AppShell.css'
 
 const NAV_LINKS = [
   { to: '/', label: 'Today', end: true },
+  { to: '/roster', label: 'Master Roster', end: false },
   { to: '/requirements', label: 'Special Requirements', end: false },
   { to: '/history', label: 'Pickup History', end: false },
   { to: '/settings', label: 'Settings', end: false },
