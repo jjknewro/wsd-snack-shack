@@ -166,7 +166,7 @@ Acceptance criteria:
 
 ### Task 1.5 — Configure Routing and Application Shell
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Implement the application shell using React Router.
 

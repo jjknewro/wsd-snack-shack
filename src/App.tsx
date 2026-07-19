@@ -1,11 +1,9 @@
-import './App.css'
+import { RouterProvider } from 'react-router'
+
+import { router } from './router'
 
 function App() {
-  return (
-    <div className="app">
-      <h1>WSD Snack Shack</h1>
-    </div>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App

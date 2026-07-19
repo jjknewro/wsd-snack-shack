@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.5 — Configure Routing and Application Shell
+Task 1.6 — Establish Mobile-First Design Foundation
 
 ---
 
@@ -143,6 +143,36 @@ Every folder is currently empty except for a `.gitkeep` marker, since none of th
 
 - Test files live under `src/tests/` per Task 1.2's structure decision, not co-located next to source (e.g. `src/App.test.tsx`) — consistent with the plan's explicit tree.
 - Corrected a mistake from the previous log entry: an earlier edit accidentally deleted the "## Completed Task History — Retired Track" section header when inserting Task 1.3's entry, leaving the retired track's Task 1.1 entry without its section heading. Restored it in this same editing session, before writing this entry.
+
+---
+
+### Task 1.5 — Configure Routing and Application Shell
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+- Installed `react-router` (v8 — the current unified package; `react-router-dom` has stopped receiving new majors past v7 and all development has moved into `react-router` itself).
+- `src/router.tsx` exports both `routes` (a plain `RouteObject[]`) and `router` (`createBrowserRouter(routes)`) — routes are exported separately from the browser-specific router instance specifically so tests can build a `createMemoryRouter` from the same route definitions with a controlled initial URL, rather than depending on the real browser location.
+- Route tree: `/` renders `AppShell` (layout) with `Today` as its index child, plus `requirements`, `history`, `settings`, and a `*` catch-all rendering `NotFound` — matching the plan's four required routes plus the controlled not-found state.
+- `src/components/AppShell.tsx`: the application shell — "WSD Snack Shack" branding, a `<nav aria-label="Primary">` of `NavLink`s to all four routes (active route highlighted via `NavLink`'s `isActive` render prop), and an `<Outlet />` for the active page.
+- Four placeholder pages (`src/pages/{Today,Requirements,History,Settings}.tsx`) plus `NotFound.tsx` (with a "Return to Today" link) — all minimal, no business logic, consistent with every other placeholder-screen task so far.
+- `src/App.tsx` now just renders `<RouterProvider router={router} />` (replaced the static placeholder from Task 1.1). `src/App.css` removed — it only ever styled the removed static placeholder and had no remaining users once `AppShell.css` took over layout.
+
+**Verification**
+
+- **Real bug found and fixed**: `@testing-library/react`'s automatic cleanup between tests relies on detecting a *global* `afterEach` — which this project doesn't have, since `test.globals` was deliberately left off in Task 1.4 (explicit imports instead). Without it, `render()` calls from earlier tests were never unmounted, so later tests in the same file saw accumulated DOM from every prior render and `getByRole('link', { name: 'Today' })` failed with "multiple elements found." Fixed by explicitly registering `afterEach(() => cleanup())` in `src/tests/setup.ts`. This will matter for every test file going forward, not just this task's.
+- **Real bug found and fixed**: visually verified navigation at phone (390×844), tablet (820×1180), and desktop (1280×800) widths using Playwright (ad hoc from the OS temp dir, not added as a project dependency — same approach as the retired track's Task 1.8). Phone width showed `scrollWidth > clientWidth` (horizontal overflow) even though the screenshot looked visually fine — root cause: `.app-shell__link`'s mobile-only `width: 100%` plus its `padding: 8px 12px` with no `box-sizing: border-box` pushed the rendered box past 100% of its container. Fixed by adding a standard global `box-sizing: border-box` reset to `src/index.css` (applies to `*`/`::before`/`::after`) rather than patching the one component — this class of bug will recur constantly without a global reset, and every other Vite/CSS project convention includes one by default; this scaffold's Task 1.1 baseline simply never added it. Re-ran the same check after the fix: zero overflow at all three widths.
+- `src/tests/router.test.tsx`: 6 tests covering the index route showing Today + all four nav links, clicking to each of the three other routes, navigating back to Today from a non-index page, and the not-found state for an unknown path (`createMemoryRouter` with a bogus `initialEntries` path) — directly covers this task's "navigation works" and "controlled not-found state" acceptance criteria with real, interactive tests, not just static rendering.
+- `src/tests/App.test.tsx` updated to also assert the default Today page renders (previously only checked the static placeholder heading).
+- `npm run verify` — 7/7 tests, lint and typecheck clean.
+- `npm run build` — succeeds.
+- Playwright screenshots also confirmed the not-found page's "Return to Today" link is present and the active nav link is visually distinguished (background highlight, not color alone in the sense that the active `<a>` also gets `aria-current="page"` — checked in the rendered DOM output during the cleanup-bug investigation).
+
+**Notes / Deviations**
+
+- None beyond the two bugs above, both found via real verification (not assumed) and both fixed at the root cause rather than patched around.
 
 ---
 
