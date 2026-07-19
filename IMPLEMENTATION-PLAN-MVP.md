@@ -70,7 +70,7 @@ Google Sheets Workbook
 
 ## Status
 
-⬜ Not Started
+✅ Complete
 
 ## Objective
 
@@ -82,7 +82,7 @@ Expo and React Native were evaluated and rejected because they did not match the
 
 Any earlier EPIC 1 wording that referenced Expo, React Native, or Expo Router must be treated as documentation superseded by this plan.
 
-**Correction (see `IMPLEMENTATION-LOG-MVP.md` for the full pivot record):** this EPIC was briefly marked complete by mistake — no React/Vite/React Router/Vitest work has actually been implemented. The prior EPIC 1 that *was* completed and verified (Tasks 1.1–1.8) built an Expo/React Native foundation under the now-superseded architecture; none of that code is reusable for this stack. EPIC 1 is being rebuilt from scratch under this plan, task by task.
+**Correction (see `IMPLEMENTATION-LOG-MVP.md` for the full pivot record):** this EPIC was briefly marked complete by mistake before any of Tasks 1.1–1.7 had actually been implemented. That has since been resolved — all seven tasks were rebuilt from scratch and genuinely completed and verified (React + Vite + TypeScript project, `src/` structure, oxlint + Prettier, Vitest + React Testing Library, React Router with an application shell, mobile-first design tokens and shared components, and this documentation baseline). The prior EPIC 1 that was completed under the now-retired Expo/React Native/Supabase architecture (also Tasks 1.1–1.8) remains in git history but none of that code was reused.
 
 ---
 
@@ -204,7 +204,7 @@ Acceptance criteria:
 
 ### Task 1.7 — Create Project Documentation Baseline
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create and maintain:
 

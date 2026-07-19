@@ -114,7 +114,7 @@ Success includes:
 The application should:
 
 - Run in mobile browsers on iPhone, iPad, and Android, and as an installed PWA
-- Use a single shared React + TypeScript codebase
+- Use a single shared React, Vite, and TypeScript codebase
 - Keep Google Sheets as the authoritative data store
 - Protect the Google Apps Script API for the single authorized operator
 - Preserve historical records (append-only)

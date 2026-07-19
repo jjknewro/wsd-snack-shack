@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.7 — Create Project Documentation Baseline
+Task 2.1 — Document the Existing Workbook Structure
 
 ---
 
@@ -212,6 +212,34 @@ Amended `IMPLEMENTATION-PLAN-MVP.md`'s Task 1.5 route list to include `/roster` 
 **Notes / Deviations**
 
 - None. No new issues found this task — likely because the box-sizing reset and token-based approach from Task 1.5's bug fix already eliminated the class of layout bug that would otherwise show up here.
+
+---
+
+### Task 1.7 — Create Project Documentation Baseline
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete — **EPIC 1 (Project Foundation) is complete under the new architecture.**
+
+**Summary**
+
+Audited all four required docs against this task's two acceptance criteria, rather than assuming the pivot work from earlier tasks already fully satisfied them:
+
+- Grepped `README-MVP.md`, `ARCHITECTURE.md`, and `IMPLEMENTATION-PLAN-MVP.md` for every "Expo" and "Supabase" mention and reviewed each one in context. Every hit falls into one of three categories: explicitly listed as excluded from the MVP, historical/explanatory (the pivot record, rejected-technology note), or framed as a possible *future* option (e.g. `ARCHITECTURE.md`'s "Future Expansion" section listing `SupabaseRepository` as one hypothetical future repository implementation). Nothing presents either as an active MVP technology.
+- **Found and fixed a real gap**: `README-MVP.md` never mentioned "Vite" anywhere, despite this task's own acceptance criterion requiring documentation to reflect React, Vite, Google Apps Script, *and* Google Sheets. Its "Technical Objectives" section said "Use a single shared React + TypeScript codebase" — corrected to "React, Vite, and TypeScript." `ARCHITECTURE.md` and `IMPLEMENTATION-PLAN-MVP.md` both already had multiple Vite mentions; only the README had the gap.
+- Confirmed the doc cross-references are consistent: `README-MVP.md`'s "Project Documentation" section lists all four files by name, and they all exist at the project root.
+- Updated EPIC 1's own status from "Not Started" (set during the pivot correction) to "Complete," and closed the loop on the earlier false-completion incident with a note confirming all seven tasks are now genuinely done and verified — not just re-asserting the same claim that turned out to be wrong before.
+
+**Verification**
+
+- `npm run verify` — 19/19 tests, lint and typecheck clean (sanity check only; this task's change was documentation-only).
+
+**Notes / Deviations**
+
+- None.
+
+**Sign-off**
+
+EPIC 1 — Project Foundation is complete under the pivoted React + Vite + Google Sheets architecture. All seven tasks (1.1–1.7) are done, reviewed, and approved. Proceeding to **EPIC 2 — Workbook Schema and Data Contract**, starting with **Task 2.1 — Document the Existing Workbook Structure**. Note that Task 2.1 requires access to the actual Google Sheets workbook (worksheet names, columns, data types, business meaning) — this will need the user to provide that access/information, similar to how Task 2.1 under the retired Supabase track needed real account setup before it could proceed.
 
 ---
 
