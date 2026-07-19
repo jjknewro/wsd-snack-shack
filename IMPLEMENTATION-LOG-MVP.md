@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.2 — Establish Project Structure
+Task 1.3 — Configure Code Quality Tooling
 
 ---
 
@@ -62,6 +62,32 @@ Scaffolded `wsd-snack-shack-web` using `npm create vite@latest` with the `react-
 **Notes / Deviations**
 
 - **Dev-server port confusion, resolved, not a real issue**: starting the dev server on port 5173 and curling `http://localhost:5173/` returned an unrelated project's page ("schmucks-studio"). Investigated via `Get-NetTCPConnection`: `localhost` resolved to `::1` (IPv6), where an unrelated, already-running Node process (a different, pre-existing project of the user's) happened to also be listening on port 5173. Our Vite server had bound cleanly to `0.0.0.0` (IPv4) on the same port number — IPv4 and IPv6 sockets are independent, so no actual `EADDRINUSE` conflict occurred. Confirmed our server directly via `http://127.0.0.1:5173/`. Worth remembering: prefer `127.0.0.1` over `localhost` when verifying a dev server on this machine, since `localhost` may resolve to an unrelated already-running IPv6 service.
+
+**Follow-up (2026-07-18):** the user explicitly asked not to use 5173 at all, regardless of the lack of a real technical conflict — they run other projects' dev servers concurrently on this machine and don't want ambiguity over which project a given port belongs to. Pinned this project's dev server to port **5180** in `vite.config.ts` (`server.port = 5180`, `strictPort: true` so any future collision fails loudly instead of silently landing elsewhere). Saved as a standing memory for future sessions.
+
+---
+
+### Task 1.2 — Establish Project Structure
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+Created the `src/` structure exactly as specified in `IMPLEMENTATION-PLAN-MVP.md` Task 1.2: `api/`, `components/`, `features/`, `hooks/`, `pages/`, `repositories/`, `services/`, `types/`, `utils/`, `tests/` — all nested under `src/`, per the new plan's tree (a deliberate difference from the retired Expo track, which kept `tests/` at the project root). `src/App.tsx`, `src/App.css`, `src/index.css`, and `src/main.tsx` remain at `src/`'s top level, unaffected — those are Vite's required entry-point files, not part of the organizational structure this task adds.
+
+Every folder is currently empty except for a `.gitkeep` marker, since none of the epics that populate them (data models in EPIC 2, the API client/repository in EPIC 4, pages in EPIC 5+, etc.) have started yet. This mirrors the same reasoning used for the retired track's Task 1.3: git doesn't track empty directories, and a `.gitkeep` is a minimal, real marker for "this boundary is established, content arrives later" rather than a fake placeholder file.
+
+**Verification**
+
+- `npx tsc -b` — clean.
+- `npm run lint` (`oxlint`) — clean.
+- `npm run build` — succeeds, same output as before (structure-only change, nothing added to the bundle).
+- Confirmed the running dev server (port 5180) still serves the app correctly after the change.
+
+**Notes / Deviations**
+
+- The acceptance criterion "No direct Google Sheets logic exists in UI components" isn't yet meaningfully verifiable — no UI components exist yet. This becomes an actively-enforced constraint starting with EPIC 4 (frontend/repository integration) and EPIC 5+ (actual pages).
 
 ---
 
