@@ -14,7 +14,7 @@ EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pi
 
 ## Current Task
 
-Task 1.3 — Configure Code Quality Tooling
+Task 1.4 — Configure Test Framework
 
 ---
 
@@ -91,7 +91,29 @@ Every folder is currently empty except for a `.gitkeep` marker, since none of th
 
 ---
 
-## Completed Task History — Retired Track (Expo / React Native / Supabase)
+### Task 1.3 — Configure Code Quality Tooling
+
+**Date:** 2026-07-18
+**Status:** ✅ Complete
+
+**Summary**
+
+- **TypeScript**: already configured in Task 1.1 (`strict: true` plus the Vite template's `noUnusedLocals`/`noUnusedParameters`/`noFallthroughCasesInSwitch`); nothing further needed here.
+- **Linting**: kept `oxlint` (the Vite template's default) rather than introducing ESLint on top of it — it already covers React and TypeScript rules and adding a second linter would be duplicate, unnecessary tooling. Installed `oxlint-tsgolint` and set `"options": { "typeAware": true }` in `.oxlintrc.json`, enabling type-aware lint rules (e.g. `no-floating-promises`) per Vite's own template guidance for production applications ("If you are developing a production application, we recommend enabling type-aware lint rules").
+- **Formatting**: added Prettier (`.prettierrc.json`: single quotes, no semicolons — matching the Vite template's existing no-semicolon style so the first format pass wouldn't rewrite files unnecessarily; trailing commas; 100-char width) and `.prettierignore` (scoped away from `*.md` for the same reason as the retired track — reformatting hand-written planning docs creates noisy diffs with no benefit).
+- **Scripts**: added `format`, `format:check`, `typecheck` (`tsc -b`, standalone from `build`), and `verify` (`lint && typecheck` — `test` isn't part of it yet since Vitest doesn't exist until Task 1.4; will extend then).
+
+**Verification**
+
+- **Confirmed type-aware linting is genuinely active, not just declared**: wrote a throwaway probe file with a classic type-aware-only issue (a fire-and-forget async call — `caller()` invoking an async function without awaiting, catching, or `void`-ing it) that plain syntactic linting or `tsc` alone would not flag. `oxlint` correctly reported `typescript(no-floating-promises)` on it. Deleted the probe file afterward (never committed).
+- `npm run format:check` found two files needing reformatting (`src/index.css`, `tsconfig.json`) — ran `npm run format` and reviewed the diff by hand: both were purely cosmetic (CSS `font` shorthand line-wrapping; a JSON `references` array reformatted to one line). Nothing unexpected.
+- `npm run verify` (lint + typecheck) — clean.
+- `npm run build` — succeeds; confirmed `dist/index.html`'s title is still correct.
+- Confirmed the running dev server (port 5180) still serves the app correctly.
+
+**Notes / Deviations**
+
+- This task's own acceptance criteria don't require demonstrating that `verify` fails on a real failure (unlike the retired track's equivalent task) — skipped that extra check since it isn't asked for here and the `&&`-chained script mechanics are already proven correct from the retired track's identical pattern.
 
 ### Task 1.1 — Create the React Native Expo Project
 

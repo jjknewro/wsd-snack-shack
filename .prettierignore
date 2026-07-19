@@ -1,0 +1,7 @@
+node_modules
+dist
+package-lock.json
+
+# Hand-formatted planning docs and reference material; Prettier's markdown
+# rewrapping/reformatting would create noisy diffs with no real benefit here.
+*.md

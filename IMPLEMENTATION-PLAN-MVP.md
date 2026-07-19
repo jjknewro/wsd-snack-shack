@@ -138,7 +138,7 @@ Acceptance criteria:
 
 ### Task 1.3 — Configure Code Quality Tooling
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Configure TypeScript, linting, formatting, and consistent scripts.
 
