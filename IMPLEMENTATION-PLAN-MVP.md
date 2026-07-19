@@ -1,2591 +1,1797 @@
-# WSD Snack Shack Mobile Application — MVP Implementation Plan
+# IMPLEMENTATION-PLAN-MVP.md
 
-## Document Status
+# WSD Snack Shack MVP Implementation Plan
 
-**Version:** 1.0  
-**Status:** Initial Draft  
-**Project:** WSD Snack Shack Mobile Application  
-**Primary Platforms:** iPhone, iPad, Android  
-**Architecture Reference:** `ARCHITECTURE.md`  
-**Product Reference:** `README-MVP.md`
+## Status
 
----
+Active MVP Plan
 
-# 1. Primary Objective
+## Primary Objective
 
-Create the fastest, simplest, and most reliable way for WSD Snack Shack staff to distribute snacks, manage dietary restrictions, track inventory, and record bunk pickups with as little effort as possible while maintaining accurate operational records.
+Create the fastest, simplest, and most reliable way for a single Snack Shack operator to distribute snacks, manage special dietary requirements, record bunk pickups, and maintain accurate operational records with as little effort as possible.
 
-Every task in this plan must support that objective.
+The MVP will be delivered as a mobile-first Progressive Web Application that works on iPhone, iPad, Android, and desktop browsers.
 
 ---
 
-# 2. Implementation Principles
+# Approved MVP Architecture
 
-All implementation work must:
+```text
+React + Vite + TypeScript PWA
+            ↓
+Google Apps Script API
+            ↓
+Google Sheets Workbook
+```
 
-- Conform to `ARCHITECTURE.md`.
-- Preserve the mobile-first operational workflow.
-- Minimize taps, typing, and training requirements.
-- Keep Supabase PostgreSQL as the system of record.
-- Enforce authorization in the backend, not only in the UI.
-- Preserve historical snack-day and pickup records.
-- Keep expected and actual snack quantities separate.
-- Use one shared React Native codebase for iPhone, iPad, and Android.
-- Include relevant automated tests.
-- Reuse established project patterns rather than creating duplicate implementations.
-- Stop for review after each task before beginning the next task.
+## Technology Decisions
+
+- Frontend: React, Vite, TypeScript
+- Routing: React Router
+- Data fetching and caching: TanStack Query
+- Forms and validation: React Hook Form with shared validation utilities
+- Backend: Google Apps Script deployed as a web application
+- Source of truth: Google Sheets
+- Testing: Vitest, React Testing Library, and Apps Script integration tests
+- Deployment: Static web hosting for the PWA and Google Apps Script for the backend
+
+## Explicitly Excluded from the MVP
+
+- Expo
+- React Native
+- Supabase
+- Native mobile builds
+- App Store or Google Play deployment
+- Multi-user account management
+- Role-based permissions
+- Real-time collaboration
+- Offline synchronization
+- Push notifications
+- Inventory forecasting
 
 ---
 
-# 3. Definition of Done for Every Task
+# Global Implementation Rules
 
-A task is complete only when:
-
-1. The implementation satisfies the task objective and requirements.
-2. The implementation conforms to `ARCHITECTURE.md`.
-3. Relevant automated tests have been created or updated.
-4. Relevant tests pass.
-5. TypeScript compile checks pass.
-6. Linting passes.
-7. The implemented behavior has been manually verified where applicable.
-8. No unrelated task or Epic has been started.
-9. The user has reviewed and approved the task.
-10. `IMPLEMENTATION-LOG-MVP.md` and this plan are updated after approval.
-
----
-
-# 4. MVP Epic Summary
-
-- [x] EPIC 1 — Project Foundation
-- [ ] EPIC 2 — Supabase Foundation and Core Data Model
-- [ ] EPIC 3 — Authentication and Role-Based Access
-- [ ] EPIC 4 — Master Bunk Roster
-- [ ] EPIC 5 — Special Snack Requirements
-- [ ] EPIC 6 — Daily Snack Setup
-- [ ] EPIC 7 — Snack Pickup Workflow
-- [ ] EPIC 8 — Daily Dashboard and Remaining Bunks
-- [ ] EPIC 9 — Inventory Management
-- [ ] EPIC 10 — History, Day Closure, and Corrections
-- [ ] EPIC 11 — Reliability, Accessibility, and Multi-Device Synchronization
-- [ ] EPIC 12 — Production Readiness and Pilot Deployment
+1. Google Sheets is the operational source of truth.
+2. The frontend must never access or edit spreadsheet cells directly.
+3. All spreadsheet operations must pass through the Google Apps Script API.
+4. UI components must not contain spreadsheet-specific logic.
+5. Business services must communicate through a repository interface.
+6. Historical pickup records must be append-only.
+7. Permanent IDs must never be reused.
+8. The application must be optimized for a single operator using a phone or tablet.
+9. Every task must include relevant tests before it is marked complete.
+10. Completed work must not be rewritten unless validation proves that it is incompatible with the approved architecture.
 
 ---
 
 # EPIC 1 — Project Foundation
 
+## Status
+
+⬜ Not Started
+
 ## Objective
 
-Create a stable React Native and Expo project that follows the approved architecture and can run on iPhone, iPad, Android, and web-based development tooling where useful.
+Establish a stable React, Vite, and TypeScript foundation for the mobile-first Snack Shack PWA.
 
-## Success Criteria
+## Architecture Review Note
 
-- The project runs successfully through Expo.
-- TypeScript, linting, formatting, testing, routing, environment handling, and base styling are configured.
-- The initial application shell is visible on supported device sizes.
-- The repository contains all required project documentation.
-- No business functionality is implemented prematurely.
+Expo and React Native were evaluated and rejected because they did not match the validated project software and development environment. The approved foundation is React, Vite, and TypeScript.
 
----
+Any earlier EPIC 1 wording that referenced Expo, React Native, or Expo Router must be treated as documentation superseded by this plan.
 
-## Task 1.1 — Create the React Native Expo Project
-
-### Status
-
-✅ Complete
-
-### Objective
-
-Create the initial Expo application using TypeScript and the approved project name and repository structure.
-
-### Requirements
-
-- Create the project as `wsd-snack-shack`.
-- Use the current supported Expo project setup.
-- Enable TypeScript.
-- Confirm the project starts successfully.
-- Confirm the default application renders in an Expo development environment.
-- Do not add business screens beyond a minimal startup screen.
-
-### Acceptance Criteria
-
-- The application starts without runtime errors.
-- The project uses TypeScript.
-- The project package name and application name identify WSD Snack Shack.
-- The initial source is committed to version control.
-
-### Tests and Verification
-
-- Run the Expo development server.
-- Run a TypeScript compile check.
-- Verify startup on at least one supported device or simulator.
+**Correction (see `IMPLEMENTATION-LOG-MVP.md` for the full pivot record):** this EPIC was briefly marked complete by mistake — no React/Vite/React Router/Vitest work has actually been implemented. The prior EPIC 1 that *was* completed and verified (Tasks 1.1–1.8) built an Expo/React Native foundation under the now-superseded architecture; none of that code is reusable for this stack. EPIC 1 is being rebuilt from scratch under this plan, task by task.
 
 ---
 
-## Task 1.2 — Add Required Project Documentation
+### Task 1.1 — Create React, Vite, and TypeScript Project
 
-### Status
+**Status:** ⬜ Not Started
 
-✅ Complete
+Create the frontend project using React, Vite, and TypeScript.
 
-### Objective
+Requirements:
 
-Add and validate the project’s core documentation files.
+- Application starts locally without errors.
+- TypeScript strict mode is enabled.
+- Development and production builds succeed.
+- Expo and React Native dependencies are not used.
 
-### Requirements
+Acceptance criteria:
 
-Create or add:
+- `npm run dev` starts the application.
+- `npm run build` completes successfully.
+- No Expo-specific configuration exists.
+
+---
+
+### Task 1.2 — Establish Project Structure
+
+**Status:** ⬜ Not Started
+
+Create a maintainable project structure.
+
+Recommended structure:
+
+```text
+src/
+├── api/
+├── components/
+├── features/
+├── hooks/
+├── pages/
+├── repositories/
+├── services/
+├── types/
+├── utils/
+└── tests/
+```
+
+Acceptance criteria:
+
+- UI, services, repositories, and shared types are separated.
+- No direct Google Sheets logic exists in UI components.
+
+---
+
+### Task 1.3 — Configure Code Quality Tooling
+
+**Status:** ⬜ Not Started
+
+Configure TypeScript, linting, formatting, and consistent scripts.
+
+Acceptance criteria:
+
+- Type checking passes.
+- Linting passes.
+- Formatting rules are documented.
+
+---
+
+### Task 1.4 — Configure Test Framework
+
+**Status:** ⬜ Not Started
+
+Configure Vitest and React Testing Library.
+
+Acceptance criteria:
+
+- Unit tests can run locally.
+- Component tests can render React components.
+- A sample test passes.
+
+---
+
+### Task 1.5 — Configure Routing and Application Shell
+
+**Status:** ⬜ Not Started
+
+Implement the application shell using React Router.
+
+Initial routes:
+
+- `/` — Today
+- `/requirements` — Special Requirements
+- `/history` — Pickup History
+- `/settings` — Settings
+
+Acceptance criteria:
+
+- Navigation works on desktop and mobile widths.
+- Unknown routes display a controlled not-found state.
+- Expo Router is not used.
+
+---
+
+### Task 1.6 — Establish Mobile-First Design Foundation
+
+**Status:** ⬜ Not Started
+
+Create the initial responsive layout, spacing rules, form controls, buttons, and status styles.
+
+Acceptance criteria:
+
+- The application is usable at widths down to 320 pixels.
+- Primary actions are easy to tap on a phone.
+- The layout works on iPhone, iPad, Android, and desktop browser sizes.
+
+---
+
+### Task 1.7 — Create Project Documentation Baseline
+
+**Status:** ⬜ Not Started
+
+Create and maintain:
 
 - `README-MVP.md`
 - `ARCHITECTURE.md`
 - `IMPLEMENTATION-PLAN-MVP.md`
 - `IMPLEMENTATION-LOG-MVP.md`
-- `.env.example`
 
-The implementation log must start with:
+Acceptance criteria:
 
-- Project name
-- Date created
-- Current Epic
-- Current task
-- Empty completed-task history
-
-### Acceptance Criteria
-
-- All required files exist at the project root.
-- The files use consistent project naming.
-- The implementation plan references the architecture.
-- The implementation log is ready to track approved work.
-
-### Tests and Verification
-
-- Verify all files are present.
-- Verify documentation links and filenames are correct.
+- Documentation reflects React, Vite, Google Apps Script, and Google Sheets.
+- Expo and Supabase are not presented as active MVP technologies.
 
 ---
 
-## Task 1.3 — Configure Project Structure
+# EPIC 2 — Workbook Schema and Data Contract
 
-### Status
+## Status
 
-✅ Complete
+⬜ Not Started
 
-### Objective
+## Objective
 
-Create the folder structure defined in `ARCHITECTURE.md`.
+Formalize the existing workbook into a stable data source that can support the application without relying on fragile cell positions or spreadsheet formulas.
 
-### Requirements
+Existing worksheets:
 
-Create the initial structure for:
+- `Master Roster`
+- `snack shack today`
+- `Allergies`
 
-- `app/`
-- `src/components/`
-- `src/features/`
-- `src/hooks/`
-- `src/lib/`
-- `src/services/`
-- `src/theme/`
-- `src/types/`
-- `src/utils/`
-- `supabase/migrations/`
-- `supabase/tests/`
-- `tests/`
-- `assets/`
+Planned worksheets:
 
-Create feature folders for:
-
-- authentication
-- dashboard
-- bunks
-- special-requirements
-- snack-days
-- pickups
-- inventory
-- history
-- administration
-
-Do not add placeholder files that provide no value. Add only the minimum files required to preserve directories and establish boundaries.
-
-### Acceptance Criteria
-
-- The folder structure conforms to `ARCHITECTURE.md`.
-- Route files remain under `app/`.
-- Reusable and business logic are organized under `src/`.
-- No direct database logic is embedded in route files.
-
-### Tests and Verification
-
-- Verify the application still starts.
-- Verify imports resolve correctly.
+- `Pickup History`
+- `Settings`
 
 ---
 
-## Task 1.4 — Configure Code Quality and Test Tooling
+### Task 2.1 — Document the Existing Workbook Structure
 
-### Status
+**Status:** ⬜ Not Started
 
-✅ Complete
+Document every worksheet, column, data type, and business meaning currently used by the workbook.
 
-### Objective
+Requirements:
 
-Create a consistent development and verification baseline.
+- Record the current column names and expected values.
+- Identify blank rows, merged cells, formulas, checkboxes, and formatting dependencies.
+- Identify data that is authoritative versus derived.
+- Identify any columns whose meaning is unclear.
 
-### Requirements
+Deliverable:
 
-Configure:
+- A workbook schema section in `ARCHITECTURE.md` or a dedicated `WORKBOOK-SCHEMA.md`.
 
-- ESLint
-- Prettier or equivalent formatting
-- TypeScript compile checking
-- Jest
-- React Native Testing Library
-- Test setup files
-- Package scripts for lint, typecheck, test, and combined verification
+Acceptance criteria:
 
-Suggested scripts:
+- Every current worksheet and column is documented.
+- No application development proceeds based on undocumented cell positions.
 
-```text
-npm run lint
-npm run typecheck
-npm test
-npm run verify
+---
+
+### Task 2.2 — Define Stable Application Data Models
+
+**Status:** ⬜ Not Started
+
+Define TypeScript data models independent of spreadsheet row layout.
+
+Required models:
+
+- `Bunk`
+- `Counselor`
+- `SpecialRequirement`
+- `SnackDay`
+- `PickupRecord`
+- `PickupHistoryRecord`
+- `AppSettings`
+- `ApiResponse<T>`
+
+Acceptance criteria:
+
+- Models use permanent IDs rather than row numbers.
+- Models define required and optional fields.
+- Models are shared across frontend services and tests.
+
+---
+
+### Task 2.3 — Add Permanent IDs to Master Data
+
+**Status:** ⬜ Not Started
+
+Add stable IDs to workbook records used by the application.
+
+Requirements:
+
+- Add a permanent `bunk_id` to each `Master Roster` row.
+- Add permanent IDs to special requirement rows when individual records need independent updates.
+- Existing spreadsheet display and formulas must continue to work.
+- IDs must not change when rows are sorted or moved.
+
+Acceptance criteria:
+
+- Every bunk has a unique permanent ID.
+- Duplicate or missing IDs are detected.
+- The application never treats a row number as an ID.
+
+---
+
+### Task 2.4 — Create Pickup History Worksheet
+
+**Status:** ⬜ Not Started
+
+Create an append-only `Pickup History` worksheet.
+
+Required columns:
+
+- `history_id`
+- `snack_date`
+- `bunk_id`
+- `division`
+- `bunk_name`
+- `expected_count`
+- `actual_count`
+- `special_requirement_summary`
+- `notes`
+- `pickup_time`
+- `created_at`
+
+Acceptance criteria:
+
+- Completed pickups can be stored without overwriting prior days.
+- Historical rows are append-only.
+- Each historical record has a unique ID.
+
+---
+
+### Task 2.5 — Create Settings Worksheet
+
+**Status:** ⬜ Not Started
+
+Create a simple key/value `Settings` worksheet for configuration that should not be hard-coded.
+
+Initial settings may include:
+
+- current snack date
+- workbook schema version
+- application display name
+- API token hash or access configuration, if used
+- default expected-count behavior
+
+Acceptance criteria:
+
+- Settings can be read through the backend API.
+- Missing required settings produce a controlled error.
+
+---
+
+### Task 2.6 — Define Workbook Validation Rules
+
+**Status:** ⬜ Not Started
+
+Create validation rules for workbook structure and data quality.
+
+Validation must detect:
+
+- missing worksheets
+- missing required columns
+- duplicate IDs
+- invalid numeric values
+- blank required fields
+- duplicate active pickup rows
+- malformed special requirement quantities
+
+Acceptance criteria:
+
+- Validation results identify the worksheet, row, and problem.
+- Invalid workbook structure blocks unsafe writes.
+
+---
+
+### Task 2.7 — Build Workbook Schema Tests
+
+**Status:** ⬜ Not Started
+
+Create automated tests or repeatable validation scripts using a representative workbook fixture.
+
+Acceptance criteria:
+
+- Valid workbook fixtures pass.
+- Missing-column and duplicate-ID fixtures fail predictably.
+- Tests do not modify the production workbook.
+
+---
+
+# EPIC 3 — Google Apps Script Backend Foundation
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Create a controlled backend API that is the only component permitted to read from or write to the Snack Shack workbook.
+
+---
+
+### Task 3.1 — Create Google Apps Script Project
+
+**Status:** ⬜ Not Started
+
+Create an Apps Script project linked to or configured for the Snack Shack workbook.
+
+Requirements:
+
+- Store workbook and worksheet names in configuration.
+- Separate request routing, business logic, workbook access, validation, and response formatting.
+- Do not place all logic in a single script function.
+
+Acceptance criteria:
+
+- The project can read workbook metadata.
+- A test function confirms access to required worksheets.
+
+---
+
+### Task 3.2 — Define the API Execution Contract
+
+**Status:** ⬜ Not Started
+
+Define a stable request and response contract.
+
+Successful response:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
 ```
 
-### Acceptance Criteria
+Failure response:
 
-- Linting runs successfully.
-- Type checking runs successfully.
-- At least one baseline test passes.
-- The combined verification command fails when any check fails.
-
-### Tests and Verification
-
-- Run all configured quality commands.
-- Intentionally verify that a failing test is detected, then restore it.
-
----
-
-## Task 1.5 — Configure Expo Router and Navigation Shell
-
-### Status
-
-✅ Complete
-
-### Objective
-
-Create the initial route structure without implementing final authentication behavior.
-
-### Requirements
-
-Create:
-
-- Root layout
-- Initial loading/index route
-- Sign-in route
-- Staff route group
-- Administrator route group
-- Placeholder Today screen
-- Placeholder Administration screen
-
-The app must have one clear startup route.
-
-### UI Requirements
-
-- Display the WSD Snack Shack name.
-- Use large readable text.
-- Provide safe-area support.
-- Avoid dense navigation.
-- Support phone and tablet widths.
-
-### Acceptance Criteria
-
-- Navigation works between approved placeholder routes.
-- Route groups match the architecture.
-- No unauthorized business data is loaded.
-- The Today route is prepared to become the primary staff screen.
-
-### Tests and Verification
-
-- Add route or screen rendering tests where practical.
-- Verify navigation manually.
-
----
-
-## Task 1.6 — Create the Base Theme and Shared UI Primitives
-
-### Status
-
-✅ Complete
-
-### Objective
-
-Establish a consistent mobile design foundation.
-
-### Requirements
-
-Create theme definitions for:
-
-- Typography
-- Spacing
-- Border radii
-- Status colors
-- Backgrounds
-- Text colors
-- Touch-target sizing
-
-Create initial shared components:
-
-- `AppButton`
-- `ScreenHeader`
-- `LoadingState`
-- `ErrorState`
-- `EmptyState`
-
-Status information must never rely on color alone.
-
-### UI Requirements
-
-- Minimum practical touch target size of approximately 44 by 44 points.
-- High contrast for operational information.
-- Readable outdoors.
-- Large default text.
-- Accessible labels for interactive elements.
-
-### Acceptance Criteria
-
-- Shared components render consistently.
-- Components support disabled, loading, and error states where applicable.
-- Theme values are centralized.
-- No screen duplicates styling that belongs in a shared primitive.
-
-### Tests and Verification
-
-- Add component rendering and interaction tests.
-- Verify phone and tablet layouts.
-
----
-
-## Task 1.7 — Configure Environment Management
-
-### Status
-
-✅ Complete
-
-### Objective
-
-Create safe environment-specific configuration.
-
-### Requirements
-
-Support at minimum:
-
-- Development environment
-- Production environment
-
-Add environment variables for:
-
-```text
-EXPO_PUBLIC_SUPABASE_URL
-EXPO_PUBLIC_SUPABASE_ANON_KEY
+```json
+{
+  "success": false,
+  "message": "User-friendly message",
+  "errorCode": "STABLE_ERROR_CODE",
+  "details": {}
+}
 ```
 
-Rules:
+Requirements:
 
-- Secrets must not be committed.
-- `.env.example` must contain names only.
-- Service-role keys must not be used in the app.
-- Missing required environment variables must fail with a clear development error.
+- Every endpoint returns JSON.
+- Error codes remain stable for frontend handling.
+- Internal stack traces are not returned to the browser.
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- The app can read approved public environment variables.
-- Missing configuration is handled clearly.
-- No secret or production credential is committed.
-
-### Tests and Verification
-
-- Test valid configuration.
-- Test missing configuration.
-- Verify `.gitignore` excludes local environment files.
+- Shared response helpers are implemented.
+- Invalid requests return controlled errors.
 
 ---
 
-## Task 1.8 — Verify Architectural Compliance of the Foundation
+### Task 3.3 — Implement API Routing
 
-### Status
+**Status:** ⬜ Not Started
 
-✅ Complete
+Implement `doGet` and `doPost` routing using explicit actions.
 
-### Objective
+Required read actions:
 
-Review the completed project foundation against `ARCHITECTURE.md` before backend implementation begins.
+- `health`
+- `getWorkbookStatus`
+- `getRoster`
+- `getToday`
+- `getSpecialRequirements`
+- `getPickupHistory`
+- `getSettings`
 
-### Requirements
+Required write actions:
 
-Verify:
+- `initializeSnackDay`
+- `completePickup`
+- `updatePickup`
+- `reopenPickup`
+- `closeSnackDay`
 
-- One React Native Expo codebase
-- TypeScript enabled
-- Expo Router structure
-- Feature-based organization
-- No custom backend introduced
-- No global state library introduced without need
-- No service-role key exposure
-- Test and quality tooling operational
-- Documentation present
+Acceptance criteria:
 
-Document any approved variance in `IMPLEMENTATION-LOG-MVP.md`.
-
-### Acceptance Criteria
-
-- All foundation requirements conform to architecture.
-- Any deviation is explicitly documented and approved.
-- EPIC 1 verification commands pass.
-
-### Tests and Verification
-
-- Run the complete verification suite.
-- Start the application.
-- Verify at least one phone-sized and one tablet-sized layout.
+- Unknown actions return `UNKNOWN_ACTION`.
+- Read and write operations are routed to separate service functions.
 
 ---
 
-# EPIC 2 — Supabase Foundation and Core Data Model
+### Task 3.4 — Implement Workbook Access Layer
+
+**Status:** ⬜ Not Started
+
+Build reusable helpers for locating worksheets, reading header-based rows, writing values, appending history, and validating headers.
+
+Requirements:
+
+- Column access must use header names, not fixed column indexes in business logic.
+- Worksheet names must be centralized.
+- Writes must be limited to intended columns.
+
+Acceptance criteria:
+
+- Reordering columns does not break business logic when headers remain unchanged.
+- Missing headers produce controlled errors.
+
+---
+
+### Task 3.5 — Implement API Access Protection
+
+**Status:** ⬜ Not Started
+
+Protect the Apps Script API for the single authorized operator.
+
+Allowed MVP approaches:
+
+- restricted Google account execution, where compatible with the frontend flow
+- a private application token validated by Apps Script
+- another simple mechanism documented and approved before implementation
+
+Requirements:
+
+- Secrets must not be committed to GitHub.
+- Unauthorized write requests must be rejected.
+- The security approach must remain practical for one user.
+
+Acceptance criteria:
+
+- Authorized requests succeed.
+- Unauthorized requests fail with a controlled error.
+- Deployment instructions explain how access is configured.
+
+---
+
+### Task 3.6 — Add Write Locking and Idempotency
+
+**Status:** ⬜ Not Started
+
+Prevent accidental duplicate writes caused by double taps, retries, or concurrent requests.
+
+Requirements:
+
+- Use Apps Script locking for write operations.
+- Accept an operation/request ID for pickup mutations.
+- Detect repeated completion requests.
+- Do not append duplicate history records.
+
+Acceptance criteria:
+
+- Repeating the same request does not create duplicate pickup history.
+- Simultaneous write attempts are handled safely.
+
+---
+
+### Task 3.7 — Add Backend Logging
+
+**Status:** ⬜ Not Started
+
+Log meaningful backend operations and failures.
+
+Log fields should include:
+
+- timestamp
+- action
+- request ID
+- bunk ID when relevant
+- success or failure
+- error code
+
+Acceptance criteria:
+
+- Write operations are traceable.
+- Logs do not expose secrets.
+
+---
+
+### Task 3.8 — Build Apps Script Tests
+
+**Status:** ⬜ Not Started
+
+Create tests for routing, validation, workbook mapping, authorization, duplicate prevention, and error responses.
+
+Acceptance criteria:
+
+- Core read and write services are covered.
+- Tests use a non-production workbook or controlled test fixtures.
+- Production data is never modified by automated tests.
+
+---
+
+# EPIC 4 — Frontend API and Repository Integration
+
+## Status
+
+⬜ Not Started
 
 ## Objective
 
-Create the Supabase development backend, version-controlled schema, constraints, seed data, typed client access, and foundational security policies.
-
-## Success Criteria
-
-- Core data tables exist through migrations.
-- Relationships and constraints protect data integrity.
-- Development seed data is available.
-- Supabase access is typed and centralized.
-- Row-Level Security is enabled and tested.
+Connect the React application to the Apps Script backend through a repository abstraction while keeping UI code independent of the workbook.
 
 ---
 
-## Task 2.1 — Create and Configure the Development Supabase Project
+### Task 4.1 — Create Environment Configuration
 
-### Objective
+**Status:** ⬜ Not Started
 
-Establish the development backend environment.
+Create validated environment configuration for the Apps Script URL and approved access credentials.
 
-### Requirements
+Requirements:
 
-- Create a Supabase development project.
-- Configure local environment variables.
-- Install and configure the Supabase CLI where appropriate.
-- Link the repository to the development project.
-- Document setup instructions without storing secrets.
+- Provide `.env.example`.
+- Do not commit secrets.
+- Fail clearly when required configuration is absent.
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- The app can establish a development Supabase connection.
-- No production environment is used for development.
-- Credentials are excluded from version control.
-
-### Tests and Verification
-
-- Run a simple safe connectivity check.
-- Verify invalid configuration is handled clearly.
+- Local development can connect to the test backend.
+- Production builds receive configuration through deployment settings.
 
 ---
 
-## Task 2.2 — Create Core Database Enums and Reference Types
+### Task 4.2 — Implement API Client
 
-### Objective
+**Status:** ⬜ Not Started
 
-Define controlled values used across the database.
+Create a shared HTTP client for Apps Script requests.
 
-### Requirements
+Requirements:
 
-Create approved database types or equivalent constraints for:
+- JSON request and response handling
+- timeout behavior
+- controlled retries for safe read requests
+- error-code mapping
+- request IDs for write operations
 
-- user role
-- snack-day status
-- pickup status
-- special-requirement type
-- requirement severity
-- schedule status
-- inventory adjustment type
+Acceptance criteria:
 
-Values must align with `ARCHITECTURE.md`.
-
-### Acceptance Criteria
-
-- Invalid values are rejected by the database.
-- Types are represented in generated TypeScript definitions.
-- Naming is consistent across database and application layers.
-
-### Tests and Verification
-
-- Add database tests for valid and invalid values.
-- Regenerate TypeScript database types.
+- Network errors are normalized.
+- Backend errors are not displayed as raw technical messages.
 
 ---
 
-## Task 2.3 — Create Profiles, Bunks, and Counselor Tables
+### Task 4.3 — Define Snack Repository Interface
 
-### Objective
+**Status:** ⬜ Not Started
 
-Create the foundational identity and roster schema.
+Define a repository interface used by business services.
 
-### Requirements
+Required methods:
 
-Create migrations for:
+```text
+getWorkbookStatus()
+getRoster()
+getToday()
+getSpecialRequirements()
+getPickupHistory()
+getSettings()
+initializeSnackDay()
+completePickup()
+updatePickup()
+reopenPickup()
+closeSnackDay()
+```
 
-- `profiles`
-- `bunks`
-- `bunk_counselors`
+Acceptance criteria:
 
-Include:
-
-- Primary keys
-- Foreign keys
-- Unique bunk code
-- Nonnegative camper count
-- Active flags
-- Created and updated timestamps
-- Historical preservation rules
-
-### Acceptance Criteria
-
-- A bunk can have multiple counselors.
-- Duplicate bunk codes are rejected.
-- Negative camper counts are rejected.
-- Deactivating a bunk does not delete related history.
-
-### Tests and Verification
-
-- Add migration tests.
-- Test constraints and relationships.
+- Services depend on the interface rather than Apps Script details.
+- A mock repository can be used in tests.
 
 ---
 
-## Task 2.4 — Create Special Requirements Table
+### Task 4.4 — Implement Google Apps Script Repository
 
-### Objective
+**Status:** ⬜ Not Started
 
-Store structured dietary, allergy, medical, nurse, and schedule requirements.
+Implement the repository using the shared API client.
 
-### Requirements
+Acceptance criteria:
 
-Create `special_requirements` with:
-
-- Bunk relationship
-- Requirement type
-- Quantity
-- Camper reference
-- Severity
-- Preparation instructions
-- Operational notes
-- Active status
-- Timestamps
-
-### Acceptance Criteria
-
-- A bunk can have multiple requirements.
-- Invalid quantities are rejected.
-- Requirements may be deactivated without deletion.
-- Severity and type values are constrained.
-
-### Tests and Verification
-
-- Test multiple requirements per bunk.
-- Test inactive requirements.
-- Test validation constraints.
+- API payloads are mapped into application models.
+- Spreadsheet row shapes are not exposed to components.
+- Invalid payloads are rejected before reaching the UI.
 
 ---
 
-## Task 2.5 — Create Snack Day and Pickup Tables
+### Task 4.5 — Configure TanStack Query
 
-### Objective
+**Status:** ⬜ Not Started
 
-Create the core daily transaction model.
+Configure query keys, caching, invalidation, loading states, and mutation behavior.
 
-### Requirements
+Requirements:
 
-Create:
+- Read data may be cached briefly.
+- Successful pickup writes invalidate Today and History queries.
+- Write mutations must not be blindly retried.
 
-- `snack_days`
-- `snack_day_staff`
-- `pickup_records`
+Acceptance criteria:
 
-Enforce:
-
-- One pickup record per snack day and bunk
-- Expected and actual quantity separation
-- Valid status transitions where feasible
-- User and timestamp references
-- Closed-day preservation
-- Foreign keys to bunks and profiles
-
-### Acceptance Criteria
-
-- Duplicate snack-day/bunk pickup rows are rejected.
-- Expected quantity is stored independently of current bunk count.
-- Historical records remain linked when a bunk is deactivated.
-- Actual quantity may remain null until completion.
-
-### Tests and Verification
-
-- Test unique constraints.
-- Test foreign keys.
-- Test historical independence from roster changes.
+- Screens receive consistent loading and error states.
+- Stale data refreshes after writes.
 
 ---
 
-## Task 2.6 — Create Inventory and Audit Tables
+### Task 4.6 — Build Connection Diagnostics Screen
 
-### Objective
+**Status:** ⬜ Not Started
 
-Create auditable inventory and operational history structures.
-
-### Requirements
-
-Create:
-
-- `inventory_records`
-- `inventory_adjustments`
-- `audit_events`
-
-Inventory must distinguish:
-
-- Starting quantity
-- Distributed quantity
-- Adjustments
-- Remaining quantity
-
-Audit records must support:
-
-- Entity
-- Action
-- Previous values
-- New values
-- User
-- Timestamp
-
-### Acceptance Criteria
-
-- Inventory changes can be reconstructed.
-- Manual adjustments require a reason and user.
-- Important changes can be audited without deleting history.
-
-### Tests and Verification
-
-- Test inventory calculations and adjustment relationships.
-- Test audit-event persistence.
-
----
-
-## Task 2.7 — Add Updated-Timestamp and Audit Support
-
-### Objective
-
-Create reusable database behavior for timestamps and approved audit events.
-
-### Requirements
-
-- Add safe `updated_at` handling.
-- Add audit triggers or controlled functions for approved sensitive actions.
-- Avoid logging sensitive data unnecessarily.
-- Ensure audit creation cannot be bypassed through normal app operations.
-
-### Acceptance Criteria
-
-- Updated timestamps change correctly.
-- Audited changes create corresponding events.
-- Sensitive values are minimized in logs.
-
-### Tests and Verification
-
-- Test update timestamps.
-- Test audit creation.
-- Test non-audited routine reads do not create noise.
-
----
-
-## Task 2.8 — Enable Row-Level Security and Baseline Policies
-
-### Objective
-
-Make backend authorization the security boundary.
-
-### Requirements
-
-- Enable Row-Level Security on every application table.
-- Deny anonymous operational access.
-- Create baseline authenticated read policies where appropriate.
-- Restrict administrative writes.
-- Prohibit destructive deletion of operational history.
-- Do not use client-side role checks as the sole protection.
-
-### Acceptance Criteria
-
-- Anonymous users cannot access operational tables.
-- Staff cannot perform administrator-only writes.
-- Administrators can perform approved management actions.
-- Historical deletion is blocked.
-
-### Tests and Verification
-
-- Add policy tests for anonymous, staff, administrator, and deactivated users.
-- Verify policies through Supabase test tooling.
-
----
-
-## Task 2.9 — Create Development Seed Data
-
-### Objective
-
-Create realistic non-sensitive test data.
-
-### Requirements
-
-Include:
-
-- Approximately 36 representative bunks
-- Multiple divisions
-- Multiple counselors
-- Staff and administrator test profiles
-- Common dietary substitutions
-- Allergy and nurse examples
-- Open, draft, and closed snack days
-- Pending and completed pickup records
-- Inventory adjustments
-
-Do not use real camper names or medical information.
-
-### Acceptance Criteria
-
-- Seed data supports all planned MVP workflows.
-- Development can be reset reproducibly.
-- No sensitive production data is included.
-
-### Tests and Verification
-
-- Reset and reseed the development database.
-- Verify representative scenarios.
-
----
-
-## Task 2.10 — Generate Typed Database Definitions and Data Access Foundation
-
-### Objective
-
-Create the typed Supabase client and initial data-access conventions.
-
-### Requirements
-
-- Generate TypeScript database types.
-- Create `src/lib/supabase.ts`.
-- Configure secure session persistence.
-- Create typed service boundaries.
-- Do not place direct queries in route files.
-- Normalize backend errors into application error categories.
-
-### Acceptance Criteria
-
-- Supabase access is typed.
-- Screens do not create raw duplicated queries.
-- Missing configuration is handled clearly.
-- Database errors are not shown directly to users.
-
-### Tests and Verification
-
-- Add client initialization tests.
-- Add error-normalization tests.
-- Run type checking.
-
----
-
-# EPIC 3 — Authentication and Role-Based Access
-
-## Objective
-
-Create secure sign-in, session handling, profile loading, role-aware navigation, and backend-enforced permissions.
-
-## Success Criteria
-
-- Only authorized active users can access the app.
-- Staff and administrators receive the correct navigation and capabilities.
-- Sessions are stored securely.
-- Deactivated users are blocked.
-- Backend policies enforce every permission.
-
----
-
-## Task 3.1 — Implement Authentication Service and Session Provider
-
-### Objective
-
-Create the application authentication layer.
-
-### Requirements
-
-Support:
-
-- Sign in
-- Sign out
-- Session restoration
-- Session refresh
-- Current user
-- Profile loading
-- Role loading
-- Deactivated-user handling
-
-Use secure device storage for sessions.
-
-### Acceptance Criteria
-
-- A valid user session survives app restart.
-- Sign out removes access.
-- Authentication state is separate from general server state.
-- Deactivated users cannot continue into operational screens.
-
-### Tests and Verification
-
-- Test sign-in success and failure.
-- Test session restoration.
-- Test sign-out.
-- Test deactivated profile behavior.
-
----
-
-## Task 3.2 — Build the Sign-In Screen
-
-### Objective
-
-Create a simple, reliable mobile sign-in experience.
-
-### UI Requirements
-
-- WSD Snack Shack identity
-- Email field
-- Approved authentication action
-- Clear loading state
-- Clear error state
-- Large touch targets
-- Keyboard-safe layout
-- No unnecessary links or options
-
-### Acceptance Criteria
-
-- Authorized users can sign in.
-- Invalid credentials show a useful message.
-- Repeated submission is prevented.
-- The screen works on phone and tablet layouts.
-
-### Tests and Verification
-
-- Add form validation tests.
-- Add loading and error-state tests.
-- Verify on iOS and Android layouts.
-
----
-
-## Task 3.3 — Implement Route Guards and Role-Aware Navigation
-
-### Objective
-
-Prevent unauthorized route access and simplify navigation by role.
-
-### Requirements
-
-- Signed-out users see only sign-in.
-- Staff see staff routes.
-- Administrators see staff and administrator routes.
-- Loading state is shown while session/profile loads.
-- Unauthorized route attempts redirect safely.
-
-### Acceptance Criteria
-
-- Staff cannot open administrator screens.
-- Administrators can access approved management screens.
-- Route guards do not replace backend policies.
-- Today becomes the default authenticated route.
-
-### Tests and Verification
-
-- Test each authentication and role state.
-- Test direct route access attempts.
-
----
-
-## Task 3.4 — Build User Profile and Sign-Out UI
-
-### Objective
-
-Provide clear current-user identification and safe sign-out.
-
-### Requirements
-
-Show:
-
-- Display name
-- Role
-- Email where appropriate
-- Sign-out action
-
-Avoid cluttering the primary Today screen.
-
-### Acceptance Criteria
-
-- Users can identify the active account.
-- Sign-out requires a deliberate action.
-- The app returns to sign-in after sign-out.
-
-### Tests and Verification
-
-- Add profile rendering tests.
-- Add sign-out interaction tests.
-
----
-
-## Task 3.5 — Verify Authentication and Authorization Security
-
-### Objective
-
-Complete a full role and security review before operational data features are built.
-
-### Requirements
-
-Verify:
-
-- No anonymous operational access
-- Staff restrictions
-- Administrator permissions
-- Deactivated-user denial
-- Secure session storage
-- No service-role credentials
-- Route guards and RLS behavior agree
-
-### Acceptance Criteria
-
-- Security tests pass for all supported roles.
-- No role depends solely on hidden UI controls.
-- Any security exception is documented and approved.
-
----
-
-# EPIC 4 — Master Bunk Roster
-
-## Objective
-
-Allow authorized users to view and manage bunk information while preserving historical records.
-
-## Success Criteria
-
-- Staff can view active bunk information.
-- Administrators can add, edit, and deactivate bunks and counselors.
-- Historical pickup data is never deleted by roster changes.
-- The roster is optimized for mobile use.
-
----
-
-## Task 4.1 — Implement Bunk Data Services and Query Hooks
-
-### Requirements
-
-Create typed functions and hooks for:
-
-- Get active bunks
-- Get bunk details
-- Get bunks by division
-- Create bunk
-- Update bunk
-- Deactivate/reactivate bunk
-- Get counselor assignments
-
-### Acceptance Criteria
-
-- Queries are centralized and typed.
-- Cache invalidation is correct.
-- Errors use normalized messages.
-
-### Tests and Verification
-
-- Add service and hook tests.
-- Test active/inactive filtering.
-
----
-
-## Task 4.2 — Build the Staff Bunk Directory
-
-### UI Requirements
+Create a simple diagnostics view accessible from Settings.
 
 Display:
 
-- Bunk code/name
-- Division
-- Camper count
-- Counselors
-- Active schedule notes
-- Special-requirement indicator
+- frontend version
+- backend connectivity
+- workbook availability
+- schema validation result
+- last successful refresh
 
-Support:
+Acceptance criteria:
 
-- Search
-- Division filtering
-- Clear empty and error states
-
-### Acceptance Criteria
-
-- Staff can find any active bunk quickly.
-- Sensitive details are not overexposed.
-- The screen works on phones and tablets.
-
-### Tests and Verification
-
-- Test search and filtering.
-- Test empty, loading, and error states.
+- The operator can distinguish a browser problem, backend problem, and workbook problem.
+- No secrets are displayed.
 
 ---
 
-## Task 4.3 — Build Administrator Bunk Management
+### Task 4.7 — Build Repository and API Client Tests
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Administrators can:
+Acceptance criteria:
 
-- Add a bunk
-- Edit bunk details
-- Update camper count
-- Change schedule status
-- Add operational notes
-- Activate/deactivate a bunk
-
-Deactivation must require confirmation.
-
-### Acceptance Criteria
-
-- Staff cannot access management controls.
-- Duplicate bunk codes are handled clearly.
-- Deactivation preserves history.
-- Forms minimize typing.
-
-### Tests and Verification
-
-- Add create, edit, validation, and permission tests.
+- Success, failure, malformed-response, timeout, and unauthorized cases are tested.
+- Component tests can use a mock repository without calling Apps Script.
 
 ---
 
-## Task 4.4 — Build Counselor Assignment Management
+# EPIC 5 — Today Screen and Snack Day Initialization
 
-### Requirements
+## Status
 
-Administrators can:
-
-- Add counselors to a bunk
-- Edit counselor names
-- Deactivate assignments
-- View current assignments
-
-### Acceptance Criteria
-
-- Multiple counselors are supported.
-- Counselor information updates on staff-facing screens.
-- Historical snack records are unaffected.
-
-### Tests and Verification
-
-- Add assignment tests.
-- Test multiple counselors per bunk.
-
----
-
-## Task 4.5 — Complete Roster Integration and Review
-
-### Requirements
-
-- Integrate bunk data into shared components.
-- Confirm all screens use the same source and display rules.
-- Remove duplicate roster formatting or query logic.
-- Verify architectural compliance.
-
-### Acceptance Criteria
-
-- One consistent roster implementation is used throughout the app.
-- Relevant tests pass.
-- EPIC 4 can support later snack-day generation.
-
----
-
-# EPIC 5 — Special Snack Requirements
+⬜ Not Started
 
 ## Objective
 
-Provide a reliable, high-visibility workflow for dietary, allergy, medical, nurse, and schedule requirements.
-
-## Success Criteria
-
-- Staff can quickly see what must be prepared.
-- Allergy and medical information is prominent but appropriately restricted.
-- Administrators can maintain structured requirements.
-- Special requirements automatically appear in daily workflows.
+Create the primary mobile screen that replaces the `snack shack today` paper or spreadsheet workflow.
 
 ---
 
-## Task 5.1 — Implement Special Requirement Services and Hooks
+### Task 5.1 — Define Today Screen UX
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Create typed operations for:
+Design the screen for fast one-handed or tablet use.
 
-- Get active requirements
-- Get requirements by bunk
-- Get requirements for active snack day
-- Create requirement
-- Update requirement
-- Deactivate/reactivate requirement
+Each bunk row or card must show:
 
-### Acceptance Criteria
+- division
+- bunk name
+- expected camper count
+- pickup status
+- special requirement indicator
+- notes indicator
+- pickup time when completed
 
-- Requirements are structured, not copied into free-text daily notes.
-- Inactive requirements are excluded by default.
-- Data access is typed and centralized.
+Acceptance criteria:
 
-### Tests and Verification
-
-- Add service and hook tests.
+- The most important information is visible without opening each record.
+- Completed and pending bunks are easy to distinguish without relying only on color.
 
 ---
 
-## Task 5.2 — Create Special Requirement Presentation Components
+### Task 5.2 — Implement Snack Day Initialization Service
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Create reusable components such as:
+Initialize the active snack day from the Master Roster.
 
-- `SpecialRequirementAlert`
-- `RequirementSeverityBadge`
-- `RequirementSummary`
+Requirements:
 
-Status must include text/icon meaning, not color alone.
+- Create one active pickup record per eligible bunk.
+- Copy expected counts and relevant notes as a daily snapshot.
+- Prevent duplicate initialization for the same date.
+- Preserve completed historical days.
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- Allergy and medical items are visually distinguishable.
-- Components support phone and tablet layouts.
-- Sensitive information is shown only where operationally necessary.
-
-### Tests and Verification
-
-- Add severity and accessibility tests.
+- A new day can be initialized from current roster data.
+- Repeating initialization does not duplicate rows.
 
 ---
 
-## Task 5.3 — Build the Special Snacks Preparation Screen
+### Task 5.3 — Build Today Screen Data Loading
 
-### UI Requirements
+**Status:** ⬜ Not Started
 
-Support:
+Load and display the active snack day.
 
-- Group by requirement type
-- Group by bunk
-- Quantity totals
-- Severity indicators
-- Preparation instructions
-- Search/filter where useful
-- Current snack-day context
+Required states:
 
-### Acceptance Criteria
+- loading
+- empty or not initialized
+- active day
+- closed day
+- API error
+- workbook validation error
 
-- Staff can prepare all special snacks from one screen.
-- Totals are accurate.
-- Bunks with multiple requirements are represented correctly.
-- The screen does not require manual transcription.
+Acceptance criteria:
 
-### Tests and Verification
-
-- Test grouping and totals.
-- Test multiple requirements per bunk.
+- Each state provides a clear next action.
+- The screen never remains blank after an error.
 
 ---
 
-## Task 5.4 — Build Administrator Requirement Management
+### Task 5.4 — Add Search and Filtering
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Administrators can:
+Allow the operator to find bunks quickly.
 
-- Add
-- Edit
-- Deactivate/reactivate
-- Set quantity
-- Set severity
-- Add camper reference where necessary
-- Add preparation instructions
+Filters:
 
-Changes to allergy or medical requirements must be auditable.
+- all
+- pending
+- completed
+- special requirements
+- division
 
-### Acceptance Criteria
+Search:
 
-- Staff cannot modify requirements.
-- Invalid quantities are blocked.
-- Sensitive changes create audit events.
+- bunk name
+- division
+- counselor name where available
 
-### Tests and Verification
+Acceptance criteria:
 
-- Add CRUD, validation, permission, and audit tests.
-
----
-
-## Task 5.5 — Integrate Requirements into Bunk and Daily Views
-
-### Requirements
-
-- Show concise requirement warnings on bunk cards.
-- Show detailed information only when opened or operationally needed.
-- Include schedule-related notes such as swim/late status.
-- Reuse the same requirement components and rules.
-
-### Acceptance Criteria
-
-- Daily cards immediately signal special handling.
-- No duplicate requirement-display logic exists.
-- Allergy/medical visibility is clear and accessible.
+- Filters work on phone-sized screens.
+- Clearing filters restores the full active list.
 
 ---
 
-# EPIC 6 — Daily Snack Setup
+### Task 5.5 — Add Daily Summary
+
+**Status:** ⬜ Not Started
+
+Display:
+
+- total bunks
+- completed bunks
+- pending bunks
+- expected total campers
+- actual total served when available
+- special requirement count
+
+Acceptance criteria:
+
+- Summary updates after each pickup mutation.
+- Counts match active records.
+
+---
+
+### Task 5.6 — Add Manual Refresh and Last-Updated State
+
+**Status:** ⬜ Not Started
+
+Acceptance criteria:
+
+- Operator can manually refresh.
+- Last successful refresh time is visible.
+- Refresh errors do not erase previously displayed data.
+
+---
+
+### Task 5.7 — Build Today Screen Tests
+
+**Status:** ⬜ Not Started
+
+Test initialization, loading, filters, summaries, error states, and responsive rendering.
+
+Acceptance criteria:
+
+- Today screen behavior is tested with mock repository data.
+- Tests include zero bunks, pending bunks, completed bunks, and special requirements.
+
+---
+
+# EPIC 6 — Pickup Workflow
+
+## Status
+
+⬜ Not Started
 
 ## Objective
 
-Allow an administrator to create and open a snack day safely, generating one daily pickup record for every active bunk through a single atomic backend operation.
-
-## Success Criteria
-
-- A snack day can be created as a draft.
-- Opening the day automatically creates pickup records.
-- Expected quantities are snapshots of current camper counts.
-- Duplicate or partial daily setup is prevented.
+Allow the operator to complete, correct, and review each bunk pickup quickly and safely.
 
 ---
 
-## Task 6.1 — Implement Snack Day Services and Queries
+### Task 6.1 — Design Pickup Interaction
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Create typed functions for:
+The default workflow should require as few actions as possible.
 
-- Get current/open snack day
-- Get snack day by date
-- Create draft snack day
-- Update draft
-- Open snack day
-- Get snack-day staff
-- Assign staff
+Normal flow:
 
-### Acceptance Criteria
+1. Select a bunk.
+2. Confirm or adjust actual count.
+3. Review special requirements and notes.
+4. Complete pickup.
 
-- Services are typed and centralized.
-- Only authorized users can create or open days.
-- Errors distinguish conflict, validation, and authorization failures.
+Acceptance criteria:
 
-### Tests and Verification
-
-- Add service tests.
+- Standard pickup can be completed quickly.
+- Destructive or corrective actions require explicit confirmation.
 
 ---
 
-## Task 6.2 — Create Atomic Open-Snack-Day Database Function
+### Task 6.2 — Implement Complete Pickup Backend Operation
 
-### Objective
+**Status:** ⬜ Not Started
 
-Implement the most critical daily setup transaction.
+Required inputs:
 
-### Requirements
+- request ID
+- snack date
+- bunk ID
+- actual count
+- optional notes
 
-The backend function must:
+Required behavior:
 
-1. Verify authorization.
-2. Validate draft status.
-3. Prevent conflicting open days.
-4. Read all active bunks.
-5. Create exactly one pickup record per active bunk.
-6. Copy camper count into expected quantity.
-7. Record opening user and backend timestamp.
-8. Change status to open.
-9. Return the complete result.
-10. Roll back all changes if any step fails.
+- validate active snack day
+- validate bunk and count
+- record completion time
+- update active pickup state
+- append exactly one history record
+- return the updated pickup
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- No partial daily setup is possible.
-- Duplicate pickup rows are prevented.
-- Retrying safely returns a conflict or idempotent result.
-- The mobile client does not perform sequential inserts.
-
-### Tests and Verification
-
-- Add database transaction tests.
-- Test duplicate opening.
-- Test rollback behavior.
-- Test zero active bunks.
-- Test unauthorized access.
+- Completion updates Today and History data.
+- Duplicate submissions do not create duplicate history rows.
 
 ---
 
-## Task 6.3 — Build the Create Snack Day Screen
+### Task 6.3 — Build Pickup Confirmation UI
 
-### UI Requirements
+**Status:** ⬜ Not Started
+
+Display:
+
+- bunk information
+- expected count
+- editable actual count
+- special requirements
+- relevant notes
+- complete button
+
+Acceptance criteria:
+
+- Count input is optimized for mobile numeric entry.
+- The operator sees a clear success confirmation.
+- The UI blocks accidental repeated submission while a mutation is active.
+
+---
+
+### Task 6.4 — Implement Pickup Correction
+
+**Status:** ⬜ Not Started
+
+Allow the operator to correct a completed pickup.
+
+Requirements:
+
+- update actual count or notes
+- preserve original and updated timestamps where practical
+- update the related history record safely
+- record that a correction occurred
+
+Acceptance criteria:
+
+- Corrections do not create duplicate history records.
+- Updated data appears consistently on Today and History screens.
+
+---
+
+### Task 6.5 — Implement Reopen Pickup
+
+**Status:** ⬜ Not Started
+
+Allow a completed pickup to return to pending when entered in error.
+
+Requirements:
+
+- require confirmation
+- preserve an audit note
+- define whether the historical row is marked void, corrected, or removed according to the approved data policy
+
+Recommended MVP policy:
+
+- retain the history record and mark it voided rather than deleting it
+
+Acceptance criteria:
+
+- Reopened pickup returns to pending.
+- The historical trail remains understandable.
+
+---
+
+### Task 6.6 — Add Optimistic and Failure-Safe UI Behavior
+
+**Status:** ⬜ Not Started
+
+Requirements:
+
+- show clear progress during writes
+- prevent double taps
+- restore the prior UI state when a write fails
+- preserve entered count and notes for retry
+
+Acceptance criteria:
+
+- Network failure does not silently lose operator input.
+- Failed writes are never displayed as completed.
+
+---
+
+### Task 6.7 — Build Pickup Workflow Tests
+
+**Status:** ⬜ Not Started
+
+Test normal completion, adjusted counts, duplicate submission, failure recovery, correction, and reopen behavior.
+
+Acceptance criteria:
+
+- Critical pickup mutations are covered by frontend and backend tests.
+
+---
+
+# EPIC 7 — Special Requirements
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Make dietary restrictions and other special snack requirements highly visible during distribution.
+
+---
+
+### Task 7.1 — Normalize Special Requirement Data
+
+**Status:** ⬜ Not Started
+
+Map the current `Allergies` worksheet into a general `SpecialRequirement` model.
+
+Fields:
+
+- requirement ID
+- bunk ID or destination
+- requirement type
+- quantity
+- notes
+- active status
+
+Acceptance criteria:
+
+- Existing Allergy worksheet records can be read without manual re-entry.
+- The model supports dairy-free, gluten-free, nurse, and future requirement types.
+
+---
+
+### Task 7.2 — Implement Special Requirements API
+
+**Status:** ⬜ Not Started
+
+Provide read access to active special requirements.
+
+Acceptance criteria:
+
+- Requirements can be retrieved by bunk and as a full list.
+- Invalid quantities and unmapped bunks are reported clearly.
+
+---
+
+### Task 7.3 — Build Special Requirements Screen
+
+**Status:** ⬜ Not Started
+
+Display requirements grouped by:
+
+- bunk or destination
+- requirement type
+
+Acceptance criteria:
+
+- Operator can scan all special items before snack distribution.
+- Quantity is always visible.
+- Unmapped or incomplete requirements are highlighted.
+
+---
+
+### Task 7.4 — Integrate Requirements into Today and Pickup Screens
+
+**Status:** ⬜ Not Started
+
+Acceptance criteria:
+
+- Bunks with requirements are visibly marked on Today.
+- Full requirement details are shown before pickup completion.
+- Requirement indicators do not rely only on color.
+
+---
+
+### Task 7.5 — Add Requirement Maintenance Workflow
+
+**Status:** ⬜ Not Started
+
+For the MVP, choose one of the following and document the decision:
+
+- read-only in the application, maintained directly in Google Sheets
+- editable through a controlled Settings or Requirements form
+
+Recommended MVP approach:
+
+- begin read-only unless daily operations require app-based editing
+
+Acceptance criteria:
+
+- The chosen behavior is explicit.
+- The UI does not suggest editing when editing is not supported.
+
+---
+
+### Task 7.6 — Build Special Requirements Tests
+
+**Status:** ⬜ Not Started
+
+Test grouping, quantities, unmapped records, Today indicators, and pickup detail display.
+
+---
+
+# EPIC 8 — History and Daily Close
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Provide a reliable record of completed pickups and a controlled way to close each snack day.
+
+---
+
+### Task 8.1 — Implement Pickup History API
+
+**Status:** ⬜ Not Started
+
+Support history retrieval by:
+
+- date range
+- bunk
+- division
+- completion status
+
+Acceptance criteria:
+
+- Results are sorted consistently.
+- Large histories are limited or paginated.
+- Active-day records and historical records are not confused.
+
+---
+
+### Task 8.2 — Build History Screen
+
+**Status:** ⬜ Not Started
+
+Display:
+
+- snack date
+- bunk
+- expected count
+- actual count
+- pickup time
+- special requirement summary
+- correction or void status
+
+Acceptance criteria:
+
+- Operator can review a selected date.
+- History is readable on mobile.
+- Empty states and errors are clear.
+
+---
+
+### Task 8.3 — Add History Filters and Search
+
+**Status:** ⬜ Not Started
+
+Acceptance criteria:
+
+- Filter by date, bunk, division, and corrected or voided status.
+- Filters can be cleared easily.
+
+---
+
+### Task 8.4 — Implement Close Snack Day
+
+**Status:** ⬜ Not Started
+
+Closing a snack day must:
+
+- confirm the date
+- identify pending bunks
+- require confirmation when pending bunks remain
+- mark the day closed
+- prevent ordinary pickup writes after close
+- preserve all active and historical records
+
+Acceptance criteria:
+
+- Closed days cannot be accidentally modified through the normal workflow.
+- Reopening a closed day is not supported unless explicitly added later.
+
+---
+
+### Task 8.5 — Build Daily Close Summary
+
+**Status:** ⬜ Not Started
+
+Display before closing:
+
+- completed bunks
+- pending bunks
+- expected total
+- actual total
+- differences
+- special requirement summary
+
+Acceptance criteria:
+
+- Operator can identify incomplete or unusual records before closing.
+
+---
+
+### Task 8.6 — Build History and Daily Close Tests
+
+**Status:** ⬜ Not Started
+
+Test history retrieval, filters, closed-day write prevention, pending-bunk warnings, and summary calculations.
+
+---
+
+# EPIC 9 — PWA, Reliability, and Recovery
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Make the browser application reliable enough for daily operational use on mobile devices.
+
+---
+
+### Task 9.1 — Configure Progressive Web Application Support
+
+**Status:** ⬜ Not Started
+
+Add:
+
+- web app manifest
+- installable icons
+- application name and theme metadata
+- basic service worker support where appropriate
+
+Requirements:
+
+- Do not imply full offline data synchronization.
+- The app may cache static application assets.
+
+Acceptance criteria:
+
+- Application can be added to the home screen on supported devices.
+- Installed application opens in a standalone-like experience where supported.
+
+---
+
+### Task 9.2 — Implement Network Status Handling
+
+**Status:** ⬜ Not Started
+
+Requirements:
+
+- detect likely offline state
+- display a persistent but unobtrusive warning
+- disable or clearly warn before writes when offline
+- preserve unsaved form input
+
+Acceptance criteria:
+
+- Operator understands when data cannot be saved.
+- The UI does not falsely report success during a network failure.
+
+---
+
+### Task 9.3 — Implement Safe Retry Behavior
+
+**Status:** ⬜ Not Started
+
+Requirements:
+
+- read requests may be retried safely
+- write retries must reuse the same request ID
+- duplicate prevention must remain active
+
+Acceptance criteria:
+
+- A timed-out completion request can be retried without duplicate history.
+
+---
+
+### Task 9.4 — Add Global Error Boundary and User-Friendly Error States
+
+**Status:** ⬜ Not Started
+
+Acceptance criteria:
+
+- Unexpected rendering failures display a recovery screen.
+- User can reload or return to Today.
+- Technical details are logged but not shown as raw stack traces.
+
+---
+
+### Task 9.5 — Add Local Draft Preservation
+
+**Status:** ⬜ Not Started
+
+Use local browser storage only for:
+
+- unsaved pickup count and notes
+- operator preferences
+- last selected filters
+
+Google Sheets remains the source of truth.
+
+Acceptance criteria:
+
+- Reloading during an unfinished pickup can restore the draft.
+- Draft data is removed after successful completion.
+
+---
+
+### Task 9.6 — Define Backup and Restore Procedure
+
+**Status:** ⬜ Not Started
+
+Document:
+
+- Google Sheets version history usage
+- periodic workbook copy procedure
+- Apps Script version/deployment rollback
+- frontend deployment rollback
+- recovery after accidental workbook structure changes
+
+Acceptance criteria:
+
+- A non-developer can follow the basic workbook recovery steps.
+- Production deployment versions are traceable.
+
+---
+
+### Task 9.7 — Build Reliability Tests
+
+**Status:** ⬜ Not Started
+
+Test offline warnings, timeout recovery, duplicate-safe retry, error boundaries, and draft restoration.
+
+---
+
+# EPIC 10 — Settings and Operational Administration
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Provide the single operator with basic configuration and diagnostic tools without introducing a full administration system.
+
+---
+
+### Task 10.1 — Build Settings Screen
+
+**Status:** ⬜ Not Started
+
+Display:
+
+- application version
+- active backend environment
+- workbook connection status
+- current snack date
+- last refresh time
+- PWA installation guidance
+
+Acceptance criteria:
+
+- Settings are readable on phone and tablet.
+- Secrets and full access tokens are never displayed.
+
+---
+
+### Task 10.2 — Add Safe Operator Preferences
+
+**Status:** ⬜ Not Started
+
+Optional preferences:
+
+- default Today filter
+- compact or expanded bunk display
+- confirmation behavior for normal pickup
+
+Acceptance criteria:
+
+- Preferences affect only the local device unless explicitly stored in Settings.
+- Reset-to-default is available.
+
+---
+
+### Task 10.3 — Add Workbook Validation Display
+
+**Status:** ⬜ Not Started
+
+Show current workbook health:
+
+- required worksheets present
+- schema version
+- missing columns
+- duplicate IDs
+- invalid records
+
+Acceptance criteria:
+
+- Operator receives a clear instruction when the workbook needs correction.
+- The screen does not expose unnecessary technical internals.
+
+---
+
+### Task 10.4 — Add Controlled Data Refresh Actions
+
+**Status:** ⬜ Not Started
+
+Actions may include:
+
+- refresh all data
+- revalidate workbook
+- reload active snack day
+
+Acceptance criteria:
+
+- Refresh actions do not create or modify pickup records.
+- Destructive reset actions are not included in the MVP.
+
+---
+
+### Task 10.5 — Build Settings Tests
+
+**Status:** ⬜ Not Started
+
+Test preferences, diagnostics, validation display, and safe refresh actions.
+
+---
+
+# EPIC 11 — End-to-End Validation and User Acceptance
+
+## Status
+
+⬜ Not Started
+
+## Objective
+
+Validate the complete daily workflow with realistic Snack Shack data before production use.
+
+---
+
+### Task 11.1 — Create Representative Test Workbook
+
+**Status:** ⬜ Not Started
+
+Include:
+
+- multiple divisions
+- multiple bunks
+- special requirements
+- blank optional values
+- at least one invalid record for validation testing
+- completed and pending pickup examples
+
+Acceptance criteria:
+
+- Testing never depends on the production workbook.
+- Test data represents realistic workflow conditions.
+
+---
+
+### Task 11.2 — Execute Full Daily Workflow Test
+
+**Status:** ⬜ Not Started
+
+Test:
+
+1. Connect to workbook.
+2. Validate schema.
+3. Initialize snack day.
+4. Review special requirements.
+5. Complete normal pickup.
+6. Complete pickup with adjusted count.
+7. Correct a pickup.
+8. Reopen a pickup.
+9. Review history.
+10. Close the snack day.
+
+Acceptance criteria:
+
+- No manual spreadsheet editing is required during the normal workflow.
+- Data remains consistent across Today, History, and workbook views.
+
+---
+
+### Task 11.3 — Validate Mobile Devices
+
+**Status:** ⬜ Not Started
+
+Test on at least:
+
+- one iPhone
+- one iPad or tablet-sized browser
+- one Android phone
+
+Acceptance criteria:
+
+- Primary actions are easy to tap.
+- No horizontal scrolling is required for normal operation.
+- Numeric entry and browser navigation behave correctly.
+
+---
+
+### Task 11.4 — Conduct Operator User Acceptance Test
+
+**Status:** ⬜ Not Started
+
+Have the intended operator complete realistic snack distribution scenarios.
 
 Capture:
 
-- Date
-- Snack name
-- Starting inventory
-- Staff on duty
-- Notes
+- confusing steps
+- unnecessary taps
+- missing information
+- slow interactions
+- error recovery issues
 
-Use defaults where safe.
+Acceptance criteria:
 
-### Acceptance Criteria
-
-- Administrators can create a draft quickly.
-- Staff cannot access creation controls.
-- Validation errors are clear.
-- The form works on phones and tablets.
-
-### Tests and Verification
-
-- Add form, validation, and permission tests.
+- Critical usability issues are resolved before deployment.
+- Operator confirms the workflow is simpler than the spreadsheet-only process.
 
 ---
 
-## Task 6.4 — Build the Open Day Confirmation Workflow
+### Task 11.5 — Complete Security and Data Integrity Review
 
-### Requirements
-
-Before opening, show:
-
-- Date
-- Snack
-- Active bunk count
-- Expected standard snacks
-- Special requirement count
-- Starting inventory
-- Staff
-
-Require deliberate confirmation.
-
-### Acceptance Criteria
-
-- The user understands what will be generated.
-- Repeated taps are prevented.
-- Success routes to Today.
-- Failure leaves the draft recoverable.
-
-### Tests and Verification
-
-- Test success, conflict, network failure, and retry states.
-
----
-
-## Task 6.5 — Build No-Open-Day and Draft-Day States
-
-### Requirements
-
-The Today screen must clearly distinguish:
-
-- No snack day
-- Draft exists
-- Open day
-- Closed day
-
-Administrators should receive the appropriate setup action. Staff should receive clear guidance without unauthorized controls.
-
-### Acceptance Criteria
-
-- No blank or confusing Today screen occurs.
-- Role-appropriate actions are visible.
-- State transitions refresh correctly.
-
----
-
-# EPIC 7 — Snack Pickup Workflow
-
-## Objective
-
-Create the primary operational workflow used from 2:00–3:00 PM, allowing a bunk pickup to be completed accurately in only a few taps.
-
-## Success Criteria
-
-- Staff can identify a bunk, confirm quantity, and record pickup quickly.
-- User and backend timestamp are recorded.
-- Duplicate submissions are prevented.
-- Special requirements remain visible.
-- Failed requests never appear permanently successful.
-
----
-
-## Task 7.1 — Implement Pickup Query and Mutation Services
-
-### Requirements
-
-Create typed operations for:
-
-- Get pickups for current day
-- Get pickup by bunk
-- Complete pickup
-- Reopen pickup
-- Mark not collected
-- Update permitted notes/quantity
-- Refetch or subscribe to updates
-
-### Acceptance Criteria
-
-- Screens do not contain raw pickup queries.
-- Errors are normalized.
-- Cache updates are consistent.
-
-### Tests and Verification
-
-- Add service and mutation tests.
-
----
-
-## Task 7.2 — Create Atomic Complete-Pickup Database Function
-
-### Requirements
-
-The backend function must:
-
-- Verify authenticated active user
-- Verify open snack day
-- Verify pending/reopened pickup status
-- Validate actual quantity
-- Set completed status
-- Set actual quantity
-- Set `picked_up_by`
-- Set backend `picked_up_at`
-- Create audit event where required
-- Prevent duplicate completion
-- Return updated record
-
-### Acceptance Criteria
-
-- Repeated submissions do not create duplicate completion.
-- Closed-day completion is blocked.
-- Unauthorized users are blocked.
-- Backend timestamp is authoritative.
-
-### Tests and Verification
-
-- Add database tests for normal, duplicate, invalid, closed-day, and unauthorized cases.
-
----
-
-## Task 7.3 — Build the Bunk Pickup Card
-
-### UI Requirements
-
-Display:
-
-- Bunk name/code
-- Division
-- Expected quantity
-- Counselor names
-- Special requirement warnings
-- Schedule notes
-- Pickup status
-- Completion time when applicable
-- Large primary action
-
-### Acceptance Criteria
-
-- A staff member can understand the bunk’s needs at a glance.
-- The card does not rely on color alone.
-- Completed and pending states are unmistakable.
-- The card works on phone and tablet screens.
-
-### Tests and Verification
-
-- Add component tests for all statuses and warnings.
-
----
-
-## Task 7.4 — Build the Pickup Confirmation and Quantity Workflow
-
-### Requirements
-
-When **Mark Picked Up** is selected:
-
-- Default actual quantity to expected quantity.
-- Allow quick adjustment.
-- Show special requirement reminder.
-- Prevent duplicate taps.
-- Submit one atomic mutation.
-- Show pending confirmation state.
-- Confirm success or restore/flag failure.
-
-### Acceptance Criteria
-
-- Standard pickup can be completed in minimal taps.
-- Different actual quantity can be recorded.
-- Failure never leaves a false completed state.
-- Unsent input is preserved for retry where practical.
-
-### Tests and Verification
-
-- Test default quantity.
-- Test adjusted quantity.
-- Test double tap.
-- Test network failure and retry.
-- Test conflict from another device.
-
----
-
-## Task 7.5 — Implement Reopen Pickup Workflow
-
-### Requirements
-
-- Require confirmation.
-- Restrict based on role/day status.
-- Record user, timestamp, and prior values.
-- Preserve previous completion details in audit history.
-- Prevent reopen after close except administrator correction.
-
-### Acceptance Criteria
-
-- Accidental pickups can be corrected safely.
-- Unauthorized users cannot reopen.
-- Audit history is complete.
-
-### Tests and Verification
-
-- Add permission, status, and audit tests.
-
----
-
-## Task 7.6 — Integrate Pickup Workflow into the Today Screen
-
-### Requirements
-
-- Load all current-day pickup cards.
-- Prioritize pending bunks.
-- Support refresh.
-- Update counts after mutations.
-- Reflect changes made by other devices.
-- Avoid full-app reloads.
-
-### Acceptance Criteria
-
-- Today is fully usable as the main operational screen.
-- Pickup changes appear promptly.
-- Loading and failure states are clear.
-- No duplicate pickup implementation exists elsewhere.
-
----
-
-# EPIC 8 — Daily Dashboard and Remaining Bunks
-
-## Objective
-
-Provide immediate visibility into snack distribution progress and remaining work.
-
-## Success Criteria
-
-- Staff can instantly see totals and remaining bunks.
-- Metrics update after every confirmed pickup.
-- Remaining, completed, and special-requirement views are available.
-- The UI follows the established successful data-loading and screen-display patterns from prior Epics.
-
----
-
-## Task 8.1 — Build the Daily Dashboard UI and Data Contract
-
-### Objective
-
-Create the complete operational summary at the top of the Today screen.
-
-### Requirements
-
-Display:
-
-- Total bunks
-- Picked up
-- Remaining
-- Expected snacks
-- Actual snacks distributed
-- Special snacks required
-- Estimated remaining inventory
-
-The task includes both the calculation/data contract and the visible UI. It is not complete if metrics exist only in services or logs.
-
-The implementation must reuse the data-loading, loading-state, error-state, refresh, and screen-rendering patterns already established in EPICs 4–7. The coder must not create a separate inconsistent mechanism.
-
-### Acceptance Criteria
-
-- Metrics are visible on the Today screen.
-- Values update after confirmed pickup changes.
-- Loading, empty, and error states render correctly.
-- Phone and tablet layouts are usable.
-- Calculations are tested.
-- No duplicate data-fetching pattern is introduced.
-
-### Tests and Verification
-
-- Add calculation tests.
-- Add dashboard rendering tests.
-- Verify live updates after pickup.
-- Verify zero-state and closed-day behavior.
-
----
-
-## Task 8.2 — Build the Remaining Bunks Screen
-
-### Requirements
-
-Show only bunks whose current-day pickup status requires action.
-
-Support:
-
-- Division grouping or filtering
-- Search
-- Special requirement indicators
-- Pull to refresh
-- Clear zero-remaining state
-
-### Acceptance Criteria
-
-- Staff can quickly identify every outstanding bunk.
-- Completed bunks disappear after confirmed mutation.
-- A conflict or failed update does not incorrectly remove a bunk.
-
-### Tests and Verification
-
-- Test filtering, updates, and zero state.
-
----
-
-## Task 8.3 — Build Completed and All-Bunks Views
-
-### Requirements
-
-Provide optional views for:
-
-- All bunks
-- Completed bunks
-- Remaining bunks
-- Special-requirement bunks
-
-Use one shared data model and card implementation.
-
-### Acceptance Criteria
-
-- Status filtering is accurate.
-- No duplicate card logic exists.
-- Switching views is simple and mobile friendly.
-
-### Tests and Verification
-
-- Test each filter state.
-
----
-
-## Task 8.4 — Add Division Progress Summaries
-
-### Requirements
-
-Show useful progress by division without cluttering the primary workflow.
-
-Example:
-
-```text
-Kindergarten: 5 of 6 picked up
-Grade 1 Girls: 3 of 4 picked up
-```
-
-### Acceptance Criteria
-
-- Division totals are accurate.
-- The summary is accessible.
-- The feature does not make Today harder to use.
-
-### Tests and Verification
-
-- Add grouping and summary tests.
-
----
-
-# EPIC 9 — Inventory Management
-
-## Objective
-
-Track starting inventory, actual distribution, adjustments, and remaining inventory without confusing planned and actual quantities.
-
-## Success Criteria
-
-- Inventory can be reconciled for each day.
-- Actual distribution drives inventory consumption.
-- Adjustments are auditable.
-- Staff can see current remaining inventory.
-- Administrators can correct counts safely.
-
----
-
-## Task 9.1 — Implement Inventory Calculation Domain Logic
-
-### Requirements
-
-Implement and test:
-
-```text
-Starting Inventory
-- Actual Distributed
-+/- Adjustments
-= Remaining Inventory
-```
-
-Support separate inventory types where needed.
-
-### Acceptance Criteria
-
-- Calculations are deterministic and tested.
-- Expected quantities do not reduce actual inventory.
-- Invalid negative results are handled according to approved rules.
-
-### Tests and Verification
-
-- Add unit tests for normal, adjustment, waste, additional stock, and variance cases.
-
----
-
-## Task 9.2 — Implement Inventory Services and Hooks
-
-### Requirements
-
-Create typed operations for:
-
-- Get current inventory
-- Create initial inventory record
-- Get adjustments
-- Add adjustment
-- Get daily reconciliation
-
-### Acceptance Criteria
-
-- Access is role appropriate.
-- Mutations refresh dashboard inventory.
-- Errors are normalized.
-
-### Tests and Verification
-
-- Add service and hook tests.
-
----
-
-## Task 9.3 — Build Current Inventory Display
-
-### UI Requirements
-
-Show:
-
-- Starting quantity
-- Distributed quantity
-- Adjustments
-- Remaining quantity
-- Warning when running low
-
-### Acceptance Criteria
-
-- Staff can see current inventory from the daily workflow.
-- Values update after confirmed pickups.
-- Warning meaning is not color only.
-
-### Tests and Verification
-
-- Add rendering and threshold tests.
-
----
-
-## Task 9.4 — Build Administrator Inventory Adjustment Workflow
-
-### Requirements
-
-Administrators can record:
-
-- Waste
-- Damaged items
-- Additional stock
-- Count correction
-- Other approved adjustment
-
-Require:
-
-- Quantity
-- Reason
-- Confirmation
-- User identity
-- Backend timestamp
-
-### Acceptance Criteria
-
-- Adjustments never silently overwrite totals.
-- Staff cannot create restricted adjustments.
-- Every adjustment is auditable.
-
-### Tests and Verification
-
-- Add validation, permission, calculation, and audit tests.
-
----
-
-## Task 9.5 — Build Daily Inventory Reconciliation
-
-### Requirements
-
-At day closure, show:
-
-- Starting inventory
-- Actual distributed
-- Adjustments
-- Calculated remaining
-- Counted remaining, if entered
-- Variance
-
-### Acceptance Criteria
-
-- Administrators can identify discrepancies.
-- Reconciliation is preserved in history.
-- Corrections require audit history.
-
-### Tests and Verification
-
-- Add variance tests and closure integration tests.
-
----
-
-# EPIC 10 — History, Day Closure, and Corrections
-
-## Objective
-
-Allow staff to review prior snack days while protecting closed records and permitting only auditable administrative corrections.
-
-## Success Criteria
-
-- Days can be closed safely.
-- Pending bunks are handled explicitly.
-- Historical days are easy to review.
-- Regular staff cannot modify closed records.
-- Administrator corrections are audited.
-
----
-
-## Task 10.1 — Create Atomic Close-Snack-Day Database Function
-
-### Requirements
-
-The backend function must:
-
-- Verify administrator authorization
-- Verify day is open
-- Identify pending bunks
-- Require approved handling for pending records
-- Mark applicable bunks not collected
-- Calculate final totals
-- Calculate inventory variance
-- Set closed status
-- Record closing user and backend timestamp
-- Create audit event
-- Prevent later staff edits
-
-### Acceptance Criteria
-
-- Closure is atomic.
-- Pending bunks cannot be silently ignored.
-- Repeated closure is safe.
-- Staff mutations are blocked after closure.
-
-### Tests and Verification
-
-- Add normal, pending, duplicate, unauthorized, and rollback tests.
-
----
-
-## Task 10.2 — Build Day Closure Review Screen
-
-### UI Requirements
-
-Display:
-
-- Day summary
-- Pending bunks
-- Expected versus actual
-- Special snacks
-- Inventory reconciliation
-- Confirmation action
-
-### Acceptance Criteria
-
-- The administrator understands all unresolved items before closing.
-- Accidental closure is difficult.
-- Errors leave the day open and recoverable.
-
-### Tests and Verification
-
-- Add review, confirmation, and failure-state tests.
-
----
-
-## Task 10.3 — Build Snack Day History List
-
-### Requirements
-
-Show:
-
-- Date
-- Snack
-- Status
-- Bunks served
-- Actual quantity distributed
-- Inventory variance
-- Closed by/time
-
-Support date-based navigation or filtering.
-
-### Acceptance Criteria
-
-- Historical days are easy to locate.
-- Closed days are clearly identified.
-- Loading and empty states are complete.
-
-### Tests and Verification
-
-- Add list and filtering tests.
-
----
-
-## Task 10.4 — Build Historical Day Detail Screen
-
-### Requirements
-
-Display:
-
-- Summary metrics
-- Every bunk pickup status
-- Actual quantities
-- Pickup times
-- Staff users
-- Special requirements applicable at the time where preserved
-- Inventory details
-- Audit history where authorized
-
-### Acceptance Criteria
-
-- History can be reviewed without modifying it.
-- Staff and administrator detail visibility follows role rules.
-- Historical pickup values are not replaced by current roster counts.
-
-### Tests and Verification
-
-- Add historical integrity tests.
-
----
-
-## Task 10.5 — Build Administrator Correction Workflow
-
-### Requirements
-
-Administrators may correct approved fields after closure.
-
-Every correction must:
-
-- Require a reason
-- Show prior value
-- Show new value
-- Record user
-- Record backend timestamp
-- Create audit event
-- Recalculate dependent totals safely
-
-### Acceptance Criteria
-
-- Corrections are explicit and traceable.
-- No historical record is deleted.
-- Staff cannot perform corrections.
-- Dependent inventory and summary values remain accurate.
-
-### Tests and Verification
-
-- Add permission, recalculation, and audit tests.
-
----
-
-# EPIC 11 — Reliability, Accessibility, and Multi-Device Synchronization
-
-## Objective
-
-Ensure the app remains safe, understandable, and responsive during a busy snack period with multiple devices and imperfect connectivity.
-
-## Success Criteria
-
-- Multiple users see current information.
-- Duplicate actions are prevented.
-- Connectivity failures are visible and recoverable.
-- Accessibility requirements are met.
-- Performance is appropriate for approximately 36 bunks.
-
----
-
-## Task 11.1 — Implement Active-Day Realtime Synchronization
-
-### Requirements
-
-Use Supabase Realtime only for operationally valuable current-day changes, such as:
-
-- Pickup status
-- Actual quantity
-- Dashboard totals or data that drives them
-- Inventory changes
-
-Also refetch:
-
-- On app foreground
-- After successful mutations
-- After reconnection
-- On manual refresh
-
-### Acceptance Criteria
-
-- Two devices reflect confirmed changes promptly.
-- Realtime is not the only sync mechanism.
-- Subscriptions are cleaned up correctly.
-- Excessive subscriptions are avoided.
-
-### Tests and Verification
-
-- Add subscription lifecycle tests where practical.
-- Perform two-device manual verification.
-
----
-
-## Task 11.2 — Implement Connectivity and Retry UX
-
-### Requirements
-
-- Detect and clearly present request failures.
-- Preserve unsent input.
-- Support safe retry.
-- Do not permanently show unconfirmed success.
-- Refetch after reconnection.
-- Avoid an offline mutation queue in the MVP.
-
-### Acceptance Criteria
-
-- A failed pickup is visibly unconfirmed.
-- Retry does not create duplicates.
-- Brief connection loss does not destroy the session.
-
-### Tests and Verification
-
-- Test slow network, timeout, disconnect, reconnect, and conflict.
-
----
-
-## Task 11.3 — Complete Accessibility Review and Remediation
-
-### Requirements
+**Status:** ⬜ Not Started
 
 Verify:
 
-- Accessible labels
-- Touch target sizes
-- Contrast
-- Text scaling
-- Logical focus order
-- Screen-reader descriptions
-- Non-color status meaning
-- Keyboard behavior for forms
+- no secrets are committed
+- unauthorized writes are rejected
+- duplicate pickup writes are prevented
+- IDs are stable
+- history is preserved
+- production workbook is backed up
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- Critical workflows are usable with screen reader support.
-- No essential status depends only on color.
-- Large text does not break the primary workflow.
-
-### Tests and Verification
-
-- Add automated checks where supported.
-- Perform manual accessibility review.
+- No unresolved critical security or data-loss risk remains.
 
 ---
 
-## Task 11.4 — Complete Performance Review and Remediation
+### Task 11.6 — Complete MVP Acceptance Checklist
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Review:
+The MVP is acceptable when:
 
-- Startup
-- Today screen query count
-- Card rendering
-- Repeated data fetches
-- Cache behavior
-- Realtime subscriptions
-- Mutation response
-- Tablet rendering
-
-### Acceptance Criteria
-
-- Today becomes usable within a few seconds on normal Wi-Fi.
-- Lists remain smooth for approximately 36 bunks.
-- No per-card duplicate backend queries occur.
-- Dashboard updates do not reload the entire application.
-
-### Tests and Verification
-
-- Measure and document representative performance.
-- Verify on at least one older or moderate-performance device if available.
+- operator can initialize a snack day
+- operator can see all bunks and counts
+- special requirements are visible
+- pickups can be completed and corrected
+- history is accurate
+- day can be closed safely
+- app works on supported mobile browsers
+- failures provide clear recovery instructions
+- workbook remains the source of truth
 
 ---
 
-## Task 11.5 — Build End-to-End Operational Test Scenarios
+# EPIC 12 — Production Deployment and Handoff
 
-### Requirements
+## Status
 
-Create repeatable scenarios for:
-
-- Sign in
-- Create draft day
-- Open day
-- Prepare special snacks
-- Complete pickups
-- Adjust actual quantity
-- Handle duplicate attempt
-- Reopen mistake
-- Inventory adjustment
-- Close day
-- Review history
-- Administrator correction
-
-### Acceptance Criteria
-
-- All critical MVP workflows are covered.
-- Test data resets cleanly.
-- Failures identify the broken workflow clearly.
-
----
-
-# EPIC 12 — Production Readiness and Pilot Deployment
+⬜ Not Started
 
 ## Objective
 
-Prepare a secure production environment, complete device testing, distribute the app privately, run a real-world pilot, and release the approved MVP.
-
-## Success Criteria
-
-- Production is separate from development.
-- Security and backups are configured.
-- Builds work on iPhone, iPad, and Android.
-- Pilot users can install and use the app.
-- Critical pilot issues are resolved.
-- The MVP is approved for regular use.
+Deploy the PWA and Apps Script backend safely and provide enough documentation for ongoing use and recovery.
 
 ---
 
-## Task 12.1 — Create and Configure Production Supabase
+### Task 12.1 — Prepare Production Google Sheets Workbook
 
-### Requirements
+**Status:** ⬜ Not Started
 
-- Create a separate production project.
-- Apply version-controlled migrations.
-- Configure RLS.
-- Configure authentication.
-- Configure backups appropriate to the service level.
-- Do not load development seed data.
-- Add only approved production users and operational data.
+Requirements:
 
-### Acceptance Criteria
+- back up the original workbook
+- apply approved IDs and worksheets
+- validate schema
+- confirm sharing and ownership settings
+- remove test data
 
-- Development and production are isolated.
-- Security tests pass against production configuration.
-- No development credentials are used in production builds.
+Acceptance criteria:
 
-### Tests and Verification
-
-- Run migration verification.
-- Run production security smoke tests.
+- Production workbook passes all validation rules.
+- A recoverable pre-deployment copy exists.
 
 ---
 
-## Task 12.2 — Create Production Data Import and Setup Process
+### Task 12.2 — Deploy Production Apps Script API
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Create a controlled process to load:
+Requirements:
 
-- Final bunk roster
-- Divisions
-- Camper counts
-- Counselors
-- Special requirements
-- Staff accounts
-- Initial inventory configuration
+- create versioned production deployment
+- configure approved access protection
+- confirm production workbook connection
+- record deployment URL securely
 
-Include validation and error reporting.
+Acceptance criteria:
 
-### Acceptance Criteria
-
-- Duplicate bunk codes are prevented.
-- Invalid counts or requirement values are reported.
-- Sensitive data is handled only in approved production workflows.
-- Import can be reviewed before final commit where practical.
-
-### Tests and Verification
-
-- Test with representative sample import.
-- Verify final counts.
+- Production health and workbook-status calls succeed.
+- Unauthorized access tests fail.
 
 ---
 
-## Task 12.3 — Configure Expo Application Services and Internal Builds
+### Task 12.3 — Deploy Production PWA
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Configure:
+Deploy the built frontend to the approved static hosting service.
 
-- Development build
-- Preview/internal build
-- Production build
-- iOS identifier
-- Android package identifier
-- Environment-specific variables
-- App name and icon
-- Versioning
+Requirements:
 
-### Acceptance Criteria
+- HTTPS
+- production environment configuration
+- stable URL
+- mobile manifest and icons
+- rollback capability
 
-- Installable iOS and Android builds are produced.
-- Builds connect to the correct environment.
-- No secret credentials are bundled.
-- App identity is correct.
+Acceptance criteria:
 
-### Tests and Verification
-
-- Install builds on supported devices.
-- Verify environment connection.
+- Production application loads on supported devices.
+- Application connects only to the production backend.
 
 ---
 
-## Task 12.4 — Complete Device and Real-World Workflow Testing
+### Task 12.4 — Complete Production Smoke Test
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Test on:
+Verify:
 
-- iPhone
-- iPad or tablet layout
-- Android phone
+- application opens
+- backend health succeeds
+- workbook validates
+- Today screen loads
+- one controlled test pickup can be completed and removed or clearly marked as test data according to the approved procedure
 
-Test conditions:
+Acceptance criteria:
 
-- Normal Wi-Fi
-- Slow Wi-Fi
-- Brief disconnect
-- Multiple simultaneous users
-- Large text
-- App background/resume
-- Repeated taps
-- Session expiration
-- Full simulated snack hour
-
-### Acceptance Criteria
-
-- Critical workflows succeed on all required device types.
-- No device-specific blocker remains.
-- Results are documented in the implementation log.
+- Production workflow succeeds without developer tools.
 
 ---
 
-## Task 12.5 — Create Staff and Administrator Operating Guides
+### Task 12.5 — Create Operator Guide
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Create concise guidance for:
+Document:
 
-- Installing the app
-- Signing in
-- Opening Today
-- Preparing special snacks
-- Recording a pickup
-- Adjusting quantity
-- Correcting a mistake
-- Viewing remaining bunks
-- Closing a day
-- Managing bunks and requirements
-- Responding to connection errors
+- opening and installing the PWA
+- starting a snack day
+- completing and correcting pickups
+- reviewing requirements
+- reviewing history
+- closing a day
+- refreshing after an error
+- reporting a problem
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- A new staff member can use the app with minimal training.
-- Administrator-only steps are clearly separated.
-- Guidance reflects the actual final UI.
+- Guide is understandable without programming knowledge.
 
 ---
 
-## Task 12.6 — Run Pilot Deployment
+### Task 12.6 — Create Technical Runbook
 
-### Requirements
+**Status:** ⬜ Not Started
 
-- Select a limited pilot group.
-- Load approved real operational data.
-- Run at least one complete snack-distribution session.
-- Record usability, accuracy, synchronization, and reliability issues.
-- Categorize issues as critical, high, medium, or low.
+Document:
 
-### Acceptance Criteria
+- repository and branch
+- local setup
+- environment variables
+- Apps Script deployment process
+- frontend deployment process
+- workbook schema
+- backup and restore
+- rollback
+- common error codes
 
-- The pilot completes without relying on the old spreadsheet for normal operation, except as an approved backup.
-- All critical and high-severity issues are documented.
-- User feedback is captured.
+Acceptance criteria:
 
----
-
-## Task 12.7 — Resolve Pilot Issues and Complete Regression Testing
-
-### Requirements
-
-- Fix all release-blocking issues.
-- Add regression tests for defects.
-- Re-run affected workflows.
-- Update documentation.
-- Do not add unrelated post-MVP features.
-
-### Acceptance Criteria
-
-- No unresolved critical or high-severity defect remains.
-- Regression suite passes.
-- Device testing remains successful.
+- Another developer can maintain and redeploy the application.
 
 ---
 
-## Task 12.8 — Approve and Release MVP
+### Task 12.7 — Finalize Implementation Logs and MVP Release
 
-### Requirements
+**Status:** ⬜ Not Started
 
-Before release, verify:
+Requirements:
 
-- All MVP Epics complete
-- All tests pass
-- Architecture compliance confirmed
-- Production RLS verified
-- Backups configured
-- Installation instructions complete
-- Staff accounts active
-- Pilot approved
-- Rollback procedure documented
+- update `IMPLEMENTATION-LOG-MVP.md`
+- verify all completed tasks and tests
+- record production URLs and versions securely
+- document known limitations
+- tag the MVP release in version control
 
-### Acceptance Criteria
+Acceptance criteria:
 
-- WSD approves regular operational use.
-- Production application is distributed to authorized users.
-- Release version is tagged in source control.
-- `IMPLEMENTATION-LOG-MVP.md` records the release.
-- Remaining enhancements are moved to a post-MVP roadmap.
+- Plan and log statuses match actual implementation.
+- MVP release is reproducible and documented.
 
 ---
 
-# 5. Cross-Epic Test Requirements
+# MVP Completion Definition
 
-The following tests must exist before MVP release:
+The WSD Snack Shack MVP is complete when one authorized operator can use a mobile browser or installed PWA to:
 
-## Application
-
-- Authentication
-- Session restoration
-- Role-aware navigation
-- Bunk search and filtering
-- Special requirement display
-- Snack-day creation
-- Snack-day opening
-- Pickup completion
-- Duplicate pickup prevention
-- Quantity adjustment
-- Pickup reopening
-- Dashboard calculations
-- Remaining-bunk filtering
-- Inventory calculations
-- Inventory adjustments
-- Snack-day closure
-- History display
-- Administrative corrections
-- Error normalization
-- Loading, empty, and failure states
-
-## Database
-
-- Schema constraints
-- Foreign keys
-- Unique snack-day/bunk pickup
-- RLS for anonymous, staff, administrator, and deactivated users
-- Atomic snack-day opening
-- Atomic pickup completion
-- Atomic day closure
-- Closed-day protection
-- Audit-event creation
-- Inventory reconciliation
-
-## Manual Device Testing
-
-- iPhone
-- iPad/tablet
-- Android
-- Multiple users
-- Slow network
-- Disconnect/reconnect
-- Large text
-- Screen reader review
-- App background/resume
-- Full snack-hour simulation
+1. Connect to the approved Google Sheets workbook.
+2. Validate the workbook structure.
+3. Initialize the current snack day from the Master Roster.
+4. See all bunks, expected counts, notes, and special requirements.
+5. Complete pickups with actual counts and timestamps.
+6. Correct or reopen a pickup without losing the historical trail.
+7. Review current progress and prior pickup history.
+8. Close a snack day safely.
+9. Recover clearly from common connection and workbook errors.
+10. Operate the workflow without directly editing the spreadsheet during normal use.
 
 ---
 
-# 6. Initial MVP Assumptions
+# Recommended Execution Order
 
-This first plan assumes:
+Proceed one task at a time in this order:
 
-- The project is a coded React Native Expo application, not an AppSheet application.
-- One shared codebase supports iPhone, iPad, and Android.
-- Supabase is the backend and system of record.
-- Staff must authenticate.
-- There are approximately 36 bunks.
-- One pickup record exists per bunk per snack day.
-- Expected and actual quantities are separate.
-- Administrators maintain roster, requirement, and user data.
-- Staff primarily use Today, Remaining, Special Snacks, and History.
-- Internet access is normally available.
-- Temporary connectivity failure must be handled safely.
-- Full offline synchronization is outside the MVP.
-- Historical records are preserved.
-- Closed days are not editable by regular staff.
-- Allergy and medical data is limited to operationally necessary information.
-- The first release may use private internal distribution instead of public app stores.
-- Attendance-system integration is outside the MVP.
-- Counselor signatures, push notifications, barcode scanning, and AI forecasting are outside the MVP.
+1. Complete EPIC 1.
+2. Complete EPIC 2.
+3. Complete EPIC 3.
+4. Complete EPIC 4.
+5. Build the Today and Pickup workflows in EPIC 5 and EPIC 6.
+6. Add Special Requirements and History in EPIC 7 and EPIC 8.
+7. Add reliability and settings in EPIC 9 and EPIC 10.
+8. Complete user acceptance, deployment, and handoff in EPIC 11 and EPIC 12.
 
----
-
-# 7. Implementation Status
-
-## Current Epic
-
-**EPIC 2 — Supabase Foundation and Core Data Model**
-
-## Next Task
-
-**Task 2.1 — Create and Configure the Development Supabase Project**
-
----
-
-# 8. Task Checklist
-
-## EPIC 1 — Project Foundation
-
-- [x] Task 1.1 — Create the React Native Expo Project
-- [x] Task 1.2 — Add Required Project Documentation
-- [x] Task 1.3 — Configure Project Structure
-- [x] Task 1.4 — Configure Code Quality and Test Tooling
-- [x] Task 1.5 — Configure Expo Router and Navigation Shell
-- [x] Task 1.6 — Create the Base Theme and Shared UI Primitives
-- [x] Task 1.7 — Configure Environment Management
-- [x] Task 1.8 — Verify Architectural Compliance of the Foundation
-
-## EPIC 2 — Supabase Foundation and Core Data Model
-
-- [ ] Task 2.1 — Create and Configure the Development Supabase Project
-- [ ] Task 2.2 — Create Core Database Enums and Reference Types
-- [ ] Task 2.3 — Create Profiles, Bunks, and Counselor Tables
-- [ ] Task 2.4 — Create Special Requirements Table
-- [ ] Task 2.5 — Create Snack Day and Pickup Tables
-- [ ] Task 2.6 — Create Inventory and Audit Tables
-- [ ] Task 2.7 — Add Updated-Timestamp and Audit Support
-- [ ] Task 2.8 — Enable Row-Level Security and Baseline Policies
-- [ ] Task 2.9 — Create Development Seed Data
-- [ ] Task 2.10 — Generate Typed Database Definitions and Data Access Foundation
-
-## EPIC 3 — Authentication and Role-Based Access
-
-- [ ] Task 3.1 — Implement Authentication Service and Session Provider
-- [ ] Task 3.2 — Build the Sign-In Screen
-- [ ] Task 3.3 — Implement Route Guards and Role-Aware Navigation
-- [ ] Task 3.4 — Build User Profile and Sign-Out UI
-- [ ] Task 3.5 — Verify Authentication and Authorization Security
-
-## EPIC 4 — Master Bunk Roster
-
-- [ ] Task 4.1 — Implement Bunk Data Services and Query Hooks
-- [ ] Task 4.2 — Build the Staff Bunk Directory
-- [ ] Task 4.3 — Build Administrator Bunk Management
-- [ ] Task 4.4 — Build Counselor Assignment Management
-- [ ] Task 4.5 — Complete Roster Integration and Review
-
-## EPIC 5 — Special Snack Requirements
-
-- [ ] Task 5.1 — Implement Special Requirement Services and Hooks
-- [ ] Task 5.2 — Create Special Requirement Presentation Components
-- [ ] Task 5.3 — Build the Special Snacks Preparation Screen
-- [ ] Task 5.4 — Build Administrator Requirement Management
-- [ ] Task 5.5 — Integrate Requirements into Bunk and Daily Views
-
-## EPIC 6 — Daily Snack Setup
-
-- [ ] Task 6.1 — Implement Snack Day Services and Queries
-- [ ] Task 6.2 — Create Atomic Open-Snack-Day Database Function
-- [ ] Task 6.3 — Build the Create Snack Day Screen
-- [ ] Task 6.4 — Build the Open Day Confirmation Workflow
-- [ ] Task 6.5 — Build No-Open-Day and Draft-Day States
-
-## EPIC 7 — Snack Pickup Workflow
-
-- [ ] Task 7.1 — Implement Pickup Query and Mutation Services
-- [ ] Task 7.2 — Create Atomic Complete-Pickup Database Function
-- [ ] Task 7.3 — Build the Bunk Pickup Card
-- [ ] Task 7.4 — Build the Pickup Confirmation and Quantity Workflow
-- [ ] Task 7.5 — Implement Reopen Pickup Workflow
-- [ ] Task 7.6 — Integrate Pickup Workflow into the Today Screen
-
-## EPIC 8 — Daily Dashboard and Remaining Bunks
-
-- [ ] Task 8.1 — Build the Daily Dashboard UI and Data Contract
-- [ ] Task 8.2 — Build the Remaining Bunks Screen
-- [ ] Task 8.3 — Build Completed and All-Bunks Views
-- [ ] Task 8.4 — Add Division Progress Summaries
-
-## EPIC 9 — Inventory Management
-
-- [ ] Task 9.1 — Implement Inventory Calculation Domain Logic
-- [ ] Task 9.2 — Implement Inventory Services and Hooks
-- [ ] Task 9.3 — Build Current Inventory Display
-- [ ] Task 9.4 — Build Administrator Inventory Adjustment Workflow
-- [ ] Task 9.5 — Build Daily Inventory Reconciliation
-
-## EPIC 10 — History, Day Closure, and Corrections
-
-- [ ] Task 10.1 — Create Atomic Close-Snack-Day Database Function
-- [ ] Task 10.2 — Build Day Closure Review Screen
-- [ ] Task 10.3 — Build Snack Day History List
-- [ ] Task 10.4 — Build Historical Day Detail Screen
-- [ ] Task 10.5 — Build Administrator Correction Workflow
-
-## EPIC 11 — Reliability, Accessibility, and Multi-Device Synchronization
-
-- [ ] Task 11.1 — Implement Active-Day Realtime Synchronization
-- [ ] Task 11.2 — Implement Connectivity and Retry UX
-- [ ] Task 11.3 — Complete Accessibility Review and Remediation
-- [ ] Task 11.4 — Complete Performance Review and Remediation
-- [ ] Task 11.5 — Build End-to-End Operational Test Scenarios
-
-## EPIC 12 — Production Readiness and Pilot Deployment
-
-- [ ] Task 12.1 — Create and Configure Production Supabase
-- [ ] Task 12.2 — Create Production Data Import and Setup Process
-- [ ] Task 12.3 — Configure Expo Application Services and Internal Builds
-- [ ] Task 12.4 — Complete Device and Real-World Workflow Testing
-- [ ] Task 12.5 — Create Staff and Administrator Operating Guides
-- [ ] Task 12.6 — Run Pilot Deployment
-- [ ] Task 12.7 — Resolve Pilot Issues and Complete Regression Testing
-- [ ] Task 12.8 — Approve and Release MVP
+Do not begin a later Epic when a required dependency in an earlier Epic remains incomplete unless the exception is documented and approved.

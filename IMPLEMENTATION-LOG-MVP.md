@@ -10,11 +10,25 @@ wsd-snack-shack
 
 ## Current Epic
 
-EPIC 1 — Project Foundation
+EPIC 1 — Project Foundation (React + Vite + TypeScript, restarted under the pivoted architecture — see "Architecture Pivot" below)
 
 ## Current Task
 
-Task 2.1 — Create and Configure the Development Supabase Project
+Task 1.1 — Create React, Vite, and TypeScript Project
+
+---
+
+## Architecture Pivot — 2026-07-18
+
+**Decision:** The project pivoted from a native mobile app (React Native + Expo + Supabase, multi-user with staff/administrator roles) to a mobile-first web PWA (React + Vite + TypeScript, backed by Google Apps Script and the Snack Shack's existing Google Sheets workbook, single-operator only). This was a deliberate decision by the user, confirmed explicitly after review, not an accident.
+
+**What this means for the record below:**
+
+- Everything logged under "Completed Task History" prior to this entry (Tasks 1.1–1.8, the original EPIC 1) is **accurate history of real, verified work** — an Expo/React Native/Supabase foundation was genuinely built, tested, and committed. It is being **retired, not deleted**: it remains in git history (commits up to and including `e25e27b`) but is no longer the active direction. None of that code is reusable for the new stack.
+- `ARCHITECTURE.md` and `IMPLEMENTATION-PLAN-MVP.md` were replaced by the user with a new architecture and a new 12-EPIC plan describing the PWA/Google-Sheets approach. `README-MVP.md` was updated by the assistant in this same session to match, since it still described the old multi-user native-app vision and directly contradicted the new architecture.
+- The new plan's EPIC 1 was found marked "✅ Complete" (React + Vite + TypeScript project, Vitest, React Router, etc.) despite none of that work actually existing in the repository — confirmed by inspection (the repo was 100% Expo/React Native at the time). After explicit user confirmation, this was corrected: EPIC 1's status (and every one of its 7 tasks) was reset to "⬜ Not Started" in `IMPLEMENTATION-PLAN-MVP.md`, and the plan's "Recommended Execution Order" section (which started at EPIC 2, assuming EPIC 1 was done) was corrected to start at EPIC 1.
+- The in-progress Task 2.1 work under the old plan (deploying a self-hosted Supabase instance on the user's Railway account) is abandoned — the new architecture does not use Supabase. Nothing had been deployed yet beyond planning/discussion, so there is nothing to tear down.
+- Going forward, "Task 1.1", "Task 2.1", etc. in this log refer to the **new** plan's numbering (React/Vite/Google-Sheets track), not the retired Expo/Supabase track's identically-numbered tasks above. Where ambiguous, entries below are dated after 2026-07-18 and refer to the new plan.
 
 ---
 
