@@ -344,7 +344,7 @@ Acceptance criteria:
 
 ### Task 2.6 — Define Data Validation Rules
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create validation rules for the JSON data files' structure and data quality.
 
@@ -361,11 +361,13 @@ Acceptance criteria:
 - Validation results identify the file, record, and problem clearly.
 - Invalid data is caught at load time with a clear error, not a silent partial render.
 
+**Note:** implemented as pure functions (`src/services/dataValidation.ts`) that return a list of structured errors rather than throwing — this is what makes them usable both for a fail-fast load-time check and for a future diagnostics display (EPIC 10, Task 10.3) without duplicating logic. **Not yet wired into any live data-loading path** — `MasterRoster.tsx` still imports the JSON files directly and doesn't call this validator. Wiring validation into the actual load path belongs to EPIC 4, Task 4.4 (the repository layer), once that layer exists — matching this plan's existing pattern of not building ahead of the epic that owns an integration point (see Task 2.2's note, and EPIC 4's "known gap").
+
 ---
 
 ### Task 2.7 — Build Data Schema Tests
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create automated tests using representative JSON fixtures (valid and deliberately invalid).
 
@@ -374,6 +376,8 @@ Acceptance criteria:
 - Valid fixtures pass validation.
 - Fixtures with missing fields, invalid `requirement` values, or orphaned `bunk` references fail predictably, with a clear message identifying what's wrong.
 - Tests use fixture data, never the real mock data files, so fixture edits for edge-case testing don't disturb the app's actual mock data.
+
+**Note:** implemented together with Task 2.6 in `src/tests/dataValidation.test.ts`, since the fixture-based tests needed to prove the validation rules work are the same tests this task requires — see that task's entry and `IMPLEMENTATION-LOG-MVP.md` for the combined implementation record.
 
 ---
 

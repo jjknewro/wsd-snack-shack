@@ -1,11 +1,14 @@
-export type RequirementType =
-  | 'No Dairy'
-  | 'Gluten Free'
-  | 'No Red Dye'
-  | 'Nurse'
-  | 'No Corn Syrup'
-  | 'No Soy/Dairy'
-  | 'Cholov Yisroel'
+export const REQUIREMENT_TYPES = [
+  'No Dairy',
+  'Gluten Free',
+  'No Red Dye',
+  'Nurse',
+  'No Corn Syrup',
+  'No Soy/Dairy',
+  'Cholov Yisroel',
+] as const
+
+export type RequirementType = (typeof REQUIREMENT_TYPES)[number]
 
 export type MasterRosterEntry = {
   bunk: string

@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 2.2 — Define Stable Application Data Models (partially prototyped — see the second architecture revision entry below)
+Task 2.2 — Define Stable Application Data Models (still partially prototyped; Tasks 2.6/2.7 completed around it without requiring the remaining models — see entries below). Next up: EPIC 4 — Data Repository Integration (Task 4.3), per the Recommended Execution Order, once Task 2.2's remaining models are needed or the epic is otherwise entered.
 
 ---
 
@@ -439,6 +439,32 @@ User reported the Master Roster special-requirements popup appeared **blank** af
 **Notes / Deviations**
 
 - An earlier debugging pass used a Playwright script with `button:has-text("N2")`, which matched `PN2`'s button too (substring match) and produced a misleading "stale content" result. Corrected to exact-name matching before drawing conclusions — worth remembering for any future ad hoc Playwright scripts in this project: always use exact/role-based matching for bunk codes, since many are substrings of others (`N2`/`PN2`, `K1`/`K1B`, etc.).
+
+---
+
+### Task 2.6 — Define Data Validation Rules / Task 2.7 — Build Data Schema Tests
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete (both tasks, implemented together)
+
+**Summary**
+
+Next task per the plan's "Recommended Execution Order" (Task 2.4 and 2.5 remain explicitly deferred to their owning epics). Implemented structural and data-quality validation for the two JSON data files.
+
+- `src/types/roster.ts`: added `REQUIREMENT_TYPES` as a `const` array (`as const`), with `RequirementType` now derived from it (`(typeof REQUIREMENT_TYPES)[number]`) instead of being a hand-written union. Single source of truth — a runtime array is required to validate an unknown value against the seven allowed requirement types, and deriving the compile-time type from it means the two can't drift apart.
+- `src/services/dataValidation.ts`: three pure functions, `validateMasterRoster`, `validateSpecialRequirements`, and `validateData` (which combines both and cross-checks `specialRequirements` bunks against the roster). Each takes `unknown[]` rather than the typed entry arrays — this is deliberate: the whole point is to check data that hasn't been proven to match the type yet (unlike the existing `as MasterRosterEntry[]` casts elsewhere, which assume correctness rather than verify it). Returns a flat list of `ValidationError` objects (`{ file, index, bunk?, message }`) rather than throwing, so a caller gets every problem at once with enough detail to locate and fix each one.
+- Detects: missing/invalid `bunk`, missing/invalid `counselors`, non-negative `campers`, duplicate `bunk` values within `masterRoster.json` (reporting both the duplicate's index and the first occurrence's index), invalid `requirement` values outside the seven defined types, non-positive `quantity`, non-string `notes`, and `specialRequirements` entries whose `bunk` doesn't exist in `masterRoster.json`.
+- **Not wired into any live data-loading path yet** — deliberately. `MasterRoster.tsx` still imports the JSON files directly with a blind cast, unchanged by this task. Actually validating data as part of loading it belongs to the repository layer (EPIC 4, Task 4.4), which doesn't exist yet; wiring it in now would mean building ahead of the epic that owns that integration point, contrary to this plan's established pattern (see Task 2.2's note and EPIC 4's documented "known gap").
+
+**Verification**
+
+- New `src/tests/dataValidation.test.ts`: fixture-based (not the real mock data files), covering both tasks' acceptance criteria directly — valid fixtures produce zero errors; a missing `bunk`, a missing `counselors`, a negative `campers`, a duplicate `bunk` (asserting the earlier index is named), an invalid `requirement` value, a non-positive `quantity`, and an orphaned cross-file `bunk` reference each produce exactly the expected error with a clear, specific message.
+- `npm run verify` (lint + typecheck + test) — clean; 49/49 tests (11 new).
+- `npm run build` — succeeds.
+
+**Notes / Deviations**
+
+- None.
 
 ---
 
