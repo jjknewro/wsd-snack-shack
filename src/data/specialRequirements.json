@@ -1,0 +1,17 @@
+[
+  { "bunk": "PN2", "requirement": "Nurse", "quantity": 1, "notes": "Daily medication at 2pm" },
+  { "bunk": "N2", "requirement": "No Dairy", "quantity": 1 },
+  { "bunk": "N5", "requirement": "No Corn Syrup", "quantity": 1, "notes": "Corn allergy" },
+  { "bunk": "K1", "requirement": "No Dairy", "quantity": 1, "notes": "Swims at 2:30" },
+  { "bunk": "K2", "requirement": "No Red Dye", "quantity": 1 },
+  { "bunk": "K3", "requirement": "No Dairy", "quantity": 2 },
+  { "bunk": "K3", "requirement": "Cholov Yisroel", "quantity": 1 },
+  { "bunk": "K3", "requirement": "Gluten Free", "quantity": 1 },
+  { "bunk": "K6", "requirement": "Gluten Free", "quantity": 1 },
+  { "bunk": "JG1B", "requirement": "Gluten Free", "quantity": 1 },
+  { "bunk": "JG2B", "requirement": "No Soy/Dairy", "quantity": 1 },
+  { "bunk": "JG2B", "requirement": "Gluten Free", "quantity": 1 },
+  { "bunk": "IB3B", "requirement": "Gluten Free", "quantity": 1 },
+  { "bunk": "IB3B", "requirement": "No Dairy", "quantity": 1 },
+  { "bunk": "IB4", "requirement": "Gluten Free", "quantity": 2 }
+]
