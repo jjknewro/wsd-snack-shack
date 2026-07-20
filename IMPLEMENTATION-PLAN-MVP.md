@@ -422,7 +422,7 @@ This epic is kept in the plan, marked Not Applicable, rather than deleted — pe
 
 ## Status
 
-⬜ Not Started
+✅ Complete
 
 ## Objective
 
@@ -526,7 +526,7 @@ Acceptance criteria:
 
 ### Task 4.7 — Build Repository Tests
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete — **EPIC 4 (Data Repository Integration) is complete.**
 
 Reframed from "Repository and API Client Tests" — there is no API client to test.
 
@@ -534,6 +534,8 @@ Acceptance criteria:
 
 - Success, malformed-data, and missing-data cases are tested against the repository.
 - Component tests use a mock/fixture-backed repository, never the real `src/data/*.json` mock data, so tests don't silently depend on — or accidentally validate against — data that's meant for local development display.
+
+**Note:** the repository-layer half of this (success / malformed / missing-data cases against `buildSnackRepository`, `createJsonSnackRepository`, `getDataLoadDiagnostics`) was already covered by Tasks 4.4 and 4.6's own tests. What this task actually added: `MasterRoster.tsx` gained an optional `createRepository` prop (defaulting to `createJsonSnackRepository`), and `MasterRoster.test.tsx`/`MasterRoster.errorState.test.tsx` were rewritten to inject a fixture-backed repository instead of exercising the real `src/data/*.json` files — closing the gap this acceptance criterion specifically calls out (those tests previously asserted real-data values like `K3` having exactly 3 requirements, which is real-data coupling, not fixture testing). `Settings.tsx` was deliberately left as-is: its own test doesn't assert any real-data-specific values (no hardcoded counts), and `getDataLoadDiagnostics()` already accepts injectable data at the function level for its own dedicated tests — adding component-level DI there too was judged unnecessary duplication of the same fix rather than a genuine gap.
 
 ---
 

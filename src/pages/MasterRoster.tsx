@@ -4,18 +4,26 @@ import { ErrorState } from '@/components/ErrorState'
 import { Modal } from '@/components/Modal'
 import '../components/SnapshotTable.css'
 import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
+import type { SnackRepository } from '@/repositories/snackRepository'
 
-export function MasterRoster() {
+export type MasterRosterProps = {
+  // Defaults to the real JSON-backed repository; tests inject a
+  // fixture-backed one instead, so they never depend on (or accidentally
+  // validate against) the real src/data/*.json mock data.
+  createRepository?: () => SnackRepository
+}
+
+export function MasterRoster({ createRepository = createJsonSnackRepository }: MasterRosterProps = {}) {
   const [selectedBunk, setSelectedBunk] = useState<string | null>(null)
 
   const { repository, loadError } = useMemo(() => {
     try {
-      return { repository: createJsonSnackRepository(), loadError: null as string | null }
+      return { repository: createRepository(), loadError: null as string | null }
     } catch (error) {
       const message = error instanceof DataValidationError ? error.message : 'Failed to load Snack Shack data.'
       return { repository: null, loadError: message }
     }
-  }, [])
+  }, [createRepository])
 
   if (!repository) {
     return (

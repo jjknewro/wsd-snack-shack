@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 4.7 — Build Repository Tests (EPIC 4 — Data Repository Integration). Tasks 4.3, 4.4, and 4.6 are complete — see entries below. Task 4.7's acceptance criteria are already largely met by Task 4.4's tests (see that entry); this task should confirm coverage explicitly rather than duplicate it, then close out EPIC 4. Task 2.2 remains partially prototyped, unaffected by this.
+**EPIC 4 (Data Repository Integration) is complete.** Next up per the plan's Recommended Execution Order: **EPIC 5 — Today Screen and Snack Day Initialization**, starting with Task 5.1 (Define Today Screen UX). Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -545,6 +545,37 @@ First task of EPIC 4 — Data Repository Integration, per the plan's Recommended
 **Notes / Deviations**
 
 - None.
+
+---
+
+### Task 4.7 — Build Repository Tests
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete — **EPIC 4 (Data Repository Integration) is complete.**
+
+**Summary**
+
+Reviewed existing coverage against this task's two acceptance criteria before writing anything new, to avoid duplicating Task 4.4/4.6's tests:
+
+- "Success, malformed-data, and missing-data cases are tested against the repository" — already true: `tests/jsonSnackRepository.test.ts` covers `buildSnackRepository` (valid fixture, missing-`bunk` fixture throwing `DataValidationError`) and `getDataLoadDiagnostics` (real data, valid fixture, invalid fixture returning `loaded: false`), plus `createJsonSnackRepository` against the real data. Nothing to add here.
+- "Component tests use a mock/fixture-backed repository, never the real `src/data/*.json` mock data" — **not yet true.** `MasterRoster.test.tsx` rendered the real `<MasterRoster />`, which internally called `createJsonSnackRepository()` with no way to substitute it — so those tests asserted specific real-data values (`K3` has exactly 3 requirements, `PN3` has exactly 0), a genuine case of tests silently depending on the mock data meant for local display, exactly as this criterion warns against.
+
+Fixed by making the dependency explicit and injectable:
+
+- `src/pages/MasterRoster.tsx`: added an optional `createRepository?: () => SnackRepository` prop, defaulting to `createJsonSnackRepository` — normal usage (via the router, no props passed) is completely unchanged.
+- `src/tests/MasterRoster.test.tsx`: rewritten to build a small fixture repository (`A1`/`B2` bunks, not real bunk codes) and inject it via the new prop. No longer touches `src/data/*.json` at all.
+- `src/tests/MasterRoster.errorState.test.tsx`: rewritten to inject a `createRepository` that throws directly, replacing the previous `vi.mock('../data/masterRoster.json', ...)` approach — simpler, and no longer relies on mocking a module boundary. Also added a second case not previously covered: the component's fallback "Failed to load Snack Shack data." message when the repository throws something other than `DataValidationError`.
+- `src/pages/Settings.tsx` was deliberately **not** given the same prop-injection treatment. `src/tests/Settings.test.tsx` only asserts label text (`"Bunks loaded"`, `"Special requirement entries loaded"`, etc.), never specific counts — so it isn't coupled to real-data values the way the old `MasterRoster.test.tsx` was. `getDataLoadDiagnostics()` already accepts injectable data as parameters (used directly by its own tests in `jsonSnackRepository.test.ts`). Adding a second injection mechanism at the component level would duplicate that without fixing a real gap.
+
+**Verification**
+
+- `npm run verify` (lint + typecheck + test) — clean; 63/63 tests (net +1: one old test file's approach was replaced, one new case added).
+- `npm run build` — succeeds.
+- Playwright smoke test against the running dev server: clicked `K3` on the real `/roster` page (default `createRepository`, real data, no props) — confirmed still shows the correct three requirements, proving the default injection path is unbroken.
+
+**Sign-off**
+
+EPIC 4 — Data Repository Integration is complete. Tasks 4.1, 4.2, and 4.5 are Not Applicable (no backend/API client to configure); Tasks 4.3, 4.4, 4.6, and 4.7 are done, reviewed, and verified. The "known gap" documented at this epic's start (`MasterRoster.tsx` importing JSON directly) is fully closed. Proceeding to **EPIC 5 — Today Screen and Snack Day Initialization**, starting with **Task 5.1 — Define Today Screen UX**.
 
 ---
 
