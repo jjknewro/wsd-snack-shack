@@ -428,9 +428,9 @@ This epic is kept in the plan, marked Not Applicable, rather than deleted — pe
 
 Route all JSON data access through a repository abstraction, so pages and components never read `src/data/*.json` directly. Originally scoped as "connect the React app to the Apps Script backend" — rewritten since there's no backend to connect to (see `ARCHITECTURE.md`'s "Architecture Revision Note").
 
-## Known gap (as of this revision)
+## Known gap (as of this revision) — Closed by Task 4.4
 
-`MasterRoster.tsx` currently imports `src/data/masterRoster.json` and `specialRequirements.json` **directly**, bypassing the repository pattern entirely — a real, acknowledged violation of `ARCHITECTURE.md`'s "UI never imports the JSON data files directly" rule. This happened because that page was built as an ad hoc mock-data prototype (see `IMPLEMENTATION-LOG-MVP.md`) before this epic — and therefore the repository layer — existed. Fixing it is explicitly part of Task 4.4 below, not a separate cleanup task.
+`MasterRoster.tsx` used to import `src/data/masterRoster.json` and `specialRequirements.json` **directly**, bypassing the repository pattern entirely — a real, acknowledged violation of `ARCHITECTURE.md`'s "UI never imports the JSON data files directly" rule. This happened because that page was built as an ad hoc mock-data prototype (see `IMPLEMENTATION-LOG-MVP.md`) before this epic — and therefore the repository layer — existed. **Task 4.4 (2026-07-20) closed this gap**: `MasterRoster.tsx` now reads exclusively through `src/repositories/jsonSnackRepository.ts`.
 
 ---
 
@@ -476,7 +476,7 @@ Acceptance criteria:
 
 ### Task 4.4 — Implement JSON Data Repository
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Implement the repository interface from Task 4.3, reading from `src/data/masterRoster.json` and `src/data/specialRequirements.json`.
 
@@ -489,6 +489,8 @@ Acceptance criteria:
 
 - No page or component imports `src/data/*.json` directly — only the repository does.
 - Invalid data is rejected before reaching the UI, with a clear error.
+
+**Note:** `src/repositories/jsonSnackRepository.ts` implements `SnackRepository` (Task 4.3) via two layers: `buildSnackRepository(masterRoster, specialRequirements)` — a pure function taking `unknown[]` for both arguments, running Task 2.6's `validateData` and throwing a `DataValidationError` (carrying the full structured error list plus a readable `.message`) if invalid — and `createJsonSnackRepository()`, a thin wrapper that calls it with the real bundled JSON imports. `MasterRoster.tsx` now calls `createJsonSnackRepository()` once (memoized) and renders the existing `ErrorState` component if it throws, instead of the table — the "known gap" from EPIC 4's objective is closed; confirmed via `grep` that no `src/pages/*` or `src/components/*` file imports `src/data/*.json`. `ARCHITECTURE.md`'s `{success, data}` / `{success: false, message, errorCode}` shape was not used verbatim here: that shape fits per-call, potentially-async business operations (e.g. completing a pickup in EPIC 6); this repository is a synchronous, load-once, all-or-nothing validity gate over static bundled data, so a thrown, typed error caught once at the page boundary is the more natural fit while still meeting the same underlying goal (clear error, no raw stack trace, no silent empty render).
 
 ---
 

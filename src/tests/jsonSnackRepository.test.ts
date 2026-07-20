@@ -1,0 +1,44 @@
+import { describe, expect, it } from 'vitest'
+
+import { buildSnackRepository, createJsonSnackRepository, DataValidationError } from '../repositories/jsonSnackRepository'
+
+describe('createJsonSnackRepository', () => {
+  it('loads the real bundled mock data successfully', () => {
+    const repository = createJsonSnackRepository()
+
+    const roster = repository.getRoster()
+    expect(roster.length).toBeGreaterThan(0)
+    expect(repository.getSpecialRequirementsForBunk('K3')).toHaveLength(3)
+    expect(repository.getSpecialRequirementsForBunk('PN3')).toHaveLength(0)
+  })
+})
+
+describe('buildSnackRepository', () => {
+  it('builds a working repository from valid fixture data', () => {
+    const repository = buildSnackRepository(
+      [{ bunk: 'K1', counselors: 'Finley' }],
+      [{ bunk: 'K1', requirement: 'No Dairy', quantity: 1 }],
+    )
+
+    expect(repository.getRoster()).toEqual([{ bunk: 'K1', counselors: 'Finley' }])
+    expect(repository.getSpecialRequirementsForBunk('K1')).toHaveLength(1)
+    expect(repository.getSpecialRequirementsForBunk('ZZ')).toEqual([])
+  })
+
+  it('throws a DataValidationError instead of returning invalid data', () => {
+    expect(() => buildSnackRepository([{ counselors: 'Finley' }], [])).toThrow(DataValidationError)
+  })
+
+  it('the thrown error carries a clear, specific message and the underlying error list', () => {
+    try {
+      buildSnackRepository([{ counselors: 'Finley' }], [])
+      expect.fail('expected buildSnackRepository to throw')
+    } catch (error) {
+      expect(error).toBeInstanceOf(DataValidationError)
+      const validationError = error as DataValidationError
+      expect(validationError.message).toContain('masterRoster.json')
+      expect(validationError.message).toContain('bunk')
+      expect(validationError.errors).toHaveLength(1)
+    }
+  })
+})

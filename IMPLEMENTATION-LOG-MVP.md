@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 4.4 — Implement JSON Data Repository (EPIC 4 — Data Repository Integration). Task 4.3 (repository interface) is complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 4.6 — Build Data Diagnostics Screen (EPIC 4 — Data Repository Integration). Tasks 4.3 and 4.4 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -489,6 +489,36 @@ First task of EPIC 4 — Data Repository Integration, per the plan's Recommended
 **Notes / Deviations**
 
 - None.
+
+---
+
+### Task 4.4 — Implement JSON Data Repository
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete — **closes EPIC 4's documented "known gap."**
+
+**Summary**
+
+- `src/repositories/jsonSnackRepository.ts`: two-layer implementation.
+  - `buildSnackRepository(masterRoster: unknown[], specialRequirements: unknown[]): SnackRepository` — pure function; runs Task 2.6's `validateData` and throws a new `DataValidationError` (extends `Error`; carries both the full `ValidationError[]` as `.errors` for programmatic use and a formatted, readable `.message`) if any errors are found, otherwise returns a working `SnackRepository`.
+  - `createJsonSnackRepository(): SnackRepository` — thin wrapper calling the above with the real bundled JSON imports (`@/data/masterRoster.json`, `@/data/specialRequirements.json`). This is the only place in the codebase that imports those two files.
+- `src/pages/MasterRoster.tsx`: rewritten to call `createJsonSnackRepository()` (memoized via `useMemo` so validation runs once, not on every click/state change) instead of importing the JSON files directly. On success, renders as before. On a thrown `DataValidationError` (or any other error), renders the existing `ErrorState` component with the error's message instead of the table — no uncaught exception, no silent empty render.
+- Also simplified the per-row special-requirements count: previously called the `getRequirementCountForBunk` service function (Task 2.8) against a page-level `requirements` array; now calls `repository.getSpecialRequirementsForBunk(row.bunk).length` directly, since the repository's per-bunk method already does the exact filtering that service function did. `getRequirementCountForBunk` itself is left in place (still correct, still tested, no longer called from this page) rather than deleted — it's a legitimate general-purpose utility, not dead code created by this task, and Global Implementation Rule #8 (don't rewrite completed work without a validated incompatibility) argues against pruning it opportunistically.
+- **Deliberate deviation from `ARCHITECTURE.md`'s literal `{ success, data }` / `{ success: false, message, errorCode }` Error Handling shape**: that shape is written for business services with per-call, potentially-async success/failure semantics (e.g. completing a pickup, EPIC 6). This repository is a synchronous, load-once, all-or-nothing validity gate over static bundled data — there's exactly one thing that can fail (the data didn't validate), and it fails the same way for every method. A thrown, typed `DataValidationError`, caught once at the page boundary and translated into `ErrorState`, meets the same underlying goals (clear message, no raw stack trace shown, no silent empty render) without forcing every `SnackRepository` call site to unwrap a result object for an error condition that, in practice, can only ever occur once, at load time.
+
+**Verification**
+
+- New `src/tests/jsonSnackRepository.test.ts`: `createJsonSnackRepository()` against the real bundled mock data (loads successfully, `K3` has 3 requirement records, `PN3` has 0); `buildSnackRepository()` against fixtures — valid data builds a working repository, invalid data throws `DataValidationError`, and the thrown error's `.message` and `.errors` are asserted directly.
+- New `src/tests/MasterRoster.errorState.test.tsx`: `vi.mock`s both JSON data modules with deliberately invalid fixture content (a roster entry missing `bunk`) for this file only, renders `<MasterRoster />`, and confirms an `alert`-role element appears with a message naming `masterRoster.json`, and that no `table` is rendered — proving the wiring from repository failure through to the UI, not just that the repository itself throws correctly in isolation.
+- Existing `src/tests/MasterRoster.test.tsx` (bunk list, popup content, no-requirements message, close behavior, count column) required no changes and still passes — confirms the refactor is behavior-preserving for the success path.
+- `grep -rn "data/masterRoster.json\|data/specialRequirements.json" src/pages src/components` — zero matches, confirming the acceptance criterion directly ("No page or component imports `src/data/*.json` directly — only the repository does").
+- `npm run verify` (lint + typecheck + test) — clean; 56/56 tests (5 new).
+- `npm run build` — succeeds.
+- Playwright smoke test against the running dev server (`http://127.0.0.1:5180/roster`): clicked `K3`, confirmed the popup still shows the correct three requirements end-to-end through the new repository layer, matching pre-refactor behavior.
+
+**Notes / Deviations**
+
+- See the Error Handling deviation noted above (intentional, reasoned, not a gap).
 
 ---
 
