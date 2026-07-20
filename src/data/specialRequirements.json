@@ -1,5 +1,5 @@
 [
-  { "bunk": "PN2", "requirement": "Nurse", "quantity": 1, "notes": "Daily medication at 2pm" },
+  { "bunk": "PN2", "requirement": "Nurse", "quantity": 1 },
   { "bunk": "N2", "requirement": "No Dairy", "quantity": 1 },
   { "bunk": "N5", "requirement": "No Corn Syrup", "quantity": 1, "notes": "Corn allergy" },
   { "bunk": "K1", "requirement": "No Dairy", "quantity": 1, "notes": "Swims at 2:30" },

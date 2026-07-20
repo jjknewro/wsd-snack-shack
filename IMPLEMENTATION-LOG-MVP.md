@@ -417,6 +417,31 @@ User request after reviewing the Master Roster screen: show, per bunk, how many 
 
 ---
 
+### Ad hoc: Fix invisible modal text in dark-mode browsers; remove invented note text
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+User reported the Master Roster special-requirements popup appeared **blank** after clicking a bunk (e.g. `PN2`), and separately flagged that "medication" wasn't one of the seven `Requirement` values they'd specified.
+
+- **"Medication" concern**: not a bug — `"Daily medication at 2pm"` was always in the `notes` field, not `requirement`. The `requirement` field for that record correctly read `"Nurse"` (one of the seven values). Since I had invented that note text as mock flavor and it was reading as confusing, removed it from `specialRequirements.json` (PN2 now has no `notes` field).
+- **Blank popup — root cause found**: `src/index.css` declared `color-scheme: light dark` on `:root`, but no rule in the app sets an explicit `color` on `body`/`:root`, and `.modal`'s background (`#fffdf5`) is a hardcoded light value that never changes. In a light-mode browser, the UA's default text color (black) happens to match the design tokens, so this was invisible in normal review. In a dark-mode browser/OS, the UA flips its default text color to white (per `color-scheme: light dark`), producing white text on the modal's still-light background — text technically present in the DOM but visually invisible. This is not a React/data bug; the popup was never actually blank, just unreadable.
+- Fixed by changing `color-scheme: light dark` to `color-scheme: light` — correct because no dark-mode-aware colors exist anywhere in this app's design tokens or components; the app does not support a dark theme today, so it shouldn't advertise one to the browser.
+
+**Verification**
+
+- Playwright, default (light) browser context: clicked every bunk with ≥1 special requirement (11 bunks) using exact button-name matching; every popup showed correct, matching content — confirmed the original bug report was not reproducible under normal conditions.
+- Playwright, `colorScheme: 'dark'` browser context (reproducing the user's actual environment): before the fix, this would need to be captured to confirm the failure mode; after the fix, screenshotted the `PN2` popup and confirmed fully legible black-on-cream text, matching the light-mode rendering exactly.
+- `npm test -- --run` — 38/38 tests pass after both changes.
+
+**Notes / Deviations**
+
+- An earlier debugging pass used a Playwright script with `button:has-text("N2")`, which matched `PN2`'s button too (substring match) and produced a misleading "stale content" result. Corrected to exact-name matching before drawing conclusions — worth remembering for any future ad hoc Playwright scripts in this project: always use exact/role-based matching for bunk codes, since many are substrings of others (`N2`/`PN2`, `K1`/`K1B`, etc.).
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project
