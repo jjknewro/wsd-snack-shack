@@ -576,7 +576,7 @@ Acceptance criteria:
 
 ### Task 5.2 — Implement Snack Day Initialization Service
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Initialize the active snack day from the Master Roster.
 
@@ -591,6 +591,8 @@ Acceptance criteria:
 
 - A new day can be initialized from current roster data.
 - Repeating initialization does not duplicate rows.
+
+**Note:** implemented as a pure function, `initializeSnackDay(repository, date, existingDays)` in `src/services/snackDayInitialization.ts`, plus new minimal types (`SnackDay`, `SnackDayBunkRecord`, `PickupStatus`) in `src/types/snackDay.ts` — kept separate from `src/types/roster.ts` since these are in-memory, session-scoped concepts, not data-file-backed models. "Eligible bunk" = every bunk currently in the roster (there's no eligibility flag in the data model to filter on). "Relevant notes" is implemented as a snapshotted `specialRequirementCount` per bunk (not the roster's own notes field, which doesn't exist) — read via the repository at initialization time, not recomputed later, specifically so a future seed-data edit (removing a special requirement, already flagged by the user as a planned future screen — see `ARCHITECTURE.md`'s "Future: Editing Seed Data") can't retroactively change an already-active day's snapshot. Duplicate-prevention and historical-day preservation are both handled by the same idempotent, non-mutating design: initializing an already-present date returns the input array by reference, unchanged; initializing a new date always appends rather than replacing. **Deliberately not wired into `Today.tsx` yet** — introducing "not initialized"/"active day" state into the actual screen is explicitly Task 5.3's job ("Build Today Screen Data Loading"), matching this plan's established define-then-wire task boundary (see Task 4.3 vs. 4.4, Task 2.6 vs. its wiring).
 
 ---
 

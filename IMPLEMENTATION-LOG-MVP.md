@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.2 — Implement Snack Day Initialization Service (EPIC 5 — Today Screen and Snack Day Initialization). Task 5.1 (Today Screen UX) is complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.3 — Build Today Screen Data Loading (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1 and 5.2 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -600,6 +600,31 @@ First task of EPIC 5. Scoped deliberately narrowly to what "Define ___ UX" means
 - `npm run verify` (lint + typecheck + test) — clean; 73/73 tests (10 new).
 - `npm run build` — succeeds.
 - Playwright: screenshot of `/` at 420px width — full bunk list renders correctly, all "Pending," special-requirement counts match `src/data/specialRequirements.json` by hand-check (e.g. `K3` shows "3 special requirements"). Separately confirmed, via `document.documentElement.scrollWidth` vs. `clientWidth` at a 390px viewport (the same check used in Task 1.8), that the page itself does not overflow horizontally — the table's own `overflow-x: auto` wrapper (pre-existing `SnapshotTable.css`, already used by `MasterRoster`) absorbs any internal scroll, not the page.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
+### Task 5.2 — Implement Snack Day Initialization Service
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+- `src/types/snackDay.ts`: new, minimal types — `PickupStatus` (`'pending' | 'completed'`), `SnackDayBunkRecord` (`bunk`, `expectedCount?`, `specialRequirementCount`, `status`), `SnackDay` (`date`, `bunks`). Kept separate from `src/types/roster.ts` deliberately: these describe in-memory, session-scoped state, not data read from `src/data/*.json`.
+- `src/services/snackDayInitialization.ts`: `initializeSnackDay(repository: SnackRepository, date: string, existingDays: SnackDay[] = []): SnackDay[]` — a pure function, not a class or stateful service, consistent with the rest of this codebase's services/repository. Reads the roster and each bunk's special-requirement count from the given repository **once**, at call time, snapshotting both onto the new day's records — deliberately not a live-recomputed view, so a later seed-data edit can't silently alter an already-initialized day (directly serves the user's own previously-stated future intent to edit seed data, e.g. removing a special requirement).
+- Idempotency and history preservation share one mechanism: the function checks `existingDays` for a matching `date` first — if found, returns the array **by reference, unchanged** (no new day, no duplicate bunks); if not found, returns a **new** array with the new day appended, never mutating or dropping any existing entry (satisfies "preserve completed historical days" structurally, even though there's no real multi-day persistence to exercise this against yet — that's EPIC 8).
+- "Eligible bunk" was interpreted as "every bunk currently in the roster" — the data model has no eligibility/active flag to filter on, and inventing one wasn't asked for.
+- Not wired into `Today.tsx` — that's Task 5.3.
+
+**Verification**
+
+- New `src/tests/snackDayInitialization.test.ts`: creates one pending record per fixture roster bunk with the correct snapshotted `expectedCount`/`specialRequirementCount`; confirms calling twice with the same date returns the exact same array reference (true idempotency, not just equal-looking output) with no duplicate bunks; confirms a historical day (with a `completed` status) passed in as `existingDays` survives untouched, by reference, alongside the newly appended day; confirms mutating the underlying roster array *after* initialization does not retroactively change the already-created snapshot.
+- `npm run verify` (lint + typecheck + test) — clean; 77/77 tests (4 new).
+- `npm run build` — succeeds.
 
 **Notes / Deviations**
 
