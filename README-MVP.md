@@ -4,7 +4,7 @@
 
 The WSD Snack Shack Web Application is a mobile-first Progressive Web App (PWA) designed to simplify and improve the daily snack distribution process at Westchester Summer Day (WSD).
 
-The application wraps the Snack Shack's existing Google Sheets workbook with a fast, guided web interface, replacing manual spreadsheet editing during the live snack-distribution window while keeping Google Sheets as the operational source of truth.
+The application is a static web app with no backend: bundled JSON files (mirroring the Snack Shack's real bunk roster and special-requirements data) are the source of truth for the day's roster, and the app provides a fast, guided interface on top of them during the live snack-distribution window. See `ARCHITECTURE.md`'s "Architecture Revision Note" for the two prior architecture directions this superseded.
 
 The application is intended to run in a mobile browser (iPhone, iPad, Android) or as an installed PWA, for use by a single authorized operator.
 
@@ -20,7 +20,7 @@ Every design decision should be evaluated against this objective.
 
 # MVP Goals
 
-The MVP focuses on replacing manual spreadsheet editing during snack distribution while keeping the existing Google Sheets workbook as the system of record.
+The MVP focuses on replacing manual spreadsheet editing during snack distribution, using bundled JSON files as the system of record for roster and special-requirement data.
 
 The MVP will allow the operator to:
 
@@ -33,7 +33,7 @@ The MVP will allow the operator to:
 - View remaining and completed bunks at a glance
 - Review pickup history
 - Close a snack day safely
-- Recover clearly from connection or workbook errors
+- Recover clearly from data-loading errors
 
 ---
 
@@ -72,7 +72,7 @@ Future versions may include:
 - Multi-location support
 - Administrative reporting
 
-The MVP should establish an architecture that supports these future capabilities without requiring major redesign. In particular, the repository pattern in `ARCHITECTURE.md` allows the Google Sheets data store to be replaced later (for example, with Supabase or another database) without rewriting the application's UI or business logic.
+The MVP should establish an architecture that supports these future capabilities without requiring major redesign. In particular, the repository pattern in `ARCHITECTURE.md` allows the JSON-file data store to be replaced later (for example, with browser storage, a small local server, or a real backend) without rewriting the application's UI or business logic.
 
 ---
 
@@ -87,7 +87,7 @@ The MVP has a single authorized user, responsible for the full daily workflow:
 - Initializing and closing snack days
 - Recording, correcting, and reopening bunk pickups
 - Reviewing pickup history
-- Maintaining the Master Roster and Allergies worksheets directly in Google Sheets when rosters change
+- Keeping the roster and special-requirements data (`src/data/*.json`) up to date — manually today; in-app editing screens are planned but not yet built (see `ARCHITECTURE.md`, "Future: Editing Seed Data")
 
 Multi-user accounts and role-based permissions (e.g. separate staff/administrator roles) are explicitly out of scope for the MVP — see `ARCHITECTURE.md`.
 
@@ -95,13 +95,13 @@ Multi-user accounts and role-based permissions (e.g. separate staff/administrato
 
 # Success Criteria
 
-The MVP will be considered successful when the operator can complete an entire snack distribution session using only the application, without directly editing the spreadsheet during normal use.
+The MVP will be considered successful when the operator can complete an entire snack distribution session using only the application, without directly editing the data files during normal use.
 
 Success includes:
 
 - Fast application startup
 - Simple navigation
-- Reliable data synchronization with the workbook
+- Reliable data loading
 - Accurate snack counts
 - Accurate pickup records
 - Easy visibility into dietary substitutions
@@ -115,9 +115,9 @@ The application should:
 
 - Run in mobile browsers on iPhone, iPad, and Android, and as an installed PWA
 - Use a single shared React, Vite, and TypeScript codebase
-- Keep Google Sheets as the authoritative data store
-- Protect the Google Apps Script API for the single authorized operator
-- Preserve historical records (append-only)
+- Keep the bundled JSON files as the authoritative data store for roster/special-requirement data
+- Run entirely client-side, with no backend to protect or deploy
+- Preserve historical records (append-only, once pickup history exists)
 - Scale for future enhancements without requiring a rewrite
 
 ---
@@ -138,15 +138,13 @@ Information that is not immediately useful during snack distribution should be m
 
 Included:
 
-- Workbook schema documentation and validation
-- Google Apps Script backend API
+- JSON data schema documentation and validation
 - Snack day initialization from the Master Roster
 - Pickup recording, correction, and reopening
 - Special requirements visibility
 - Pickup history
 - Daily close workflow
-- Connection/diagnostics visibility
-- Single-operator access protection
+- Data-load diagnostics visibility
 
 Not included:
 
@@ -196,4 +194,4 @@ These documents together define the vision, architecture, implementation roadmap
 
 # Long-Term Vision
 
-The WSD Snack Shack Web Application should evolve into a comprehensive operational platform that enables the Snack Shack to manage distribution quickly, accurately, and confidently while minimizing administrative effort — with room to grow into multi-user accounts and a database-backed system of record if the operational needs of Westchester Summer Day expand beyond a single operator and a spreadsheet.
+The WSD Snack Shack Web Application should evolve into a comprehensive operational platform that enables the Snack Shack to manage distribution quickly, accurately, and confidently while minimizing administrative effort — with room to grow into multi-user accounts and a database-backed system of record if the operational needs of Westchester Summer Day expand beyond a single operator and local JSON files.

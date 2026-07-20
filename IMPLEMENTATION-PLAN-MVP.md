@@ -16,36 +16,42 @@ The MVP will be delivered as a mobile-first Progressive Web Application that wor
 
 # Approved MVP Architecture
 
+**Revised 2026-07-19 — see `ARCHITECTURE.md`'s "Architecture Revision Note" for the full history.** This is the second revision: React Native/Expo/Supabase → React/Vite/Google Sheets+Apps Script → this (React/Vite/JSON files, no backend).
+
 ```text
 React + Vite + TypeScript PWA
             ↓
-Google Apps Script API
-            ↓
-Google Sheets Workbook
+   Bundled JSON files
+(src/data/masterRoster.json,
+ src/data/specialRequirements.json)
 ```
+
+No backend. No network request is made to read operational data.
 
 ## Technology Decisions
 
 - Frontend: React, Vite, TypeScript
 - Routing: React Router
-- Data fetching and caching: TanStack Query
 - Forms and validation: React Hook Form with shared validation utilities
-- Backend: Google Apps Script deployed as a web application
-- Source of truth: Google Sheets
-- Testing: Vitest, React Testing Library, and Apps Script integration tests
-- Deployment: Static web hosting for the PWA and Google Apps Script for the backend
+- Backend: none
+- Source of truth: bundled JSON files (today's pickup status is in-memory only — see `ARCHITECTURE.md`, "Persistence — Current State")
+- Testing: Vitest, React Testing Library
+- Deployment: static web hosting only (no backend to deploy)
 
 ## Explicitly Excluded from the MVP
 
 - Expo
 - React Native
 - Supabase
+- **Google Sheets / Google Apps Script** (excluded as of this revision — see above)
+- **TanStack Query** (nothing to fetch over a network)
 - Native mobile builds
 - App Store or Google Play deployment
 - Multi-user account management
 - Role-based permissions
 - Real-time collaboration
-- Offline synchronization
+- **Multi-device / multi-browser sync** (a direct consequence of local, file/in-memory-only persistence)
+- Offline synchronization (moot — the app has no online dependency)
 - Push notifications
 - Inventory forecasting
 
@@ -53,16 +59,14 @@ Google Sheets Workbook
 
 # Global Implementation Rules
 
-1. Google Sheets is the operational source of truth.
-2. The frontend must never access or edit spreadsheet cells directly.
-3. All spreadsheet operations must pass through the Google Apps Script API.
-4. UI components must not contain spreadsheet-specific logic.
-5. Business services must communicate through a repository interface.
-6. Historical pickup records must be append-only.
-7. Permanent IDs must never be reused.
-8. The application must be optimized for a single operator using a phone or tablet.
-9. Every task must include relevant tests before it is marked complete.
-10. Completed work must not be rewritten unless validation proves that it is incompatible with the approved architecture.
+1. The bundled JSON files (`src/data/*.json`) are the operational source of truth for roster and special-requirement data.
+2. UI components must never import `src/data/*.json` directly — only the repository layer does (see `ARCHITECTURE.md`'s Repository Pattern; tracked as a known gap for `MasterRoster.tsx` until EPIC 4, Task 4.4).
+3. UI components must not contain data-file-specific logic.
+4. Business services must communicate through a repository interface.
+5. Historical pickup records (once they exist) must be append-only.
+6. The application must be optimized for a single operator using a phone or tablet.
+7. Every task must include relevant tests before it is marked complete.
+8. Completed work must not be rewritten unless validation proves that it is incompatible with the approved architecture.
 
 ---
 
@@ -220,7 +224,7 @@ Acceptance criteria:
 
 ---
 
-# EPIC 2 — Workbook Schema and Data Contract
+# EPIC 2 — Data Schema and Contract
 
 ## Status
 
@@ -228,18 +232,21 @@ Acceptance criteria:
 
 ## Objective
 
-Formalize the existing workbook into a stable data source that can support the application without relying on fragile cell positions or spreadsheet formulas.
+Establish stable, well-documented JSON data shapes that support the application without relying on the original spreadsheet's fragile cell positions or a live workbook connection.
 
-Existing worksheets:
+## Revision Note (2026-07-19)
 
-- `Master Roster`
-- `snack shack today`
-- `Allergies`
+This epic originally formalized the Google Sheets workbook as the live data source (Task 2.1), with the rest of the epic building toward an Apps Script-backed schema. The architecture has since dropped Google Sheets/Apps Script entirely (see `ARCHITECTURE.md`) in favor of bundled JSON files. Task 2.1's documentation remains valid and valuable — it directly informed the JSON shapes below — but is now historical context, not a live data contract. Tasks 2.3–2.7 below have been reframed for JSON files; Task 2.3 in particular is no longer needed at all.
 
-Planned worksheets:
+Current data files:
 
-- `Pickup History`
-- `Settings`
+- `src/data/masterRoster.json`
+- `src/data/specialRequirements.json`
+
+Planned (not yet defined — see Task 2.2):
+
+- Pickup history data shape
+- Settings data shape
 
 ---
 
@@ -265,137 +272,108 @@ Acceptance criteria:
 - Every current worksheet and column is documented.
 - No application development proceeds based on undocumented cell positions.
 
+**Historical note:** this task's deliverable (`WORKBOOK-SCHEMA.md`) documents the real Google Sheets workbook, which the application no longer reads. It remains in the repository because it directly informed the JSON data shapes in `src/types/roster.ts` and is useful context for understanding real-world data quality issues (see its "Data-quality issues" notes and `open-questions.md`).
+
 ---
 
 ### Task 2.2 — Define Stable Application Data Models
 
-**Status:** ⬜ Not Started
+**Status:** ⬜ Not Started (partially prototyped — see note)
 
-Define TypeScript data models independent of spreadsheet row layout.
+Define TypeScript data models for the application's JSON data.
 
-Required models:
+Required models (confirmed so far):
 
-- `Bunk`
-- `Counselor`
-- `SpecialRequirement`
-- `SnackDay`
-- `PickupRecord`
-- `PickupHistoryRecord`
-- `AppSettings`
-- `ApiResponse<T>`
+- `MasterRosterEntry` (`bunk`, `counselors`, optional `campers`)
+- `SpecialRequirementEntry` (`bunk`, `requirement`, `quantity`, optional `notes`)
+
+Models not yet needed / not yet defined:
+
+- Pickup status / pickup record (currently in-memory only — see `ARCHITECTURE.md` "Persistence — Current State")
+- Pickup history record
+- App settings
 
 Acceptance criteria:
 
-- Models use permanent IDs rather than row numbers.
-- Models define required and optional fields.
-- Models are shared across frontend services and tests.
+- Models define required and optional fields accurately (no more, no less than the real data needs).
+- Models are shared across pages, services, and tests via a single source (`src/types/`).
+- No model assumes a spreadsheet row number or permanent ID that the JSON files don't actually have.
+
+**Note:** `MasterRosterEntry` and `SpecialRequirementEntry` already exist in `src/types/roster.ts`, built ahead of this formal task as part of an ad hoc mock-data prototype (see `IMPLEMENTATION-LOG-MVP.md`). This task is not being marked complete yet since the remaining models (pickup status/history, settings) haven't been defined — those will happen when their owning epics (6, 8, 10) are reached, following the same "confirm the shape before building on it" discipline, not speculatively now.
 
 ---
 
 ### Task 2.3 — Add Permanent IDs to Master Data
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Add stable IDs to workbook records used by the application.
+This task existed to solve a Google Sheets-specific problem: spreadsheet row numbers are not stable identifiers (rows can be sorted or moved), so a separate permanent ID was needed. JSON files don't have this problem — `bunk` is already a stable, natural key that doesn't shift when the file is edited. No separate ID is needed under the current architecture.
 
-Requirements:
-
-- Add a permanent `bunk_id` to each `Master Roster` row.
-- Add permanent IDs to special requirement rows when individual records need independent updates.
-- Existing spreadsheet display and formulas must continue to work.
-- IDs must not change when rows are sorted or moved.
-
-Acceptance criteria:
-
-- Every bunk has a unique permanent ID.
-- Duplicate or missing IDs are detected.
-- The application never treats a row number as an ID.
+Kept here (rather than deleted) for historical traceability, per this plan's own rule that completed/superseded work should be recorded, not erased.
 
 ---
 
-### Task 2.4 — Create Pickup History Worksheet
+### Task 2.4 — Define Pickup History Data Shape
 
 **Status:** ⬜ Not Started
 
-Create an append-only `Pickup History` worksheet.
+Define the JSON shape for completed pickups, once EPIC 6/8 (Pickup Workflow, History and Daily Close) are reached. Not started now — speculating on this shape before the pickup workflow itself is designed risks getting it wrong.
 
-Required columns:
+Likely fields (subject to change when this task is actually picked up): `bunk`, `snackDate`, `expectedCount`, `actualCount`, `specialRequirementSummary`, `notes`, `pickupTime`.
 
-- `history_id`
-- `snack_date`
-- `bunk_id`
-- `division`
-- `bunk_name`
-- `expected_count`
-- `actual_count`
-- `special_requirement_summary`
-- `notes`
-- `pickup_time`
-- `created_at`
-
-Acceptance criteria:
+Acceptance criteria (unchanged in spirit from the original task):
 
 - Completed pickups can be stored without overwriting prior days.
-- Historical rows are append-only.
-- Each historical record has a unique ID.
+- Historical records are append-only.
+- Each historical record is identifiable (by `bunk` + `snackDate`, or another key decided when this task is picked up).
 
 ---
 
-### Task 2.5 — Create Settings Worksheet
+### Task 2.5 — Define Settings Data Shape
 
 **Status:** ⬜ Not Started
 
-Create a simple key/value `Settings` worksheet for configuration that should not be hard-coded.
-
-Initial settings may include:
-
-- current snack date
-- workbook schema version
-- application display name
-- API token hash or access configuration, if used
-- default expected-count behavior
+Define a simple key/value settings shape for configuration that shouldn't be hard-coded, once a real need for configurable settings appears (see EPIC 10). No API token or backend-access setting is needed under the current architecture — that entire category from the original task no longer applies.
 
 Acceptance criteria:
 
-- Settings can be read through the backend API.
-- Missing required settings produce a controlled error.
+- Settings can be read by the application.
+- Missing required settings produce a controlled error, not a silent default that masks a real problem.
 
 ---
 
-### Task 2.6 — Define Workbook Validation Rules
+### Task 2.6 — Define Data Validation Rules
 
 **Status:** ⬜ Not Started
 
-Create validation rules for workbook structure and data quality.
+Create validation rules for the JSON data files' structure and data quality.
 
 Validation must detect:
 
-- missing worksheets
-- missing required columns
-- duplicate IDs
-- invalid numeric values
-- blank required fields
-- duplicate active pickup rows
-- malformed special requirement quantities
+- Missing required fields
+- Invalid `requirement` values (outside the seven defined types)
+- Invalid numeric values (e.g. negative `quantity` or `campers`)
+- A `specialRequirements.json` entry whose `bunk` doesn't exist in `masterRoster.json`
+- Duplicate bunks in `masterRoster.json`
 
 Acceptance criteria:
 
-- Validation results identify the worksheet, row, and problem.
-- Invalid workbook structure blocks unsafe writes.
+- Validation results identify the file, record, and problem clearly.
+- Invalid data is caught at load time with a clear error, not a silent partial render.
 
 ---
 
-### Task 2.7 — Build Workbook Schema Tests
+### Task 2.7 — Build Data Schema Tests
 
 **Status:** ⬜ Not Started
 
-Create automated tests or repeatable validation scripts using a representative workbook fixture.
+Create automated tests using representative JSON fixtures (valid and deliberately invalid).
 
 Acceptance criteria:
 
-- Valid workbook fixtures pass.
-- Missing-column and duplicate-ID fixtures fail predictably.
-- Tests do not modify the production workbook.
+- Valid fixtures pass validation.
+- Fixtures with missing fields, invalid `requirement` values, or orphaned `bunk` references fail predictably, with a clear message identifying what's wrong.
+- Tests use fixture data, never the real mock data files, so fixture edits for edge-case testing don't disturb the app's actual mock data.
 
 ---
 
@@ -403,205 +381,21 @@ Acceptance criteria:
 
 ## Status
 
-⬜ Not Started
+**Not Applicable — removed by the architecture revision (2026-07-19)**
 
-## Objective
+## Objective (original, no longer pursued)
 
 Create a controlled backend API that is the only component permitted to read from or write to the Snack Shack workbook.
 
----
+## Why this epic no longer applies
 
-### Task 3.1 — Create Google Apps Script Project
+`ARCHITECTURE.md` was revised to remove the Google Sheets/Apps Script backend entirely — the application now reads bundled JSON files directly, with no server of any kind (see `ARCHITECTURE.md`'s "Architecture Revision Note"). All eight of this epic's original tasks (Apps Script project setup, API execution contract, routing, workbook access layer, access protection, write locking, backend logging, Apps Script tests) depended on a backend that no longer exists.
 
-**Status:** ⬜ Not Started
-
-Create an Apps Script project linked to or configured for the Snack Shack workbook.
-
-Requirements:
-
-- Store workbook and worksheet names in configuration.
-- Separate request routing, business logic, workbook access, validation, and response formatting.
-- Do not place all logic in a single script function.
-
-Acceptance criteria:
-
-- The project can read workbook metadata.
-- A test function confirms access to required worksheets.
+This epic is kept in the plan, marked Not Applicable, rather than deleted — per this plan's own principle that completed or superseded work should be recorded, not erased (see Task 2.3 for the same treatment applied to a single task). Nothing here was ever built; no work is lost by this change. Full original task text remains available in git history (see the commit that introduced this revision) if ever needed for reference.
 
 ---
 
-### Task 3.2 — Define the API Execution Contract
-
-**Status:** ⬜ Not Started
-
-Define a stable request and response contract.
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-Failure response:
-
-```json
-{
-  "success": false,
-  "message": "User-friendly message",
-  "errorCode": "STABLE_ERROR_CODE",
-  "details": {}
-}
-```
-
-Requirements:
-
-- Every endpoint returns JSON.
-- Error codes remain stable for frontend handling.
-- Internal stack traces are not returned to the browser.
-
-Acceptance criteria:
-
-- Shared response helpers are implemented.
-- Invalid requests return controlled errors.
-
----
-
-### Task 3.3 — Implement API Routing
-
-**Status:** ⬜ Not Started
-
-Implement `doGet` and `doPost` routing using explicit actions.
-
-Required read actions:
-
-- `health`
-- `getWorkbookStatus`
-- `getRoster`
-- `getToday`
-- `getSpecialRequirements`
-- `getPickupHistory`
-- `getSettings`
-
-Required write actions:
-
-- `initializeSnackDay`
-- `completePickup`
-- `updatePickup`
-- `reopenPickup`
-- `closeSnackDay`
-
-Acceptance criteria:
-
-- Unknown actions return `UNKNOWN_ACTION`.
-- Read and write operations are routed to separate service functions.
-
----
-
-### Task 3.4 — Implement Workbook Access Layer
-
-**Status:** ⬜ Not Started
-
-Build reusable helpers for locating worksheets, reading header-based rows, writing values, appending history, and validating headers.
-
-Requirements:
-
-- Column access must use header names, not fixed column indexes in business logic.
-- Worksheet names must be centralized.
-- Writes must be limited to intended columns.
-
-Acceptance criteria:
-
-- Reordering columns does not break business logic when headers remain unchanged.
-- Missing headers produce controlled errors.
-
----
-
-### Task 3.5 — Implement API Access Protection
-
-**Status:** ⬜ Not Started
-
-Protect the Apps Script API for the single authorized operator.
-
-Allowed MVP approaches:
-
-- restricted Google account execution, where compatible with the frontend flow
-- a private application token validated by Apps Script
-- another simple mechanism documented and approved before implementation
-
-Requirements:
-
-- Secrets must not be committed to GitHub.
-- Unauthorized write requests must be rejected.
-- The security approach must remain practical for one user.
-
-Acceptance criteria:
-
-- Authorized requests succeed.
-- Unauthorized requests fail with a controlled error.
-- Deployment instructions explain how access is configured.
-
----
-
-### Task 3.6 — Add Write Locking and Idempotency
-
-**Status:** ⬜ Not Started
-
-Prevent accidental duplicate writes caused by double taps, retries, or concurrent requests.
-
-Requirements:
-
-- Use Apps Script locking for write operations.
-- Accept an operation/request ID for pickup mutations.
-- Detect repeated completion requests.
-- Do not append duplicate history records.
-
-Acceptance criteria:
-
-- Repeating the same request does not create duplicate pickup history.
-- Simultaneous write attempts are handled safely.
-
----
-
-### Task 3.7 — Add Backend Logging
-
-**Status:** ⬜ Not Started
-
-Log meaningful backend operations and failures.
-
-Log fields should include:
-
-- timestamp
-- action
-- request ID
-- bunk ID when relevant
-- success or failure
-- error code
-
-Acceptance criteria:
-
-- Write operations are traceable.
-- Logs do not expose secrets.
-
----
-
-### Task 3.8 — Build Apps Script Tests
-
-**Status:** ⬜ Not Started
-
-Create tests for routing, validation, workbook mapping, authorization, duplicate prevention, and error responses.
-
-Acceptance criteria:
-
-- Core read and write services are covered.
-- Tests use a non-production workbook or controlled test fixtures.
-- Production data is never modified by automated tests.
-
----
-
-# EPIC 4 — Frontend API and Repository Integration
+# EPIC 4 — Data Repository Integration
 
 ## Status
 
@@ -609,47 +403,27 @@ Acceptance criteria:
 
 ## Objective
 
-Connect the React application to the Apps Script backend through a repository abstraction while keeping UI code independent of the workbook.
+Route all JSON data access through a repository abstraction, so pages and components never read `src/data/*.json` directly. Originally scoped as "connect the React app to the Apps Script backend" — rewritten since there's no backend to connect to (see `ARCHITECTURE.md`'s "Architecture Revision Note").
+
+## Known gap (as of this revision)
+
+`MasterRoster.tsx` currently imports `src/data/masterRoster.json` and `specialRequirements.json` **directly**, bypassing the repository pattern entirely — a real, acknowledged violation of `ARCHITECTURE.md`'s "UI never imports the JSON data files directly" rule. This happened because that page was built as an ad hoc mock-data prototype (see `IMPLEMENTATION-LOG-MVP.md`) before this epic — and therefore the repository layer — existed. Fixing it is explicitly part of Task 4.4 below, not a separate cleanup task.
 
 ---
 
 ### Task 4.1 — Create Environment Configuration
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Create validated environment configuration for the Apps Script URL and approved access credentials.
-
-Requirements:
-
-- Provide `.env.example`.
-- Do not commit secrets.
-- Fail clearly when required configuration is absent.
-
-Acceptance criteria:
-
-- Local development can connect to the test backend.
-- Production builds receive configuration through deployment settings.
+Existed to configure the Apps Script URL and access credentials. No backend, no URL, no credentials exist under the current architecture. Kept here, marked Not Applicable, per this plan's own practice of recording superseded work rather than deleting it.
 
 ---
 
 ### Task 4.2 — Implement API Client
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Create a shared HTTP client for Apps Script requests.
-
-Requirements:
-
-- JSON request and response handling
-- timeout behavior
-- controlled retries for safe read requests
-- error-code mapping
-- request IDs for write operations
-
-Acceptance criteria:
-
-- Network errors are normalized.
-- Backend errors are not displayed as raw technical messages.
+Existed to provide a shared HTTP client for Apps Script requests. There are no network requests to make.
 
 ---
 
@@ -657,93 +431,80 @@ Acceptance criteria:
 
 **Status:** ⬜ Not Started
 
-Define a repository interface used by business services.
+Define a repository interface used by business services and pages, matching `ARCHITECTURE.md`'s Repository Pattern section.
 
-Required methods:
+Required methods (revised from the original Apps Script-oriented list):
 
 ```text
-getWorkbookStatus()
 getRoster()
-getToday()
-getSpecialRequirements()
-getPickupHistory()
-getSettings()
-initializeSnackDay()
-completePickup()
-updatePickup()
-reopenPickup()
-closeSnackDay()
+getSpecialRequirementsForBunk(bunk)
 ```
+
+Not yet included (deferred until their owning epics define the underlying data shape — see EPIC 2, Task 2.2's note): `getToday()`/pickup-status methods, `getHistory()`, settings methods. Adding them speculatively now, ahead of the workflows that need them, risks guessing the interface wrong.
 
 Acceptance criteria:
 
-- Services depend on the interface rather than Apps Script details.
-- A mock repository can be used in tests.
+- Services and pages depend on the interface, not on `src/data/*.json` file paths.
+- A mock/fixture-backed repository can be used in tests without touching the real mock data files.
 
 ---
 
-### Task 4.4 — Implement Google Apps Script Repository
+### Task 4.4 — Implement JSON Data Repository
 
 **Status:** ⬜ Not Started
 
-Implement the repository using the shared API client.
+Implement the repository interface from Task 4.3, reading from `src/data/masterRoster.json` and `src/data/specialRequirements.json`.
+
+Requirements:
+
+- **Update `MasterRoster.tsx` to use the repository instead of importing the JSON files directly** — this task is what actually closes the "known gap" noted above.
+- Malformed or missing data produces a controlled error (see `ARCHITECTURE.md`'s Error Handling section), not a silent empty render or an uncaught exception.
 
 Acceptance criteria:
 
-- API payloads are mapped into application models.
-- Spreadsheet row shapes are not exposed to components.
-- Invalid payloads are rejected before reaching the UI.
+- No page or component imports `src/data/*.json` directly — only the repository does.
+- Invalid data is rejected before reaching the UI, with a clear error.
 
 ---
 
 ### Task 4.5 — Configure TanStack Query
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Configure query keys, caching, invalidation, loading states, and mutation behavior.
-
-Requirements:
-
-- Read data may be cached briefly.
-- Successful pickup writes invalidate Today and History queries.
-- Write mutations must not be blindly retried.
-
-Acceptance criteria:
-
-- Screens receive consistent loading and error states.
-- Stale data refreshes after writes.
+Existed to manage caching/invalidation for network-fetched data. JSON file reads are synchronous and local; there is nothing to cache or invalidate over a network.
 
 ---
 
-### Task 4.6 — Build Connection Diagnostics Screen
+### Task 4.6 — Build Data Diagnostics Screen
 
 **Status:** ⬜ Not Started
 
-Create a simple diagnostics view accessible from Settings.
+Create a simple diagnostics view accessible from Settings, reframed from "connection diagnostics" (there's no connection) to data-load diagnostics.
 
 Display:
 
-- frontend version
-- backend connectivity
-- workbook availability
-- schema validation result
-- last successful refresh
+- Frontend version
+- Whether the roster/special-requirements data loaded and parsed successfully
+- Schema validation result (once Task 2.6/2.7 exist)
+- Record counts (bunks loaded, special requirement entries loaded)
 
 Acceptance criteria:
 
-- The operator can distinguish a browser problem, backend problem, and workbook problem.
-- No secrets are displayed.
+- The operator can tell whether the app's data loaded correctly, distinct from any other kind of problem.
+- No secrets are displayed (moot today, but keeping the principle for whenever settings/config exist).
 
 ---
 
-### Task 4.7 — Build Repository and API Client Tests
+### Task 4.7 — Build Repository Tests
 
 **Status:** ⬜ Not Started
 
+Reframed from "Repository and API Client Tests" — there is no API client to test.
+
 Acceptance criteria:
 
-- Success, failure, malformed-response, timeout, and unauthorized cases are tested.
-- Component tests can use a mock repository without calling Apps Script.
+- Success, malformed-data, and missing-data cases are tested against the repository.
+- Component tests use a mock/fixture-backed repository, never the real `src/data/*.json` mock data, so tests don't silently depend on — or accidentally validate against — data that's meant for local development display.
 
 ---
 
@@ -765,15 +526,13 @@ Create the primary mobile screen that replaces the `snack shack today` paper or 
 
 Design the screen for fast one-handed or tablet use.
 
-Each bunk row or card must show:
+Each bunk row or card must show (revised to match the confirmed data model in `ARCHITECTURE.md` — no `division` field exists in the current roster data):
 
-- division
-- bunk name
-- expected camper count
+- bunk code
+- camper count (optional — may be blank)
 - pickup status
 - special requirement indicator
-- notes indicator
-- pickup time when completed
+- pickup time when completed (once pickup persistence beyond in-memory state is decided — see `ARCHITECTURE.md`, "Persistence — Current State")
 
 Acceptance criteria:
 
@@ -814,8 +573,7 @@ Required states:
 - empty or not initialized
 - active day
 - closed day
-- API error
-- workbook validation error
+- data load error (malformed or missing JSON — see `ARCHITECTURE.md`'s Error Handling section)
 
 Acceptance criteria:
 
@@ -1130,14 +888,12 @@ Acceptance criteria:
 
 **Status:** ⬜ Not Started
 
-For the MVP, choose one of the following and document the decision:
+**Decision already confirmed by the user (2026-07-19, ahead of this task formally starting):** the MVP will eventually have in-app editing screens for the roster and special-requirements seed data — e.g., removing a special requirement. This was stated directly while discussing the architecture revision, not decided as part of executing this task. See `ARCHITECTURE.md`'s "Future: Editing Seed Data" — the actual write-back mechanism (small local server vs. manual export/import) is still undecided and will be chosen when this task is actually picked up, not speculated on now.
 
-- read-only in the application, maintained directly in Google Sheets
+Original MVP choice this task posed (superseded by the above, kept for context):
+
+- read-only in the application, maintained directly in the JSON files by hand
 - editable through a controlled Settings or Requirements form
-
-Recommended MVP approach:
-
-- begin read-only unless daily operations require app-based editing
 
 Acceptance criteria:
 
@@ -1350,13 +1106,13 @@ Acceptance criteria:
 
 **Status:** ⬜ Not Started
 
-Use local browser storage only for:
+Use local browser storage for:
 
-- unsaved pickup count and notes
+- unsaved pickup count and notes (in progress, not yet completed)
 - operator preferences
 - last selected filters
 
-Google Sheets remains the source of truth.
+**Note (2026-07-19):** under the current architecture, committed pickup status itself is *also* only in-memory application state, not persisted anywhere yet (see `ARCHITECTURE.md`, "Persistence — Current State") — so this task's original framing ("drafts in local storage, Google Sheets is the source of truth for the real thing") no longer quite applies. This task may need to be reconsidered alongside whatever task ends up giving pickup status real persistence, rather than executed exactly as originally written.
 
 Acceptance criteria:
 
@@ -1369,17 +1125,17 @@ Acceptance criteria:
 
 **Status:** ⬜ Not Started
 
-Document:
+Document, for the JSON-file architecture:
 
-- Google Sheets version history usage
-- periodic workbook copy procedure
-- Apps Script version/deployment rollback
-- frontend deployment rollback
-- recovery after accidental workbook structure changes
+- Git history as the primary backup/version-history mechanism for `src/data/*.json` (replaces Google Sheets version history)
+- Recovery after accidental data-file corruption (revert via git, or restore from a manual backup copy)
+- Frontend deployment rollback (unchanged in spirit — still just a static-site redeploy)
+
+No Apps Script or backend rollback procedure is needed — there is nothing deployed server-side.
 
 Acceptance criteria:
 
-- A non-developer can follow the basic workbook recovery steps.
+- A non-developer can follow the basic data-file recovery steps.
 - Production deployment versions are traceable.
 
 ---
@@ -1411,8 +1167,7 @@ Provide the single operator with basic configuration and diagnostic tools withou
 Display:
 
 - application version
-- active backend environment
-- workbook connection status
+- data load status (see EPIC 4, Task 4.6 — no "backend environment" or "connection status" applies without a backend)
 - current snack date
 - last refresh time
 - PWA installation guidance
@@ -1420,7 +1175,7 @@ Display:
 Acceptance criteria:
 
 - Settings are readable on phone and tablet.
-- Secrets and full access tokens are never displayed.
+- Secrets and full access tokens are never displayed (moot today with no backend, kept as a standing principle).
 
 ---
 
@@ -1441,21 +1196,21 @@ Acceptance criteria:
 
 ---
 
-### Task 10.3 — Add Workbook Validation Display
+### Task 10.3 — Add Data Validation Display
 
 **Status:** ⬜ Not Started
 
-Show current workbook health:
+Reframed from "Workbook Validation Display." Show current data health, per the validation rules defined in EPIC 2, Task 2.6:
 
-- required worksheets present
+- required data files loaded
 - schema version
-- missing columns
-- duplicate IDs
-- invalid records
+- missing required fields
+- duplicate bunks
+- invalid records (e.g. orphaned `bunk` references, invalid `requirement` values)
 
 Acceptance criteria:
 
-- Operator receives a clear instruction when the workbook needs correction.
+- Operator receives a clear instruction when the data needs correction.
 - The screen does not expose unnecessary technical internals.
 
 ---
@@ -1467,7 +1222,7 @@ Acceptance criteria:
 Actions may include:
 
 - refresh all data
-- revalidate workbook
+- revalidate data
 - reload active snack day
 
 Acceptance criteria:
@@ -1497,22 +1252,23 @@ Validate the complete daily workflow with realistic Snack Shack data before prod
 
 ---
 
-### Task 11.1 — Create Representative Test Workbook
+### Task 11.1 — Create Representative Test Data Files
 
 **Status:** ⬜ Not Started
 
+Reframed from "Test Workbook" — JSON fixture files, not a spreadsheet.
+
 Include:
 
-- multiple divisions
-- multiple bunks
-- special requirements
-- blank optional values
+- multiple bunks (no `division` field — not part of the current data model)
+- special requirements covering all seven requirement types
+- blank optional values (`campers`, `notes`)
 - at least one invalid record for validation testing
 - completed and pending pickup examples
 
 Acceptance criteria:
 
-- Testing never depends on the production workbook.
+- Testing never depends on the real mock data files (`src/data/*.json`) used for local development display.
 - Test data represents realistic workflow conditions.
 
 ---
@@ -1523,7 +1279,7 @@ Acceptance criteria:
 
 Test:
 
-1. Connect to workbook.
+1. Load data files.
 2. Validate schema.
 3. Initialize snack day.
 4. Review special requirements.
@@ -1536,8 +1292,8 @@ Test:
 
 Acceptance criteria:
 
-- No manual spreadsheet editing is required during the normal workflow.
-- Data remains consistent across Today, History, and workbook views.
+- No manual data-file editing is required during the normal workflow.
+- Data remains consistent across Today, History, and data views.
 
 ---
 
@@ -1586,12 +1342,11 @@ Acceptance criteria:
 
 Verify:
 
-- no secrets are committed
-- unauthorized writes are rejected
+- no secrets are committed (moot today with no backend, kept as a standing check)
 - duplicate pickup writes are prevented
-- IDs are stable
+- bunk codes are stable and unique
 - history is preserved
-- production workbook is backed up
+- production data files are backed up (git history — see EPIC 9, Task 9.6)
 
 Acceptance criteria:
 
@@ -1613,7 +1368,7 @@ The MVP is acceptable when:
 - day can be closed safely
 - app works on supported mobile browsers
 - failures provide clear recovery instructions
-- workbook remains the source of truth
+- the JSON data files remain the source of truth
 
 ---
 
@@ -1625,44 +1380,23 @@ The MVP is acceptable when:
 
 ## Objective
 
-Deploy the PWA and Apps Script backend safely and provide enough documentation for ongoing use and recovery.
+Deploy the PWA safely and provide enough documentation for ongoing use and recovery. Originally "Deploy the PWA and Apps Script backend" — there is no backend to deploy under the current architecture.
 
 ---
 
 ### Task 12.1 — Prepare Production Google Sheets Workbook
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Requirements:
-
-- back up the original workbook
-- apply approved IDs and worksheets
-- validate schema
-- confirm sharing and ownership settings
-- remove test data
-
-Acceptance criteria:
-
-- Production workbook passes all validation rules.
-- A recoverable pre-deployment copy exists.
+No Google Sheets workbook exists under the current architecture. Kept here, marked Not Applicable, per this plan's practice of recording superseded work rather than deleting it. The equivalent concern — getting real, correct data into `src/data/*.json` for production use — is not yet a scoped task; it depends on decisions still open in `open-questions.md` and the "Future: Editing Seed Data" section of `ARCHITECTURE.md`.
 
 ---
 
 ### Task 12.2 — Deploy Production Apps Script API
 
-**Status:** ⬜ Not Started
+**Status:** Not Applicable — superseded by the architecture revision
 
-Requirements:
-
-- create versioned production deployment
-- configure approved access protection
-- confirm production workbook connection
-- record deployment URL securely
-
-Acceptance criteria:
-
-- Production health and workbook-status calls succeed.
-- Unauthorized access tests fail.
+No Apps Script, no backend, nothing to deploy server-side.
 
 ---
 
@@ -1675,7 +1409,6 @@ Deploy the built frontend to the approved static hosting service.
 Requirements:
 
 - HTTPS
-- production environment configuration
 - stable URL
 - mobile manifest and icons
 - rollback capability
@@ -1683,7 +1416,6 @@ Requirements:
 Acceptance criteria:
 
 - Production application loads on supported devices.
-- Application connects only to the production backend.
 
 ---
 
@@ -1694,8 +1426,7 @@ Acceptance criteria:
 Verify:
 
 - application opens
-- backend health succeeds
-- workbook validates
+- data loads and validates
 - Today screen loads
 - one controlled test pickup can be completed and removed or clearly marked as test data according to the approved procedure
 
@@ -1734,13 +1465,13 @@ Document:
 
 - repository and branch
 - local setup
-- environment variables
-- Apps Script deployment process
 - frontend deployment process
-- workbook schema
-- backup and restore
+- data schema (`src/types/roster.ts`, `WORKBOOK-SCHEMA.md` for historical context)
+- backup and restore (git history for `src/data/*.json` — see EPIC 9, Task 9.6)
 - rollback
 - common error codes
+
+No environment variables or Apps Script deployment process exist to document.
 
 Acceptance criteria:
 
@@ -1771,16 +1502,16 @@ Acceptance criteria:
 
 The WSD Snack Shack MVP is complete when one authorized operator can use a mobile browser or installed PWA to:
 
-1. Connect to the approved Google Sheets workbook.
-2. Validate the workbook structure.
+1. Load the approved roster and special-requirements data.
+2. Validate the data structure.
 3. Initialize the current snack day from the Master Roster.
-4. See all bunks, expected counts, notes, and special requirements.
+4. See all bunks, camper counts, and special requirements.
 5. Complete pickups with actual counts and timestamps.
 6. Correct or reopen a pickup without losing the historical trail.
 7. Review current progress and prior pickup history.
 8. Close a snack day safely.
-9. Recover clearly from common connection and workbook errors.
-10. Operate the workflow without directly editing the spreadsheet during normal use.
+9. Recover clearly from common data-loading errors.
+10. Operate the workflow without directly editing the data files during normal use.
 
 ---
 
@@ -1790,11 +1521,11 @@ Proceed one task at a time in this order:
 
 1. Complete EPIC 1.
 2. Complete EPIC 2.
-3. Complete EPIC 3.
+3. ~~Complete EPIC 3.~~ Skip — Not Applicable as of the 2026-07-19 architecture revision (no backend).
 4. Complete EPIC 4.
 5. Build the Today and Pickup workflows in EPIC 5 and EPIC 6.
 6. Add Special Requirements and History in EPIC 7 and EPIC 8.
 7. Add reliability and settings in EPIC 9 and EPIC 10.
-8. Complete user acceptance, deployment, and handoff in EPIC 11 and EPIC 12.
+8. Complete user acceptance, deployment, and handoff in EPIC 11 and EPIC 12 (Tasks 12.1 and 12.2 are also Not Applicable — skip to 12.3).
 
 Do not begin a later Epic when a required dependency in an earlier Epic remains incomplete unless the exception is documented and approved.

@@ -10,11 +10,11 @@ wsd-snack-shack
 
 ## Current Epic
 
-EPIC 2 — Workbook Schema and Data Contract
+EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 2.2 — Define Stable Application Data Models
+Task 2.2 — Define Stable Application Data Models (partially prototyped — see the second architecture revision entry below)
 
 ---
 
@@ -313,6 +313,80 @@ Generated `public/data/workbook-snapshot.json` from the workbook export (same th
 **Notes / Deviations**
 
 - Real people's names (counselors) are visible in the live app now, in this development environment, sourced from a gitignored local file. This is fine for local development review — the same handling as opening the spreadsheet directly — but worth remembering this isn't something to screenshot/share externally without the same care as the source spreadsheet itself.
+
+---
+
+### Ad hoc: Add `open-questions.md` as a central decision tracker
+
+**Date:** 2026-07-19
+**Status:** Done — not a numbered plan task.
+
+**Summary**
+
+Created `open-questions.md` consolidating the four open questions from `WORKBOOK-SCHEMA.md`'s "Open Questions for the Operator" section into one project-wide, non-workbook-specific tracker (Open/Resolved sections, so answered questions stay traceable rather than being deleted). `WORKBOOK-SCHEMA.md` now points to it instead of duplicating the list. Added to `README-MVP.md`'s Project Documentation list.
+
+*(Retroactively logged — this was committed at the time but the log entry was missed; added now while reconstructing the record before the architecture pivot below.)*
+
+---
+
+### Ad hoc: Mock data (JSON) and Master Roster screen with requirements popup
+
+**Date:** 2026-07-19
+**Status:** Done — not a numbered plan task, done at the user's direct request.
+
+**Summary**
+
+The user gave an exact data spec for two entities — Master Roster (`Bunk`, `Counselors`, optional `# of Campers`) and Special Requirements (`Bunk`, `Requirement`, `Quantity`, `Notes`, zero-to-many per bunk, seven possible `Requirement` values) — and asked for mock data plus a screen showing bunks where clicking one pops up its special requirements.
+
+Built:
+- `src/types/roster.ts` — `MasterRosterEntry`, `SpecialRequirementEntry`, `RequirementType` (the first two are the models referenced by EPIC 2 Task 2.2, below).
+- `src/data/masterRoster.json`, `src/data/specialRequirements.json` — real bunk codes from `WORKBOOK-SCHEMA.md` (structural, not personal data) with **entirely fictional** counselor names, generated fresh rather than reusing real ones — safe to commit normally, unlike the gitignored real workbook snapshot from the prior ad hoc entry.
+- `src/components/Modal.tsx` — accessible (`role="dialog"`, `aria-modal`, Escape/backdrop/close-button dismissal, focus management), light notepad visual treatment.
+- Rebuilt `MasterRoster.tsx` to render the roster as a table with clickable bunk buttons opening the modal.
+- Added `resolveJsonModule` to `tsconfig.app.json` for typed JSON imports (wasn't needed before this).
+- 10 new tests (`Modal` ×4, `MasterRoster` ×4, existing suite unaffected — 33 total passing).
+- Verified via Playwright screenshots: bunk `K3` shows all 3 requirements (matching the user's own worked example — 2× No Dairy, 1× Cholov Yisroel, 1× Gluten Free), bunk `PN3` shows the correct empty state.
+
+**Note:** this directly overlapped with and superseded the *previous* ad hoc entry's `MasterRoster` page content (the real-Google-Sheets-snapshot visualization) — both are logged in full since both were genuinely built and verified in sequence, not because the later one was known to replace the earlier one at the time.
+
+*(Retroactively logged — committed at the time but the log entry was missed; added now while reconstructing the record before the architecture pivot below.)*
+
+---
+
+## Architecture Pivot #2 — 2026-07-19: JSON files, no backend
+
+**Decision:** Immediately after seeing the mock-data Master Roster prototype above working, the user requested a second architecture simplification: remove Google Sheets and Google Apps Script entirely. The application now reads bundled JSON files directly, with **no backend of any kind**.
+
+**How this was reached** (worth recording — it took real back-and-forth to land correctly, not a single clean instruction):
+
+1. User: "instead of google sheets, we are going to just use json... files," with an exact spec for the two entities and a request to prototype a Master Roster screen with a click-to-popup requirements view. Built as the ad hoc entry immediately above.
+2. User asked to update `ARCHITECTURE.md`/`IMPLEMENTATION-PLAN-MVP.md` to match. Before doing the full rewrite, asked a clarifying question about how day-to-day changes (e.g. marking a pickup complete) would actually be *saved* — "just use JSON files" doesn't answer that on its own. User chose "browser storage only" (no server).
+3. Began drafting `ARCHITECTURE.md` around a `localStorage`-backed repository — then the user stopped this mid-draft: **"wait - there srill needs to be files (json?)."** The browser-storage design would have meant the actual `.json` files stopped mattering after the very first load, which wasn't what they meant by "files."
+4. Asked a follow-up multiple-choice question about this; the user rejected it as overcomplicating something simple, and explained directly instead: **the JSON files are read fresh on an ongoing basis (not a one-time seed)**; the *only* thing that changes day-to-day right now is per-bunk pickup status (pending/processed), and that can live in plain React application memory for now, explicitly described as something that "might change later"; and there will eventually be in-app screens to edit the seed data itself (e.g. removing a special requirement) — but that's future work, not to be architected in detail now.
+
+This sequence is recorded in this much detail because steps 2–3 represent a real overcorrection on the assistant's part (jumping to a `localStorage`-repository design) that the user had to explicitly interrupt and redirect — worth remembering: when "just use files" is said, don't assume a persistence mechanism that makes the files stop being the files.
+
+**What changed:**
+
+- `ARCHITECTURE.md`: fully rewritten. No backend section (removed entirely). Data store is the bundled JSON files, read directly (not through `localStorage`). New "Persistence — Current State" section explicitly documents that pickup status is in-memory-only today. New "Future: Editing Seed Data" section explicitly declines to architect the write-back mechanism speculatively. New "Architecture Revision Note" recording this as the *second* revision (after Expo/RN/Supabase → Sheets/Apps-Script → this).
+- `IMPLEMENTATION-PLAN-MVP.md`: extensive rework, epic by epic:
+  - Header ("Approved MVP Architecture", "Technology Decisions", "Global Implementation Rules") rewritten for the new stack.
+  - **EPIC 2** renamed "Data Schema and Contract" (from "Workbook Schema and Data Contract"). Task 2.1 kept complete with a historical-context note. Task 2.2 explicitly *not* marked complete despite `MasterRosterEntry`/`SpecialRequirementEntry` already existing — the remaining models (pickup status/history, settings) haven't been defined, and won't be until their owning epics are reached. **Task 2.3 (permanent IDs) marked Not Applicable** — `bunk` is already a stable natural key in JSON; the row-position problem it solved was Google-Sheets-specific. Tasks 2.4–2.7 reframed from "worksheet" to "JSON data shape" language.
+  - **EPIC 3 (Google Apps Script Backend Foundation) marked Not Applicable in its entirety** — all eight original tasks depended on a backend that no longer exists. Full original task text was replaced with a short explanation rather than kept verbatim (unlike the lighter-touch treatment given to individual Not-Applicable tasks elsewhere) since none of it could possibly still apply; the original text remains in git history if ever needed.
+  - **EPIC 4** renamed "Data Repository Integration" (from "Frontend API and Repository Integration"). Explicitly documents a **known, real architecture-rule violation**: `MasterRoster.tsx` currently imports the JSON files directly, bypassing the repository pattern the rest of the document requires — because it was built as an ad hoc prototype before this epic (and therefore the repository layer) existed. Fixing it is scoped as part of Task 4.4, not a separate cleanup task. Tasks 4.1 (env config), 4.2 (API client), and 4.5 (TanStack Query) marked Not Applicable. Task 4.3's interface trimmed to only the two methods actually backed by a defined data shape today (`getRoster()`, `getSpecialRequirementsForBunk()`) rather than speculatively including pickup/history/settings methods.
+  - **EPICs 5–12**: lighter-touch pass — fixed specific Apps-Script/Sheets/workbook/API references in not-yet-started tasks (these will actually be executed under this architecture, so needed to be accurate) without re-deriving every task from scratch. Notable fixes: Task 5.1's required Today-card fields corrected to drop `division` (not part of the actual data model) and generally match the real roster shape; Task 7.5 (special-requirement editing) updated to record that the user already confirmed intent for in-app editing screens, ahead of that task formally starting; Tasks 9.5/9.6 (draft preservation, backup/restore) reframed around git history instead of Google Sheets version history; Tasks 10.1/10.3/10.4 (Settings screen, data validation display) reframed from "workbook"/"backend connectivity" to "data load status"; Tasks 11.1/11.2 (test workbook, full workflow test) reframed around JSON fixture files; **EPIC 12 Tasks 12.1 and 12.2 (prepare production Sheets workbook, deploy production Apps Script) marked Not Applicable**, matching the EPIC 3 treatment; Task 12.6 (technical runbook) no longer references environment variables or an Apps Script deployment process, since neither exists. "MVP Completion Definition" and "Recommended Execution Order" sections updated to match (the latter now explicitly notes EPIC 3 and part of EPIC 12 are skipped).
+  - Tasks that were already **✅ Complete** under the previous (Sheets/Apps-Script) revision — Task 1.7 in particular, whose acceptance criteria literally says "Documentation reflects... Google Apps Script, and Google Sheets" — were **deliberately left unedited**. That criterion was true when the task was completed under the architecture active at the time; rewriting completed task text to match a later architecture revision would be rewriting history, not correcting an error. This mirrors how the *first* architecture pivot handled the retired Expo/React Native track's already-completed task log entries.
+- `README-MVP.md`: every Google Sheets/Apps Script mention updated to describe the JSON-file, no-backend architecture (Project Overview, MVP Goals, Product Vision, Intended User, Success Criteria, Technical Objectives, MVP Scope, Long-Term Vision). "Single-operator access protection" removed from MVP Scope's "Included" list, since there is genuinely no access-protection layer without a backend to protect (`ARCHITECTURE.md`'s Authentication section is now simply "None").
+
+**Verification**
+
+- `npm run verify` — 33/33 tests, lint and typecheck clean (sanity check; this pivot's changes were documentation-only, no application code touched).
+- Grepped `README-MVP.md`, `ARCHITECTURE.md`, and `IMPLEMENTATION-PLAN-MVP.md` for every remaining "Apps Script" / "Google Sheets" / "workbook" / "spreadsheet" / "TanStack" mention after the rewrite and reviewed each one in context — confirmed the ones left in place are either describing what the app *replaces* (the camp's old manual process, which doesn't change with our tech stack), explicitly historical/retired-track content, or `WORKBOOK-SCHEMA.md`'s own still-valid documentation of the real spreadsheet.
+
+**Notes / Deviations**
+
+- This document (`IMPLEMENTATION-LOG-MVP.md`) is not being restructured into a third "track" section (mirroring "Active Track" / "Retired Track" from the first pivot) — the JSON-file architecture is a *revision* of the same active track, not a parallel retired one, since (unlike the Expo/RN/Supabase work) nothing built under the Sheets/Apps-Script revision was ever actually implemented as real, working code — it was still all just planning documents. There is no retired *code* to segregate this time, only retired *plan text*, which is handled inline (Not Applicable markers) rather than with a whole new section.
+- Two log entries (`open-questions.md`, mock data/Modal) were found missing and retroactively added in this same session, immediately above this entry, before writing this one — see their entries for the note explaining why.
 
 ---
 
