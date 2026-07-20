@@ -504,7 +504,7 @@ Existed to manage caching/invalidation for network-fetched data. JSON file reads
 
 ### Task 4.6 — Build Data Diagnostics Screen
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Create a simple diagnostics view accessible from Settings, reframed from "connection diagnostics" (there's no connection) to data-load diagnostics.
 
@@ -519,6 +519,8 @@ Acceptance criteria:
 
 - The operator can tell whether the app's data loaded correctly, distinct from any other kind of problem.
 - No secrets are displayed (moot today, but keeping the principle for whenever settings/config exist).
+
+**Note:** built as a presentational `src/components/DataDiagnostics.tsx`, rendered directly on the existing `Settings` page (Task 10.1 will build out the rest of that screen later — this is the diagnostics piece it's already expected to reuse, per that task's own text). Diagnostics data comes from a new `getDataLoadDiagnostics()` in `jsonSnackRepository.ts` — deliberately **not** the throw-based `createJsonSnackRepository()`/`buildSnackRepository()` used elsewhere: a diagnostics screen's whole purpose is to show a failure calmly, not propagate an exception, so it returns a `{ loaded: true, rosterCount, specialRequirementCount } | { loaded: false, error: DataValidationError }` discriminated union instead. Frontend version is read directly from `package.json`'s `version` field (currently `0.0.0`, the untouched Vite scaffold default — real, not fabricated). No secrets are displayed or exist to display.
 
 ---
 

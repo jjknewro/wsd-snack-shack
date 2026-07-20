@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 4.6 — Build Data Diagnostics Screen (EPIC 4 — Data Repository Integration). Tasks 4.3 and 4.4 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 4.7 — Build Repository Tests (EPIC 4 — Data Repository Integration). Tasks 4.3, 4.4, and 4.6 are complete — see entries below. Task 4.7's acceptance criteria are already largely met by Task 4.4's tests (see that entry); this task should confirm coverage explicitly rather than duplicate it, then close out EPIC 4. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -519,6 +519,32 @@ First task of EPIC 4 — Data Repository Integration, per the plan's Recommended
 **Notes / Deviations**
 
 - See the Error Handling deviation noted above (intentional, reasoned, not a gap).
+
+---
+
+### Task 4.6 — Build Data Diagnostics Screen
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+- `src/repositories/jsonSnackRepository.ts`: added `getDataLoadDiagnostics(masterRoster = masterRosterJson, specialRequirements = specialRequirementsJson)`, returning a `DataLoadDiagnostics` discriminated union — `{ loaded: true, rosterCount, specialRequirementCount }` on success, `{ loaded: false, error: DataValidationError }` on failure — rather than throwing. This is a deliberately different shape from `createJsonSnackRepository()`'s throw-based approach in the same file: a diagnostics screen exists specifically to *display* a failure clearly, not propagate an exception past it. Optional parameters (defaulting to the real bundled JSON) keep it directly testable against fixtures, matching `buildSnackRepository`'s existing pattern.
+- `src/components/DataDiagnostics.tsx` (+ `.css`): new presentational component. Takes `frontendVersion: string` and `diagnostics: DataLoadDiagnostics` as props — no data loading of its own, matching the codebase's existing split between pages (data) and components (presentation). Shows frontend version, a `StatusBadge` for load status (real text label, not color alone, per the standing principle from Task 5.1's note), and either the two record counts or the validation error message, depending on outcome.
+- `src/pages/Settings.tsx`: replaced its placeholder paragraph with `<DataDiagnostics frontendVersion={packageJson.version} diagnostics={getDataLoadDiagnostics()} />`. `packageJson` is imported directly from the repo-root `package.json` (`resolveJsonModule` already enabled since Task 1.x) — its `version` field is `0.0.0`, the real, un-bumped Vite scaffold default, not a fabricated value.
+
+**Verification**
+
+- New tests in `src/tests/jsonSnackRepository.test.ts`: `getDataLoadDiagnostics()` against the real bundled data (positive counts); against valid fixtures (exact counts asserted); against invalid fixtures (`loaded: false` with the `DataValidationError`, not a thrown exception).
+- New `src/tests/DataDiagnostics.test.tsx`: component test with both a success-shaped and a failure-shaped `diagnostics` prop passed directly — confirms record counts show on success, the error message shows (and record-count labels do *not* appear) on failure.
+- New `src/tests/Settings.test.tsx`: renders the real `Settings` page (no mocking) and confirms the diagnostics section, version, status, and both count labels are present — proving the wiring, not just the component in isolation.
+- `npm run verify` (lint + typecheck + test) — clean; 62/62 tests (6 new).
+- `npm run build` — succeeds.
+- Playwright screenshot of `/settings` at a phone-sized viewport (420×700): confirms visually correct, legible rendering — frontend version `0.0.0`, a green "Loaded and validated successfully" badge, "Bunks loaded: 35", "Special requirement entries loaded: 15" (matching `src/data/*.json`'s real current contents by hand-check).
+
+**Notes / Deviations**
+
+- None.
 
 ---
 

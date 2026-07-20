@@ -1,0 +1,24 @@
+.data-diagnostics__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.data-diagnostics__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-diagnostics__row dt {
+  color: var(--color-text-muted);
+}
+
+.data-diagnostics__row dd {
+  margin: 0;
+  text-align: right;
+}

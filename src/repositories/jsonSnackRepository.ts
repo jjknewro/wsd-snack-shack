@@ -40,3 +40,15 @@ export function buildSnackRepository(masterRoster: unknown[], specialRequirement
 export function createJsonSnackRepository(): SnackRepository {
   return buildSnackRepository(masterRosterJson, specialRequirementsJson)
 }
+
+export type DataLoadDiagnostics =
+  | { loaded: true; rosterCount: number; specialRequirementCount: number }
+  | { loaded: false; error: DataValidationError }
+
+export function getDataLoadDiagnostics(masterRoster: unknown[] = masterRosterJson, specialRequirements: unknown[] = specialRequirementsJson): DataLoadDiagnostics {
+  const errors = validateData(masterRoster, specialRequirements)
+  if (errors.length > 0) {
+    return { loaded: false, error: new DataValidationError(errors) }
+  }
+  return { loaded: true, rosterCount: masterRoster.length, specialRequirementCount: specialRequirements.length }
+}
