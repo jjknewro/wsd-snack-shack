@@ -1,59 +1,75 @@
-import '../components/SnapshotTable.css'
+import { useMemo } from 'react'
+
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
-import { LoadingState } from '@/components/LoadingState'
-import { StatusBadge } from '@/components/StatusBadge'
-import { useWorkbookSnapshot } from '@/hooks/useWorkbookSnapshot'
+import '../components/SnapshotTable.css'
+import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
+import type { SnackRepository } from '@/repositories/snackRepository'
 
-export function Today() {
-  const snapshot = useWorkbookSnapshot()
+import { TodayBunkRow } from '../components/TodayBunkRow'
+
+export type TodayProps = {
+  createRepository?: () => SnackRepository
+}
+
+export function Today({ createRepository = createJsonSnackRepository }: TodayProps = {}) {
+  const { repository, loadError } = useMemo(() => {
+    try {
+      return { repository: createRepository(), loadError: null as string | null }
+    } catch (error) {
+      const message = error instanceof DataValidationError ? error.message : 'Failed to load Snack Shack data.'
+      return { repository: null, loadError: message }
+    }
+  }, [createRepository])
+
+  if (!repository) {
+    return (
+      <div>
+        <h2>Today</h2>
+        <ErrorState message={loadError ?? 'Failed to load Snack Shack data.'} />
+      </div>
+    )
+  }
+
+  const roster = repository.getRoster()
 
   return (
     <div>
       <h2>Today</h2>
       <p className="snapshot-note">
-        Temporary local snapshot of the "snack shack today" worksheet, for reference only — not live
-        data. The real daily dashboard and pickup workflow are built in a later epic. See
-        WORKBOOK-SCHEMA.md.
+        Every bunk shown as pending — pickup completion isn't built yet (see EPIC 6). Pickup status
+        will be tracked for the current session only, once that exists (see ARCHITECTURE.md,
+        "Persistence — Current State").
       </p>
 
-      {snapshot.status === 'loading' ? <LoadingState label="Loading today's sheet…" /> : null}
-      {snapshot.status === 'error' ? <ErrorState message={snapshot.message} /> : null}
-      {snapshot.status === 'ready' && snapshot.data.snackShackToday.length === 0 ? (
-        <EmptyState message="No bunks found in today's sheet snapshot." />
-      ) : null}
-
-      {snapshot.status === 'ready' && snapshot.data.snackShackToday.length > 0 ? (
+      {roster.length === 0 ? (
+        <EmptyState message="No bunks found in the roster." />
+      ) : (
         <div className="snapshot-table-wrapper">
           <table className="snapshot-table">
             <thead>
               <tr>
                 <th>Status</th>
                 <th>Bunk</th>
-                <th>Special Snack</th>
-                <th>Notes</th>
-                <th>Time</th>
+                <th># of Campers</th>
+                <th>Special Requirements</th>
+                <th>Pickup Time</th>
               </tr>
             </thead>
             <tbody>
-              {snapshot.data.snackShackToday.map((row) => (
-                <tr key={row.bunk}>
-                  <td>
-                    <StatusBadge
-                      variant={row.pickedUp ? 'completed' : 'pending'}
-                      label={row.pickedUp ? 'Picked Up' : 'Pending'}
-                    />
-                  </td>
-                  <td>{row.bunk}</td>
-                  <td>{row.specialSnack}</td>
-                  <td>{row.notes}</td>
-                  <td>{row.time}</td>
-                </tr>
+              {roster.map((row) => (
+                <TodayBunkRow
+                  key={row.bunk}
+                  bunk={row.bunk}
+                  campers={row.campers}
+                  status="pending"
+                  specialRequirementCount={repository.getSpecialRequirementsForBunk(row.bunk).length}
+                />
               ))}
             </tbody>
           </table>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

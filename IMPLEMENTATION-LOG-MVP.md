@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-**EPIC 4 (Data Repository Integration) is complete.** Next up per the plan's Recommended Execution Order: **EPIC 5 — Today Screen and Snack Day Initialization**, starting with Task 5.1 (Define Today Screen UX). Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.2 — Implement Snack Day Initialization Service (EPIC 5 — Today Screen and Snack Day Initialization). Task 5.1 (Today Screen UX) is complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -576,6 +576,34 @@ Fixed by making the dependency explicit and injectable:
 **Sign-off**
 
 EPIC 4 — Data Repository Integration is complete. Tasks 4.1, 4.2, and 4.5 are Not Applicable (no backend/API client to configure); Tasks 4.3, 4.4, 4.6, and 4.7 are done, reviewed, and verified. The "known gap" documented at this epic's start (`MasterRoster.tsx` importing JSON directly) is fully closed. Proceeding to **EPIC 5 — Today Screen and Snack Day Initialization**, starting with **Task 5.1 — Define Today Screen UX**.
+
+---
+
+### Task 5.1 — Define Today Screen UX
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+First task of EPIC 5. Scoped deliberately narrowly to what "Define ___ UX" means here — the visual design and what each row shows — not the interactive pickup workflow (EPIC 6) or snack-day initialization (Task 5.2), which come later.
+
+- `src/components/TodayBunkRow.tsx`: new presentational component, one `<tr>` per bunk, showing everything this task's requirements list asks for — bunk code, camper count (dash when absent), pickup status (`StatusBadge`, always paired with a real text label — "Pending" / "Picked Up" — never color alone), a special-requirement indicator ("None" or "N special requirement(s)"), and pickup time (only rendered for a `completed` row; always a dash for `pending`, since that data doesn't exist under the current in-memory-only persistence model).
+- `src/pages/Today.tsx`: fully rewritten. Previously rendered the temporary `useWorkbookSnapshot` real-workbook-snapshot view (its own code comment already flagged it as temporary, "EPIC 4 replaces it entirely" — that comment undersold it slightly, since EPIC 4 only touched `MasterRoster.tsx`; this task is what actually retires it from the `/` route). Now reads through the repository via the same `createRepository`-injection pattern established for `MasterRoster.tsx` in Task 4.7, rendering an `EmptyState` for zero bunks and an `ErrorState` for load failure, matching the established pattern from EPIC 4.
+- `useWorkbookSnapshot.ts` and `types/workbookSnapshot.ts` were **not** deleted — `Requirements.tsx` still uses them, and that page belongs to EPIC 7, not this task. Only `Today.tsx`'s use of them was removed.
+- **Every bunk currently shows "Pending"** — this is the honest current state, not a placeholder bug: no pickup-completion interaction exists yet (that's EPIC 6, starting at Task 6.1). Fabricating a "completed" bunk in the live app to make the row look more finished was deliberately avoided, matching this plan's established practice of showing real state rather than invented data (see Task 2.8's `0`-not-blank precedent, `MasterRoster.tsx`'s real record counts).
+
+**Verification**
+
+- New `src/tests/TodayBunkRow.test.tsx`: proves the acceptance criterion "completed and pending bunks are easy to distinguish without relying only on color" directly — renders both `status` values via props and asserts the specific, distinct text labels ("Pending" vs. "Picked Up") each appear, the other does not, pickup time only appears for `completed`, and special-requirement wording (`None` / singular / plural) is correct.
+- New `src/tests/Today.test.tsx`: fixture-backed repository injection (not `src/data/*.json`, per the Task 4.7 pattern) — confirms roster bunks render with status, campers, and requirement indicator all visible in the row (no click needed, the other acceptance criterion); confirms the empty-roster and load-failure states render `EmptyState`/`ErrorState` instead of the table.
+- `npm run verify` (lint + typecheck + test) — clean; 73/73 tests (10 new).
+- `npm run build` — succeeds.
+- Playwright: screenshot of `/` at 420px width — full bunk list renders correctly, all "Pending," special-requirement counts match `src/data/specialRequirements.json` by hand-check (e.g. `K3` shows "3 special requirements"). Separately confirmed, via `document.documentElement.scrollWidth` vs. `clientWidth` at a 390px viewport (the same check used in Task 1.8), that the page itself does not overflow horizontally — the table's own `overflow-x: auto` wrapper (pre-existing `SnapshotTable.css`, already used by `MasterRoster`) absorbs any internal scroll, not the page.
+
+**Notes / Deviations**
+
+- None.
 
 ---
 

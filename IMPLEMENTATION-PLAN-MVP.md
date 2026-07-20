@@ -553,7 +553,7 @@ Create the primary mobile screen that replaces the `snack shack today` paper or 
 
 ### Task 5.1 — Define Today Screen UX
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Design the screen for fast one-handed or tablet use.
 
@@ -569,6 +569,8 @@ Acceptance criteria:
 
 - The most important information is visible without opening each record.
 - Completed and pending bunks are easy to distinguish without relying only on color.
+
+**Note:** implemented as a presentational `src/components/TodayBunkRow.tsx` (one table row per bunk — Status, Bunk, # of Campers, Special Requirements, Pickup Time, all visible with no click needed) rendered by a rewritten `src/pages/Today.tsx`, which now reads through the repository (same `createRepository`-injection pattern as `MasterRoster.tsx`, Task 4.7) instead of the old `useWorkbookSnapshot` real-workbook-snapshot hook — that hook and its temporary viewer role are retired from this route (its own code comment already called it temporary, superseded by EPIC 4's repository; it remains in place for `Requirements.tsx` until EPIC 7 replaces that page too, so nothing there was touched). **Deliberately read-only and honest about current state**: every bunk shows `Pending` because no completion interaction exists yet — that's EPIC 6's job (Task 6.1 onward), out of scope for a UX-definition task. The pending/completed visual distinction itself (StatusBadge, always paired with a real text label, never color alone) is proven directly via component tests passing both states as props, not by fabricating a completed bunk in the live app. Pickup time is only ever rendered for a `completed` row — for `pending`, it's always a dash, matching that this data doesn't exist yet under the current in-memory-only persistence model.
 
 ---
 
