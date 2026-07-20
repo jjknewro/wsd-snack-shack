@@ -390,6 +390,33 @@ This sequence is recorded in this much detail because steps 2–3 represent a re
 
 ---
 
+### Task 2.8 — Add Derived Special-Requirements Count to Master Roster
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+User request after reviewing the Master Roster screen: show, per bunk, how many special-requirement *records* exist for it — a derived value joining `masterRoster.json` and `specialRequirements.json` on `bunk`, not stored anywhere. Formalized as EPIC 2 Task 2.8 before implementing, per the user's explicit "add to the plan, implement, and log" request.
+
+- Added a "Special Requirements" column to the `MasterRoster` table showing the count.
+- **Explicitly a record count, not a sum of quantities** — bunk `K3`'s 3 entries (`No Dairy` × 2, `Cholov Yisroel` × 1, `Gluten Free` × 1) show **3**, not 4. Bunks with none show `0`, not a blank cell.
+- **Real refactor during implementation, not just the new feature**: the first version put the counting function directly in `MasterRoster.tsx` and exported it (to make it testable) — `oxlint`'s `react/only-export-components` rule correctly flagged this as breaking Fast Refresh's assumption that component files only export components. Moved the logic to a new `src/services/specialRequirements.ts` (matching `ARCHITECTURE.md`'s Application Layers — business logic belongs in services, not components), and changed it from reading the module-level imported JSON to a pure function taking `requirements` as a parameter. This is strictly more testable than the original, not just a lint-satisfying workaround.
+
+**Verification**
+
+- New `tests/specialRequirements.test.ts`: unit tests against **fixture data** (not the real mock data) — record-count-not-sum, zero case, and an explicit "recomputes correctly as the underlying data changes" test that mutates a fixture array between assertions, directly satisfying this task's acceptance criterion of that exact name.
+- `tests/MasterRoster.test.tsx`: kept one integration-style test confirming the count actually reaches the correct table cell when rendered (`within(row).getByRole('cell', ...)`) — removed the redundant direct-function-call assertions now that the service has its own thorough unit tests.
+- `npm run verify` — 38/38 tests, lint (including the `react/only-export-components` fix) and typecheck clean.
+- `npm run build` — succeeds.
+- Visually verified via Playwright screenshot against the real mock data: every row's count matches what's in `specialRequirements.json` by hand-check (`K3`=3, `PN3`=0, `IB4`=1 [a single quantity-2 record, correctly not double-counted], etc.).
+
+**Notes / Deviations**
+
+- None.
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project

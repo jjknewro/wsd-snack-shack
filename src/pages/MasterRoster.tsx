@@ -4,6 +4,7 @@ import { Modal } from '@/components/Modal'
 import '../components/SnapshotTable.css'
 import masterRoster from '@/data/masterRoster.json'
 import specialRequirements from '@/data/specialRequirements.json'
+import { getRequirementCountForBunk } from '@/services/specialRequirements'
 import type { MasterRosterEntry, SpecialRequirementEntry } from '@/types/roster'
 
 const roster = masterRoster as MasterRosterEntry[]
@@ -26,6 +27,7 @@ export function MasterRoster() {
               <th>Bunk</th>
               <th>Counselors</th>
               <th># of Campers</th>
+              <th>Special Requirements</th>
             </tr>
           </thead>
           <tbody>
@@ -42,6 +44,7 @@ export function MasterRoster() {
                 </td>
                 <td>{row.counselors}</td>
                 <td>{row.campers ?? '—'}</td>
+                <td>{getRequirementCountForBunk(row.bunk, requirements)}</td>
               </tr>
             ))}
           </tbody>

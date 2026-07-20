@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import { MasterRoster } from '../pages/MasterRoster'
 
@@ -39,5 +39,21 @@ describe('MasterRoster', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  describe('derived special-requirements count column', () => {
+    // The counting logic itself (record count vs. sum of quantities, zero
+    // handling, recomputation) is unit-tested against fixture data in
+    // tests/specialRequirements.test.ts. These tests only confirm the count
+    // actually reaches the right table cell when rendered.
+    it('renders the count in the correct row of the table', () => {
+      render(<MasterRoster />)
+
+      const k3Row = screen.getByRole('button', { name: 'K3' }).closest('tr') as HTMLElement
+      expect(within(k3Row).getByRole('cell', { name: '3' })).toBeVisible()
+
+      const pn3Row = screen.getByRole('button', { name: 'PN3' }).closest('tr') as HTMLElement
+      expect(within(pn3Row).getByRole('cell', { name: '0' })).toBeVisible()
+    })
   })
 })

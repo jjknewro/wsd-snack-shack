@@ -377,6 +377,25 @@ Acceptance criteria:
 
 ---
 
+### Task 2.8 — Add Derived Special-Requirements Count to Master Roster
+
+**Status:** ✅ Complete
+
+Added at the user's request after reviewing the Master Roster mock-data prototype (see EPIC 2's revision note and `IMPLEMENTATION-LOG-MVP.md`). The Master Roster screen must show, per bunk, how many special-requirement **records** exist for that bunk — a value derived by joining `masterRoster.json` and `specialRequirements.json` on `bunk`, not stored in either file directly.
+
+Requirements:
+
+- The count is the number of matching entries in `specialRequirements.json` for that bunk (record count), **not** the sum of their `quantity` values — e.g. bunk `K3`'s 3 entries (`No Dairy` × 2, `Cholov Yisroel` × 1, `Gluten Free` × 1) count as **3**, not 4.
+- Bunks with no special-requirement entries show `0`, not a blank cell — this is a real, meaningful count, not an optional field.
+- Displayed as a new column on the Master Roster table, alongside the existing click-to-popup interaction from the prior ad hoc work.
+
+Acceptance criteria:
+
+- The displayed count exactly matches the number of `specialRequirements.json` entries for that bunk.
+- Recomputes correctly if the underlying data changes (verified via test, not just visual inspection).
+
+---
+
 # EPIC 3 — Google Apps Script Backend Foundation
 
 ## Status
