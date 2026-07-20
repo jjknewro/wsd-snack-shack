@@ -452,7 +452,7 @@ Existed to provide a shared HTTP client for Apps Script requests. There are no n
 
 ### Task 4.3 — Define Snack Repository Interface
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Define a repository interface used by business services and pages, matching `ARCHITECTURE.md`'s Repository Pattern section.
 
@@ -469,6 +469,8 @@ Acceptance criteria:
 
 - Services and pages depend on the interface, not on `src/data/*.json` file paths.
 - A mock/fixture-backed repository can be used in tests without touching the real mock data files.
+
+**Note:** `src/repositories/snackRepository.ts` defines the `SnackRepository` type with exactly the two methods above. This task is the interface only — **no page depends on it yet**; `MasterRoster.tsx` still imports `src/data/*.json` directly, so the first acceptance criterion above is not yet true in practice. Closing that gap (making pages actually depend on this interface instead of the file paths) is Task 4.4's explicit job, not this one's — matching the plan's established practice of defining a contract in one task and wiring it up in the next (see Task 2.2 vs. its consumers, Task 2.6 vs. Task 4.4). The second acceptance criterion (fixture-backed repository usable in tests) is demonstrated now, in this task's own tests.
 
 ---
 

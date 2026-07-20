@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 2.2 — Define Stable Application Data Models (still partially prototyped; Tasks 2.6/2.7 completed around it without requiring the remaining models — see entries below). Next up: EPIC 4 — Data Repository Integration (Task 4.3), per the Recommended Execution Order, once Task 2.2's remaining models are needed or the epic is otherwise entered.
+Task 4.4 — Implement JSON Data Repository (EPIC 4 — Data Repository Integration). Task 4.3 (repository interface) is complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -460,6 +460,30 @@ Next task per the plan's "Recommended Execution Order" (Task 2.4 and 2.5 remain 
 
 - New `src/tests/dataValidation.test.ts`: fixture-based (not the real mock data files), covering both tasks' acceptance criteria directly — valid fixtures produce zero errors; a missing `bunk`, a missing `counselors`, a negative `campers`, a duplicate `bunk` (asserting the earlier index is named), an invalid `requirement` value, a non-positive `quantity`, and an orphaned cross-file `bunk` reference each produce exactly the expected error with a clear, specific message.
 - `npm run verify` (lint + typecheck + test) — clean; 49/49 tests (11 new).
+- `npm run build` — succeeds.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
+### Task 4.3 — Define Snack Repository Interface
+
+**Date:** 2026-07-19
+**Status:** ✅ Complete
+
+**Summary**
+
+First task of EPIC 4 — Data Repository Integration, per the plan's Recommended Execution Order (EPIC 3 skipped as Not Applicable).
+
+- `src/repositories/snackRepository.ts`: defines `SnackRepository`, a `type` with exactly two methods, `getRoster(): MasterRosterEntry[]` and `getSpecialRequirementsForBunk(bunk: string): SpecialRequirementEntry[]` — matching the plan's revised (non-Apps-Script) method list. Removed the directory's placeholder `.gitkeep` now that it holds a real file, same as `src/services/` earlier.
+- Deliberately interface-only, no implementation and no wiring: `MasterRoster.tsx` is untouched by this task and still imports `src/data/*.json` directly. Implementing the interface against the real JSON files, and switching `MasterRoster.tsx` over to it (closing the "known gap" EPIC 4's objective section documents), is Task 4.4 — kept separate on purpose, same reasoning already applied to Task 2.2 (define the model) vs. its consumers, and Task 2.6 (define validation) vs. wiring it in.
+
+**Verification**
+
+- New `src/tests/snackRepository.test.ts`: a small fixture-backed object literal typed as `SnackRepository`, exercised directly — confirms the interface is genuinely usable by a mock implementation in tests, without importing or touching `src/data/*.json`, satisfying this task's second acceptance criterion. (The first acceptance criterion — pages depending on the interface — is intentionally not yet true; see the Notes above and the plan entry.)
+- `npm run verify` (lint + typecheck + test) — clean; 51/51 tests (2 new).
 - `npm run build` — succeeds.
 
 **Notes / Deviations**
