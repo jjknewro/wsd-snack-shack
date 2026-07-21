@@ -676,13 +676,15 @@ Acceptance criteria:
 
 ### Task 5.6 — Add Manual Refresh and Last-Updated State
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Acceptance criteria:
 
 - Operator can manually refresh.
 - Last successful refresh time is visible.
 - Refresh errors do not erase previously displayed data.
+
+**Note:** "refresh" here means re-running the repository load/validation against the bundled JSON — there's no backend to refetch from, but re-validating is still meaningful (and, once "Future: Editing Seed Data" exists, will genuinely matter). A shared `loadRepositorySafely()` helper was extracted from `MasterRoster.tsx`/`Today.tsx`'s previously-duplicated try/catch (now in `src/repositories/jsonSnackRepository.ts`), since Today needed to run it more than once (initial load + every refresh) — `MasterRoster.tsx` was updated to use the same helper, removing its own copy of the same logic. `TodayRefreshControls` shows "Last refreshed: [time]" and a Refresh button; the top-level `ErrorState`'s `onRetry` (present since Task 4.4 but never wired up until now) is wired to the same refresh handler, so retrying from a load failure and manually refreshing are the same action. A failed refresh does **not** replace already-loaded data — it's kept in place, with a separate inline error message reporting the refresh failure, tested directly (a repository stub that succeeds once then fails on the next call, exercising a path the real bundled JSON can't currently produce but the design must still handle correctly).
 
 ---
 

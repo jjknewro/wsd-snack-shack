@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { ErrorState } from '@/components/ErrorState'
 import { Modal } from '@/components/Modal'
 import '../components/SnapshotTable.css'
-import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
+import { createJsonSnackRepository, loadRepositorySafely } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 
 export type MasterRosterProps = {
@@ -16,20 +16,13 @@ export type MasterRosterProps = {
 export function MasterRoster({ createRepository = createJsonSnackRepository }: MasterRosterProps = {}) {
   const [selectedBunk, setSelectedBunk] = useState<string | null>(null)
 
-  const { repository, loadError } = useMemo(() => {
-    try {
-      return { repository: createRepository(), loadError: null as string | null }
-    } catch (error) {
-      const message = error instanceof DataValidationError ? error.message : 'Failed to load Snack Shack data.'
-      return { repository: null, loadError: message }
-    }
-  }, [createRepository])
+  const { repository, error: loadError } = useMemo(() => loadRepositorySafely(createRepository), [createRepository])
 
   if (!repository) {
     return (
       <div>
         <h2>Master Roster</h2>
-        <ErrorState message={loadError ?? 'Failed to load Snack Shack data.'} />
+        <ErrorState message={loadError} />
       </div>
     )
   }

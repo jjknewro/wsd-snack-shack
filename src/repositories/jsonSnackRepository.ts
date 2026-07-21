@@ -41,6 +41,22 @@ export function createJsonSnackRepository(): SnackRepository {
   return buildSnackRepository(masterRosterJson, specialRequirementsJson)
 }
 
+export type RepositoryLoadResult = { repository: SnackRepository; error: null } | { repository: null; error: string }
+
+// Shared by every page that loads a repository (and, as of Task 5.6, by a
+// single page needing to load it more than once for a manual refresh) -
+// converts a thrown DataValidationError into a safe, user-facing message
+// instead of a raw stack trace, matching ARCHITECTURE.md's Error Handling
+// section.
+export function loadRepositorySafely(createRepository: () => SnackRepository): RepositoryLoadResult {
+  try {
+    return { repository: createRepository(), error: null }
+  } catch (error) {
+    const message = error instanceof DataValidationError ? error.message : 'Failed to load Snack Shack data.'
+    return { repository: null, error: message }
+  }
+}
+
 export type DataLoadDiagnostics =
   | { loaded: true; rosterCount: number; specialRequirementCount: number }
   | { loaded: false; error: DataValidationError }

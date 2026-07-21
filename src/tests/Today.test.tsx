@@ -192,4 +192,59 @@ describe('Today', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('masterRoster.json')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
+
+  it('shows the initial load time immediately, and updates it when the operator refreshes', () => {
+    let clockValue = '10:00:00 AM'
+    renderToday({ now: () => clockValue })
+
+    expect(screen.getByText('Last refreshed: 10:00:00 AM')).toBeVisible()
+
+    clockValue = '10:05:00 AM'
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(screen.getByText('Last refreshed: 10:05:00 AM')).toBeVisible()
+  })
+
+  it('retrying from the error state via the Refresh action recovers once the data loads successfully', () => {
+    let shouldFail = true
+    const createSometimesFailingRepository = () => {
+      if (shouldFail) {
+        throw new DataValidationError([{ file: 'masterRoster.json', index: 0, message: 'Missing or invalid "bunk".' }])
+      }
+      return createFixtureRepository()
+    }
+
+    renderToday({ createRepository: createSometimesFailingRepository })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('masterRoster.json')
+
+    shouldFail = false
+    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }))
+
+    expect(screen.getByText("Today hasn't been started yet.")).toBeVisible()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('a failed refresh keeps the previously loaded data visible and reports the failure separately', () => {
+    let shouldFail = false
+    const createSometimesFailingRepository = () => {
+      if (shouldFail) {
+        throw new DataValidationError([{ file: 'masterRoster.json', index: 0, message: 'Missing or invalid "bunk".' }])
+      }
+      return createFixtureRepository()
+    }
+
+    renderToday({ createRepository: createSometimesFailingRepository })
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+    expect(screen.getByText('A1')).toBeVisible()
+
+    shouldFail = true
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    // The previously-loaded active day must still be fully visible...
+    expect(screen.getByText('A1')).toBeVisible()
+    expect(screen.getByText('B2')).toBeVisible()
+    // ...alongside a clear report that the refresh itself failed.
+    expect(screen.getByRole('alert')).toHaveTextContent('masterRoster.json')
+  })
 })

@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { StatusBadge } from '@/components/StatusBadge'
 import { TodayFilters } from '@/components/TodayFilters'
+import { TodayRefreshControls } from '@/components/TodayRefreshControls'
 import { TodaySummary } from '@/components/TodaySummary'
 import '../components/SnapshotTable.css'
 import { useSnackDays } from '@/hooks/useSnackDays'
-import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
+import { createJsonSnackRepository, loadRepositorySafely } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { initializeSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
@@ -20,9 +21,14 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+function defaultNow(): string {
+  return new Date().toLocaleTimeString()
+}
+
 export type TodayProps = {
   createRepository?: () => SnackRepository
   today?: () => string
+  now?: () => string
 }
 
 // Note on the "loading" state required by this screen's design: repository
@@ -31,25 +37,42 @@ export type TodayProps = {
 // would be dead code exercised by nothing. See this task's log entry for
 // the full reasoning; the states below (error / not-initialized / active /
 // closed) are the ones actually reachable under the current architecture.
-export function Today({ createRepository = createJsonSnackRepository, today = todayIsoDate }: TodayProps = {}) {
+export function Today({
+  createRepository = createJsonSnackRepository,
+  today = todayIsoDate,
+  now = defaultNow,
+}: TodayProps = {}) {
   const { snackDays, setSnackDays } = useSnackDays()
   const [statusFilter, setStatusFilter] = useState<TodayStatusFilter>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { repository, loadError } = useMemo(() => {
-    try {
-      return { repository: createRepository(), loadError: null as string | null }
-    } catch (error) {
-      const message = error instanceof DataValidationError ? error.message : 'Failed to load Snack Shack data.'
-      return { repository: null, loadError: message }
-    }
-  }, [createRepository])
+  const [repositoryState, setRepositoryState] = useState(() => loadRepositorySafely(createRepository))
+  // Set unconditionally at mount — the initial load already counts as the
+  // first "refresh" (see TodayRefreshControls). If the load failed, this
+  // value simply never gets rendered (the error branch below returns first).
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(now)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
-  if (loadError || !repository) {
+  function handleRefresh() {
+    const result = loadRepositorySafely(createRepository)
+    if (result.repository) {
+      setRepositoryState(result)
+      setLastRefreshedAt(now())
+      setRefreshError(null)
+    } else {
+      // Keep whatever was already loaded and displayed — a failed refresh
+      // must not erase previously-good data, it just can't update it.
+      setRefreshError(result.error)
+    }
+  }
+
+  const { repository, error: loadError } = repositoryState
+
+  if (!repository) {
     return (
       <div>
         <h2>Today</h2>
-        <ErrorState message={loadError ?? 'Failed to load Snack Shack data.'} />
+        <ErrorState message={loadError} onRetry={handleRefresh} />
       </div>
     )
   }
@@ -61,6 +84,7 @@ export function Today({ createRepository = createJsonSnackRepository, today = to
     return (
       <div>
         <h2>Today</h2>
+        <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefresh} />
         <EmptyState message="Today hasn't been started yet." />
         <Button onClick={() => setSnackDays((current) => initializeSnackDay(repository, date, current))}>
           Start Today
@@ -74,6 +98,8 @@ export function Today({ createRepository = createJsonSnackRepository, today = to
   return (
     <div>
       <h2>Today</h2>
+
+      <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefresh} />
 
       {activeDay.dayStatus === 'closed' ? (
         <p className="snapshot-note">

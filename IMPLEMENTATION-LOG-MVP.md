@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.6 — Add Manual Refresh and Last-Updated State (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.5 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.7 — Build Today Screen Tests (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.6 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -731,6 +731,36 @@ Scoped down from the plan's original filter/search list before starting, with th
 - `npm run verify` (lint + typecheck + test) — clean; 109/109 tests (11 new).
 - `npm run build` — succeeds.
 - Playwright at 390px width against the real bundled data: summary shows Total bunks 35, Completed 0, Pending 35, Expected campers 174, Actual served "Not tracked yet", Special requirements 15 — the last figure matches Settings' own diagnostics count (Task 4.6) by cross-check. No page-level horizontal overflow.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
+### Task 5.6 — Add Manual Refresh and Last-Updated State
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete — **EPIC 5 (Today Screen and Snack Day Initialization) is complete.**
+
+**Summary**
+
+- `src/repositories/jsonSnackRepository.ts`: extracted `loadRepositorySafely(createRepository): RepositoryLoadResult` — `{ repository, error: null } | { repository: null, error: string }` — from what had been near-identical inline try/catch logic in both `MasterRoster.tsx` and `Today.tsx`. Motivated by real, immediate need: `Today.tsx` now has to run this logic more than once per component lifetime (initial load, then again on every refresh), so the duplication was about to triple rather than just persist. `MasterRoster.tsx` was updated to use the same helper, removing its copy — a real, justified cleanup, not a speculative refactor.
+- `src/components/TodayRefreshControls.tsx` (+ `.css`): shows `Last refreshed: {time}` and a Refresh button. Takes `lastRefreshedAt: string` (**not** nullable — see below), `refreshError: string | null`, `onRefresh: () => void`.
+- `src/pages/Today.tsx`: repository loading moved from a one-shot `useMemo` to `useState` (initialized via `loadRepositorySafely`) plus a `handleRefresh()` that re-runs the same load. On success, replaces `repositoryState` and updates `lastRefreshedAt` (via a new injectable `now?: () => string` prop, same DI pattern as `today`). **On failure, `repositoryState` is left untouched** — only a separate `refreshError` is set — so a bad refresh can never clobber good data already on screen. The top-level `ErrorState`'s `onRetry` prop (present since Task 4.4, never wired to anything until now) is wired to the same `handleRefresh`, so recovering from an initial load failure and manually refreshing later are literally the same code path.
+- **Caught and fixed a real design mistake before it shipped, via writing the test**: the first draft made `lastRefreshedAt` nullable (`string | null`), rendering "Not yet refreshed" until the first manual click. Writing the corresponding test immediately showed this was unreachable — repository loading is synchronous, so the very first render already has a successful load (or the component never gets this far, landing in the `ErrorState` branch instead). There is no real intermediate "not yet refreshed" moment, the same category of non-issue as Task 5.3's "loading" state. Fixed by making `lastRefreshedAt` a plain `string`, set unconditionally at mount (the initial load *is* the first refresh) — simpler code and no dead branch to maintain.
+
+**Verification**
+
+- New `src/tests/TodayRefreshControls.test.tsx`: timestamp renders; refresh button calls its handler; no error shown when `refreshError` is `null`; an error message renders via `role="alert"` **without** hiding the last-known-good timestamp.
+- `src/tests/Today.test.tsx`, three new integration tests: (1) the initial load time shows immediately and updates after a manual refresh (using an injectable, mutable `now` fixture); (2) clicking "Try Again" on the top-level error state recovers once the underlying repository stops failing, proving `onRetry` is correctly wired to the same refresh path; (3) — the core acceptance criterion — a repository stub that succeeds on the first call and fails on a second (simulating a refresh happening after a successful load, a scenario the real static bundle can't produce today but the design must still handle) confirms the previously-displayed active day (`A1`, `B2`, all its data) **remains fully visible**, with the refresh failure reported as a separate, additional alert rather than replacing the screen.
+- `npm run verify` (lint + typecheck + test) — clean; 116/116 tests (10 net new, after removing 2 for the corrected "not yet refreshed" design and adding replacements).
+- `npm run build` — succeeds.
+- Playwright at 390px width: confirmed the refresh control renders correctly in both the not-initialized and active states, with no page-level horizontal overflow.
+
+**Sign-off**
+
+EPIC 5 — Today Screen and Snack Day Initialization is complete except for Task 5.7 (Build Today Screen Tests), which is a dedicated coverage-review pass — following the same approach as Task 4.7 (review what Tasks 5.1–5.6's own tests already cover, close any real gaps, avoid duplicating what's already tested) rather than a separate task bundled into this one.
 
 **Notes / Deviations**
 
