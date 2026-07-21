@@ -1,0 +1,25 @@
+.today-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-background-muted);
+  border-radius: var(--radius-md);
+}
+
+.today-summary__row {
+  display: flex;
+  flex-direction: column;
+}
+
+.today-summary__row dt {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+}
+
+.today-summary__row dd {
+  margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: 600;
+}

@@ -5,12 +5,14 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { StatusBadge } from '@/components/StatusBadge'
 import { TodayFilters } from '@/components/TodayFilters'
+import { TodaySummary } from '@/components/TodaySummary'
 import '../components/SnapshotTable.css'
 import { useSnackDays } from '@/hooks/useSnackDays'
 import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { initializeSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
+import { summarizeToday } from '@/services/todaySummary'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
 
@@ -84,6 +86,8 @@ export function Today({ createRepository = createJsonSnackRepository, today = to
           — Current State").
         </p>
       )}
+
+      <TodaySummary summary={summarizeToday(activeDay.bunks)} />
 
       {activeDay.bunks.length === 0 ? (
         <EmptyState message="No bunks found in the roster." />

@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.5 — Add Daily Summary (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.4 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.6 — Add Manual Refresh and Last-Updated State (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.5 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -707,6 +707,34 @@ Scoped down from the plan's original filter/search list before starting, with th
 **Notes / Deviations**
 
 - `division` dropped from both filters and search — see Summary. User confirmed this scope directly before implementation started.
+
+---
+
+### Task 5.5 — Add Daily Summary
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+- `src/services/todaySummary.ts`: `summarizeToday(bunks): TodaySummaryData` — pure function returning `totalBunks`, `completedBunks`, `pendingBunks`, `expectedTotalCampers` (sums `expectedCount`, treating a missing count as `0`, not skipping the bunk or throwing), `actualTotalServed` (always `null` — see below), `specialRequirementCount` (sum, not count-of-bunks-with-any).
+- `src/components/TodaySummary.tsx` (+ `.css`): presentational, a `<dl>` styled as a 2-column stat grid. Renders `actualTotalServed ?? 'Not tracked yet'`.
+- `src/pages/Today.tsx`: renders `<TodaySummary summary={summarizeToday(activeDay.bunks)} />` for any active day (open or closed), computed from the **full** `activeDay.bunks`, deliberately not `filteredBunks` (Task 5.4) — the summary describes the whole day's real state, and would be actively misleading if it silently tracked whatever the operator happened to be searching for. Placed above the filter controls and table.
+- **`actualTotalServed` is always `null` ("Not tracked yet"), not a fabricated or approximated number.** There is no `actualCount` field anywhere in `SnackDayBunkRecord` — capturing one is explicitly EPIC 6, Task 6.2's job ("Complete Pickup Backend Operation"), including the real design question of how an actual count can differ from the expected one. Inventing a value now (e.g. treating expected count as a stand-in) would misrepresent data that hasn't actually been collected.
+- "Summary updates after each pickup mutation" required no explicit wiring: `summarizeToday` runs fresh on every render against `activeDay.bunks`, which itself comes from `snackDays` context state — any future `setSnackDays` call (e.g. EPIC 6 marking a bunk picked up) will cause the summary to recompute automatically. This is the same "derived value recomputed on render" pattern as `getRequirementCountForBunk` (Task 2.8) and `filterTodayBunks` (Task 5.4).
+
+**Verification**
+
+- New `src/tests/todaySummary.test.ts`: total/completed/pending counts; expected-campers sum correctly treats a missing `expectedCount` as `0` rather than erroring or excluding the bunk; special-requirement sum; `actualTotalServed` is `null`; an empty day returns all zeros (and `null`), not an error.
+- New `src/tests/TodaySummary.test.tsx`: all six figures render with their labels; `null` renders as "Not tracked yet", not blank or `0`.
+- `src/tests/Today.test.tsx`: two new integration tests — the summary reflects the real active-day counts and **does not change** when a search term narrows the visible table (proving it tracks the full day, not the filtered view); a closed-day fixture with one `completed` bunk correctly shows `Completed: 1`, standing in for the future real pickup-completion mutation this task's acceptance criterion describes.
+- `npm run verify` (lint + typecheck + test) — clean; 109/109 tests (11 new).
+- `npm run build` — succeeds.
+- Playwright at 390px width against the real bundled data: summary shows Total bunks 35, Completed 0, Pending 35, Expected campers 174, Actual served "Not tracked yet", Special requirements 15 — the last figure matches Settings' own diagnostics count (Task 4.6) by cross-check. No page-level horizontal overflow.
+
+**Notes / Deviations**
+
+- None.
 
 ---
 

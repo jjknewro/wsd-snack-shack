@@ -74,6 +74,38 @@ describe('Today', () => {
     expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
   })
 
+  it('shows a summary matching the active records, independent of the current filter/search', () => {
+    const { container } = renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    const summary = container.querySelector('.today-summary') as HTMLElement
+    const totalRow = within(summary).getByText('Total bunks').closest('div') as HTMLElement
+    expect(within(totalRow).getByText('2')).toBeVisible()
+
+    const pendingRow = within(summary).getByText('Pending').closest('div') as HTMLElement
+    expect(within(pendingRow).getByText('2')).toBeVisible()
+
+    // Narrowing the visible table via search must not change the summary —
+    // it reflects the whole active day, not the current filtered view.
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'A1' } })
+    expect(within(totalRow).getByText('2')).toBeVisible()
+  })
+
+  it('reflects a completed bunk in the summary for a closed day', () => {
+    const closedDay: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'closed',
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
+    }
+
+    const { container } = renderToday({}, [closedDay])
+
+    const summary = container.querySelector('.today-summary') as HTMLElement
+    const completedRow = within(summary).getByText('Completed').closest('div') as HTMLElement
+    expect(within(completedRow).getByText('1')).toBeVisible()
+    expect(within(summary).getByText('Not tracked yet')).toBeVisible()
+  })
+
   it('filters the table by status, and clearing filters restores the full list', () => {
     renderToday()
     fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))

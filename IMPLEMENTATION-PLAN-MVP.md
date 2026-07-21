@@ -654,7 +654,7 @@ Acceptance criteria:
 
 ### Task 5.5 — Add Daily Summary
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Display:
 
@@ -669,6 +669,8 @@ Acceptance criteria:
 
 - Summary updates after each pickup mutation.
 - Counts match active records.
+
+**Note:** `src/services/todaySummary.ts` (`summarizeToday`) is a pure function computing all six figures from `activeDay.bunks` (the full active day, not the current search/filter view — the summary is what's really true for the day, independent of what the operator happens to be looking for right now). `actualTotalServed` is always `null` and rendered as "Not tracked yet" — there is no per-bunk "actual count" field yet (that's EPIC 6, Task 6.2's job to define and capture); showing a fabricated number instead of an honest "not available" would be worse than showing nothing. "Summary updates after each pickup mutation" is satisfied by construction, not by any explicit update logic: `summarizeToday` is called fresh on every render from `activeDay.bunks`, so once EPIC 6 adds a real mutation (e.g. marking a bunk picked up via `setSnackDays`), the summary recomputes automatically with no changes needed here — verified now via the closed-day fixture (a `completed` bunk correctly increments `completedBunks`) standing in for that future mutation.
 
 ---
 
