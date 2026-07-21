@@ -598,7 +598,7 @@ Acceptance criteria:
 
 ### Task 5.3 — Build Today Screen Data Loading
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Load and display the active snack day.
 
@@ -614,6 +614,12 @@ Acceptance criteria:
 
 - Each state provides a clear next action.
 - The screen never remains blank after an error.
+
+**Note:** `Today.tsx` now renders four of the five states: **error** (`ErrorState`, same as `MasterRoster.tsx`), **not-initialized** (`EmptyState` + a "Start Today" button — the clear next action), **active** (the bunk table via `initializeSnackDay`, Task 5.2), and **closed** (read-only, a "Day Closed" `StatusBadge` instead of the button, same table). **"Loading" is deliberately not implemented as a rendered branch** — repository creation reads bundled JSON synchronously (no network boundary), so there is no real intermediate frame to show a spinner for; adding one would be dead code for a state nothing can ever produce, which the project's own guidance says to avoid. This is documented in code and here rather than silently skipped.
+
+**Real correctness fix surfaced by this task**: `ARCHITECTURE.md`'s "Persistence — Current State" says pickup status resets "every time the page is reloaded" (not on mere navigation) — but a plain `useState` local to `Today.tsx` would have been cleared by React Router unmounting the page on every navigation away, which is stricter than the architecture promises. Fixed by lifting the state into a new `SnackDayProvider` (`src/components/SnackDayProvider.tsx` + `src/hooks/useSnackDays.ts`, split across two files to satisfy the `react/only-export-components` lint rule, same as Task 2.8's precedent) mounted once in `AppShell.tsx` around `<Outlet />` — `AppShell` itself never unmounts across in-app navigation, only on an actual page reload, exactly matching the documented behavior. Verified live with Playwright: initialized Today, navigated to Master Roster, navigated back — the day was still active, no re-initialization needed.
+
+`SnackDay` (Task 5.2) gained a `dayStatus: 'active' | 'closed'` field to support this task's required "closed" state — a minimal, additive extension, not a rewrite, since Task 5.2 didn't yet have any consumer needing to distinguish them.
 
 ---
 

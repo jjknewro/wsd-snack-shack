@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.3 — Build Today Screen Data Loading (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1 and 5.2 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.4 — Add Search and Filtering (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1, 5.2, and 5.3 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -625,6 +625,32 @@ First task of EPIC 5. Scoped deliberately narrowly to what "Define ___ UX" means
 - New `src/tests/snackDayInitialization.test.ts`: creates one pending record per fixture roster bunk with the correct snapshotted `expectedCount`/`specialRequirementCount`; confirms calling twice with the same date returns the exact same array reference (true idempotency, not just equal-looking output) with no duplicate bunks; confirms a historical day (with a `completed` status) passed in as `existingDays` survives untouched, by reference, alongside the newly appended day; confirms mutating the underlying roster array *after* initialization does not retroactively change the already-created snapshot.
 - `npm run verify` (lint + typecheck + test) — clean; 77/77 tests (4 new).
 - `npm run build` — succeeds.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
+### Task 5.3 — Build Today Screen Data Loading
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+- `src/types/snackDay.ts`: `SnackDay` gained `dayStatus: 'active' | 'closed'` (set to `'active'` in `initializeSnackDay`, Task 5.2) — a minimal, additive extension needed to represent this task's required "closed" state, which Task 5.2 had no reason to include yet.
+- `src/pages/Today.tsx`: rewritten around the required states. Load failure → `ErrorState`. No day for today → `EmptyState` ("Today hasn't been started yet.") plus a "Start Today" button calling `initializeSnackDay`. An active, non-closed day → the bunk table (via `TodayBunkRow`, Task 5.1), reading each row from the day's own snapshot (`expectedCount`, `specialRequirementCount`, `status`) rather than live repository calls, since the whole point of Task 5.2's snapshot was to stop tracking live data once a day starts. A closed day → the same table, read-only in spirit, with a "Day Closed" `StatusBadge` replacing the button. **"Loading" has no rendered branch** — repository creation is synchronous (bundled JSON import, no `fetch`), so there is no real frame during which a spinner would ever paint; writing one would be unreachable code for a state that structurally cannot occur under this architecture, which the project's standing guidance says not to add. Documented in a code comment and here rather than silently dropped, so it reads as a deliberate decision if the architecture ever becomes async.
+- **Real bug caught and fixed while implementing this, not just executing the task as originally scoped**: a plain `useState` inside `Today.tsx` would be destroyed every time React Router unmounted the page (i.e. every navigation to another tab, not just a reload) — stricter than `ARCHITECTURE.md`'s explicit "reset every time the page is reloaded" (not "navigated away from"). Fixed by introducing `SnackDayProvider` (`src/components/SnackDayProvider.tsx`) holding the `snackDays` state, mounted once around `<Outlet />` in `AppShell.tsx` — `AppShell` persists across all in-app navigation, only remounting on an actual page reload, which is exactly the boundary the architecture describes. The context/hook plumbing (`SnackDayContext`, `useSnackDays()`) lives in a separate `src/hooks/useSnackDays.ts` from the `SnackDayProvider` component itself, split for the same `react/only-export-components` lint reason as Task 2.8's `getRequirementCountForBunk` move.
+- `SnackDayProvider` accepts an optional `initialSnackDays` prop (default `[]`) purely for test seeding (e.g. constructing a closed-day scenario without a real close-day feature to produce one) — real usage via `AppShell` never passes it.
+
+**Verification**
+
+- New `src/tests/useSnackDays.test.tsx`: `useSnackDays()` throws a clear error outside a provider; starts empty and updates via `setSnackDays` inside one; accepts seeded `initialSnackDays`.
+- Rewrote `src/tests/Today.test.tsx` around the new state machine (fixture-injected repository + a fixed `today()` date, same DI pattern as Task 4.7): not-initialized state and its button; clicking through to the active day with all data visible per-row; a seeded closed day rendering read-only; a seeded active day with zero bunks showing `EmptyState`; the error path unchanged from before. **Added a test proving the actual architectural fix**: mounts `Today` inside a `SnackDayProvider`-wrapped test harness, initializes the day, unmounts `Today` (simulating navigating away) while keeping the same provider instance mounted, remounts `Today` (simulating navigating back), and confirms the day is still active with no "Start Today" button — this is the test that would have failed against the original component-local `useState` implementation.
+- `npm run verify` (lint + typecheck + test) — clean; 83/83 tests (13 new).
+- `npm run build` — succeeds.
+- Playwright against the running dev server: screenshotted the not-initialized state and the active state (all 34 bunks, correct special-requirement counts matching `src/data/specialRequirements.json`); then, in the same session, clicked Start Today, navigated to Master Roster, navigated back to Today, and confirmed via a `Start Today` button-count check (0, as expected) that the active day survived real in-app navigation — the live-app confirmation of the fix, not just the unit test.
 
 **Notes / Deviations**
 

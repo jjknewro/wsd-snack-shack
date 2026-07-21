@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
+import { SnackDayProvider } from '../components/SnackDayProvider'
 import { Today } from '../pages/Today'
 import { DataValidationError } from '../repositories/jsonSnackRepository'
 import type { SnackRepository } from '../repositories/snackRepository'
+import type { SnackDay } from '../types/snackDay'
 import type { MasterRosterEntry, SpecialRequirementEntry } from '../types/roster'
+
+const FIXED_DATE = '2026-07-20'
 
 const fixtureRoster: MasterRosterEntry[] = [
   { bunk: 'A1', counselors: 'Alex', campers: 8 },
@@ -20,9 +24,30 @@ function createFixtureRepository(): SnackRepository {
   }
 }
 
+function renderToday(
+  props: Partial<Parameters<typeof Today>[0]> = {},
+  initialSnackDays: SnackDay[] = [],
+) {
+  return render(
+    <SnackDayProvider initialSnackDays={initialSnackDays}>
+      <Today createRepository={createFixtureRepository} today={() => FIXED_DATE} {...props} />
+    </SnackDayProvider>,
+  )
+}
+
 describe('Today', () => {
-  it('renders every roster bunk as pending, with campers and special requirements visible without opening a record', () => {
-    render(<Today createRepository={createFixtureRepository} />)
+  it('starts not-initialized, with a clear next action', () => {
+    renderToday()
+
+    expect(screen.getByText("Today hasn't been started yet.")).toBeVisible()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start Today' })).toBeVisible()
+  })
+
+  it('initializes and shows the active day when Start Today is clicked, with no data left visible without opening a record', () => {
+    renderToday()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
 
     const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
     expect(within(a1Row).getByText('Pending')).toBeVisible()
@@ -30,20 +55,57 @@ describe('Today', () => {
     expect(within(a1Row).getByText('1 special requirement')).toBeVisible()
 
     const b2Row = screen.getByText('B2').closest('tr') as HTMLElement
-    expect(within(b2Row).getByText('Pending')).toBeVisible()
     expect(within(b2Row).getByText('None')).toBeVisible()
+
+    expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
   })
 
-  it('shows an empty state when the roster has no bunks', () => {
-    const createEmptyRepository = (): SnackRepository => ({
-      getRoster: () => [],
-      getSpecialRequirementsForBunk: () => [],
-    })
+  it('shows a read-only closed-day view for a day already marked closed', () => {
+    const closedDay: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'closed',
+      bunks: [{ bunk: 'A1', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
+    }
 
-    render(<Today createRepository={createEmptyRepository} />)
+    renderToday({}, [closedDay])
+
+    expect(screen.getByText('Day Closed')).toBeVisible()
+    expect(screen.getByText('Picked Up')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
+  })
+
+  it('shows an empty state if an active day has no bunks', () => {
+    const emptyDay: SnackDay = { date: FIXED_DATE, dayStatus: 'active', bunks: [] }
+
+    renderToday({}, [emptyDay])
 
     expect(screen.getByText('No bunks found in the roster.')).toBeVisible()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it('survives Today unmounting and remounting within the same provider, simulating navigating away and back', () => {
+    function Wrapper({ showToday }: { showToday: boolean }) {
+      return (
+        <SnackDayProvider>
+          {showToday ? (
+            <Today createRepository={createFixtureRepository} today={() => FIXED_DATE} />
+          ) : (
+            <p>Elsewhere</p>
+          )}
+        </SnackDayProvider>
+      )
+    }
+
+    const { rerender } = render(<Wrapper showToday={true} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+    expect(screen.getByText('A1')).toBeVisible()
+
+    rerender(<Wrapper showToday={false} />)
+    expect(screen.getByText('Elsewhere')).toBeVisible()
+
+    rerender(<Wrapper showToday={true} />)
+    expect(screen.getByText('A1')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
   })
 
   it('shows a controlled error instead of the table when the repository fails to load', () => {
@@ -51,7 +113,11 @@ describe('Today', () => {
       throw new DataValidationError([{ file: 'masterRoster.json', index: 0, message: 'Missing or invalid "bunk".' }])
     }
 
-    render(<Today createRepository={createFailingRepository} />)
+    render(
+      <SnackDayProvider>
+        <Today createRepository={createFailingRepository} today={() => FIXED_DATE} />
+      </SnackDayProvider>,
+    )
 
     expect(screen.getByRole('alert')).toHaveTextContent('masterRoster.json')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()

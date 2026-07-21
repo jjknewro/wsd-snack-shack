@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 
 import './AppShell.css'
+import { SnackDayProvider } from './SnackDayProvider'
 
 const NAV_LINKS = [
   { to: '/', label: 'Today', end: true },
@@ -31,7 +32,9 @@ export function AppShell() {
         </nav>
       </header>
       <main className="app-shell__content">
-        <Outlet />
+        <SnackDayProvider>
+          <Outlet />
+        </SnackDayProvider>
       </main>
     </div>
   )

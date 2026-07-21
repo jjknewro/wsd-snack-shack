@@ -1,18 +1,35 @@
 import { useMemo } from 'react'
 
+import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { StatusBadge } from '@/components/StatusBadge'
 import '../components/SnapshotTable.css'
+import { useSnackDays } from '@/hooks/useSnackDays'
 import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
+import { initializeSnackDay } from '@/services/snackDayInitialization'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
 
-export type TodayProps = {
-  createRepository?: () => SnackRepository
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10)
 }
 
-export function Today({ createRepository = createJsonSnackRepository }: TodayProps = {}) {
+export type TodayProps = {
+  createRepository?: () => SnackRepository
+  today?: () => string
+}
+
+// Note on the "loading" state required by this screen's design: repository
+// creation reads bundled JSON synchronously (no network), so there is no
+// real intermediate frame to render a loading indicator for today - it
+// would be dead code exercised by nothing. See this task's log entry for
+// the full reasoning; the states below (error / not-initialized / active /
+// closed) are the ones actually reachable under the current architecture.
+export function Today({ createRepository = createJsonSnackRepository, today = todayIsoDate }: TodayProps = {}) {
+  const { snackDays, setSnackDays } = useSnackDays()
+
   const { repository, loadError } = useMemo(() => {
     try {
       return { repository: createRepository(), loadError: null as string | null }
@@ -22,7 +39,7 @@ export function Today({ createRepository = createJsonSnackRepository }: TodayPro
     }
   }, [createRepository])
 
-  if (!repository) {
+  if (loadError || !repository) {
     return (
       <div>
         <h2>Today</h2>
@@ -31,18 +48,38 @@ export function Today({ createRepository = createJsonSnackRepository }: TodayPro
     )
   }
 
-  const roster = repository.getRoster()
+  const date = today()
+  const activeDay = snackDays.find((day) => day.date === date)
+
+  if (!activeDay) {
+    return (
+      <div>
+        <h2>Today</h2>
+        <EmptyState message="Today hasn't been started yet." />
+        <Button onClick={() => setSnackDays((current) => initializeSnackDay(repository, date, current))}>
+          Start Today
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div>
       <h2>Today</h2>
-      <p className="snapshot-note">
-        Every bunk shown as pending — pickup completion isn't built yet (see EPIC 6). Pickup status
-        will be tracked for the current session only, once that exists (see ARCHITECTURE.md,
-        "Persistence — Current State").
-      </p>
 
-      {roster.length === 0 ? (
+      {activeDay.dayStatus === 'closed' ? (
+        <p className="snapshot-note">
+          <StatusBadge variant="completed" label="Day Closed" /> This day is closed and read-only.
+        </p>
+      ) : (
+        <p className="snapshot-note">
+          Pickup completion isn't built yet (see EPIC 6) — every bunk shows pending for now. Status is
+          tracked for this session only and resets on page reload (see ARCHITECTURE.md, "Persistence
+          — Current State").
+        </p>
+      )}
+
+      {activeDay.bunks.length === 0 ? (
         <EmptyState message="No bunks found in the roster." />
       ) : (
         <div className="snapshot-table-wrapper">
@@ -57,13 +94,13 @@ export function Today({ createRepository = createJsonSnackRepository }: TodayPro
               </tr>
             </thead>
             <tbody>
-              {roster.map((row) => (
+              {activeDay.bunks.map((record) => (
                 <TodayBunkRow
-                  key={row.bunk}
-                  bunk={row.bunk}
-                  campers={row.campers}
-                  status="pending"
-                  specialRequirementCount={repository.getSpecialRequirementsForBunk(row.bunk).length}
+                  key={record.bunk}
+                  bunk={record.bunk}
+                  campers={record.expectedCount}
+                  status={record.status}
+                  specialRequirementCount={record.specialRequirementCount}
                 />
               ))}
             </tbody>

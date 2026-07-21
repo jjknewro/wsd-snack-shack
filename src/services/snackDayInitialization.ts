@@ -21,6 +21,7 @@ export function initializeSnackDay(
 
   const newDay: SnackDay = {
     date,
+    dayStatus: 'active',
     bunks: roster.map((entry) => ({
       bunk: entry.bunk,
       expectedCount: entry.campers,

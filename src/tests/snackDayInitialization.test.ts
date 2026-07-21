@@ -29,6 +29,7 @@ describe('initializeSnackDay', () => {
     expect(days).toHaveLength(1)
     expect(days[0]).toEqual({
       date: '2026-07-20',
+      dayStatus: 'active',
       bunks: [
         { bunk: 'A1', expectedCount: 8, specialRequirementCount: 2, status: 'pending' },
         { bunk: 'B2', expectedCount: undefined, specialRequirementCount: 0, status: 'pending' },
@@ -48,6 +49,7 @@ describe('initializeSnackDay', () => {
   it('preserves existing (including completed) historical days when initializing a new date', () => {
     const historicalDay: SnackDay = {
       date: '2026-07-19',
+      dayStatus: 'closed',
       bunks: [{ bunk: 'A1', expectedCount: 8, specialRequirementCount: 2, status: 'completed' }],
     }
 

@@ -9,5 +9,6 @@ export type SnackDayBunkRecord = {
 
 export type SnackDay = {
   date: string
+  dayStatus: 'active' | 'closed'
   bunks: SnackDayBunkRecord[]
 }
