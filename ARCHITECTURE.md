@@ -181,7 +181,7 @@ This is intentional for the current stage of the MVP — explicitly called out b
 
 # Future: Editing Seed Data
 
-Not yet architected in detail — a later task, once reached. The user has confirmed the intent: eventually there will be in-app screens to edit the roster and special-requirements data itself (e.g., removing a special requirement, adding a bunk). Whatever write-back mechanism that needs (writing to the actual files requires either a small local server or a manual export/import step, since a static site cannot write to its own source files) will be decided **when that task is reached**, informed by how the app is actually being used by then — not speculated on now.
+Not yet architected in detail — a later task, once reached (`IMPLEMENTATION-PLAN-MVP.md` Task 7.5). The user has confirmed the intent, twice: first generally (that in-app editing would eventually be needed), then explicitly (2026-07-20) as full CRUD — the operator needs to **add, delete, and modify** entries in both the roster and special-requirements data, not just remove things. Whatever write-back mechanism that needs (writing to the actual files requires either a small local server or a manual export/import step, since a static site cannot write to its own source files) will be decided **when that task is reached**, informed by how the app is actually being used by then — not speculated on now. Note that this is a different persistence category from pickup status (see "Persistence — Current State" above): seed-data edits must survive a page reload to be useful, whereas pickup status explicitly must not.
 
 ---
 

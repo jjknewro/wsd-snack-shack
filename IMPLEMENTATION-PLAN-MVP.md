@@ -945,11 +945,19 @@ Acceptance criteria:
 
 ---
 
-### Task 7.5 — Add Requirement Maintenance Workflow
+### Task 7.5 — Add Roster and Special Requirements Maintenance Workflow
 
 **Status:** ⬜ Not Started
 
-**Decision already confirmed by the user (2026-07-19, ahead of this task formally starting):** the MVP will eventually have in-app editing screens for the roster and special-requirements seed data — e.g., removing a special requirement. This was stated directly while discussing the architecture revision, not decided as part of executing this task. See `ARCHITECTURE.md`'s "Future: Editing Seed Data" — the actual write-back mechanism (small local server vs. manual export/import) is still undecided and will be chosen when this task is actually picked up, not speculated on now.
+**Decision confirmed by the user, twice, ahead of this task formally starting:** first generally on 2026-07-19 (in-app editing screens will eventually be needed for the roster and special-requirements seed data), then explicitly on 2026-07-20 — the operator needs to **add, delete, and modify** entries in **both** data sets, not just remove a special requirement as the earlier example implied. See `ARCHITECTURE.md`'s "Future: Editing Seed Data."
+
+Requirements:
+
+- Operator can add, edit, and delete roster entries (`bunk`, `counselors`, optional `campers`).
+- Operator can add, edit, and delete special-requirement entries (`bunk`, `requirement`, `quantity`, optional `notes`).
+- Edits are validated with the existing rules (Task 2.6 — `src/services/dataValidation.ts`) before being applied; an invalid edit (out-of-range `requirement` value, negative `quantity`/`campers`, a special-requirement entry referencing a bunk that doesn't exist, a duplicate bunk) is rejected with a clear message, never silently saved or silently corrupting the data.
+- Edits must actually persist across a page reload — this is a different persistence category from pickup status (see `ARCHITECTURE.md`, "Persistence — Current State," which explicitly must **not** persist across a reload). Editing seed data that resets on reload would defeat the purpose.
+- **The write-back mechanism itself is still undecided** (a small local dev-only server that writes to `src/data/*.json` on disk, vs. a manual export/import step, since a static production build cannot write to its own source files) — to be chosen when this task actually starts, informed by how the app is being used by then, not speculated on now. This will likely mean the real implementation differs meaningfully between local development and any deployed build; that split isn't designed yet either.
 
 Original MVP choice this task posed (superseded by the above, kept for context):
 
@@ -958,8 +966,10 @@ Original MVP choice this task posed (superseded by the above, kept for context):
 
 Acceptance criteria:
 
-- The chosen behavior is explicit.
-- The UI does not suggest editing when editing is not supported.
+- Operator can add, modify, and delete both roster entries and special-requirement entries from within the app.
+- Invalid edits are rejected before being saved, with a clear, specific message.
+- Saved edits persist across a page reload.
+- The UI does not suggest editing is possible before this task actually ships it.
 
 ---
 

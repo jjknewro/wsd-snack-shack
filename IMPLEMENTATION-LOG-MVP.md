@@ -831,6 +831,24 @@ First work in EPIC 6. Combined three plan tasks into one implementation cycle �
 
 ---
 
+### Ad hoc: Confirm and document full CRUD scope for seed-data editing (Task 7.5)
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete (planning/documentation only — no code)
+
+**Summary**
+
+User asked which epic covers editing the roster and special-requirements seed data, then explicitly confirmed the real requirement: **add, delete, and modify** entries in both data sets — not just the narrower "remove a special requirement" example that Task 7.5's text previously carried over from the second architecture pivot discussion.
+
+- `ARCHITECTURE.md`'s "Future: Editing Seed Data" section updated to record this second, more explicit confirmation, and to cross-reference `IMPLEMENTATION-PLAN-MVP.md` Task 7.5 directly. Also called out that this is a different persistence category from pickup status — seed-data edits must survive a page reload; pickup status explicitly must not (see "Persistence — Current State").
+- `IMPLEMENTATION-PLAN-MVP.md` Task 7.5 renamed from "Add Requirement Maintenance Workflow" to "Add Roster and Special Requirements Maintenance Workflow" and rewritten with concrete requirements: CRUD on both roster and special-requirement entries, validated through the existing Task 2.6 rules before being applied, and persisted across a reload. The write-back mechanism itself (small local dev server writing to `src/data/*.json` vs. manual export/import) remains **deliberately undecided** — that was already the right call when first written (informed by actual usage, not speculated in advance) and nothing about today's clarification changes that reasoning; only the *scope* of what needs editing was underspecified before.
+
+**Notes / Deviations**
+
+- No code changed. This is a scope clarification captured before EPIC 7 is reached, consistent with this plan's practice of recording decisions as soon as they're made rather than waiting until the task starts.
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project
