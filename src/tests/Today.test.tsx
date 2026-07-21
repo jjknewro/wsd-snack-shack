@@ -144,13 +144,17 @@ describe('Today', () => {
     expect(screen.queryByText('A1')).not.toBeInTheDocument()
   })
 
-  it('shows an empty state if an active day has no bunks', () => {
+  it('shows an empty state and a zero-value summary if an active day has no bunks, without crashing', () => {
     const emptyDay: SnackDay = { date: FIXED_DATE, dayStatus: 'active', bunks: [] }
 
-    renderToday({}, [emptyDay])
+    const { container } = renderToday({}, [emptyDay])
 
     expect(screen.getByText('No bunks found in the roster.')).toBeVisible()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+
+    const summary = container.querySelector('.today-summary') as HTMLElement
+    const totalRow = within(summary).getByText('Total bunks').closest('div') as HTMLElement
+    expect(within(totalRow).getByText('0')).toBeVisible()
   })
 
   it('survives Today unmounting and remounting within the same provider, simulating navigating away and back', () => {

@@ -543,7 +543,7 @@ Acceptance criteria:
 
 ## Status
 
-⬜ Not Started
+✅ Complete
 
 ## Objective
 
@@ -690,7 +690,7 @@ Acceptance criteria:
 
 ### Task 5.7 — Build Today Screen Tests
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete — **EPIC 5 (Today Screen and Snack Day Initialization) is complete.**
 
 Test initialization, loading, filters, summaries, error states, and responsive rendering.
 
@@ -698,6 +698,9 @@ Acceptance criteria:
 
 - Today screen behavior is tested with mock repository data.
 - Tests include zero bunks, pending bunks, completed bunks, and special requirements.
+
+**Note:** reviewed existing coverage against this task's criteria before writing anything new (same approach as Task 4.7), rather than assuming a gap exists. Result: initialization, filters, summaries, and error states (including the refresh-failure-preserves-data case) were already thoroughly covered across `Today.test.tsx` and the dedicated component/service test files built incrementally in Tasks 5.1–5.6 — all fixture-backed, per the DI pattern established in Task 4.7, never `src/data/*.json`. Zero/pending/completed/special-requirement bunks were all already exercised too. **"Responsive rendering" has no automated test and cannot get one under this project's own standing decision**: Playwright is deliberately never added as a project dependency (see Task 1.8's log entry), and jsdom (the vitest environment actually in use) doesn't perform real layout, so there is no way to assert on-screen overflow from within the committed test suite. Responsive rendering has instead been verified via ad hoc Playwright checks at 390–420px, repeated at every task that changed `Today.tsx`'s layout (5.1, 5.4, 5.5, 5.6) — the same verification approach used for every other page in this project, not a gap specific to this task.
+- **One real gap found and fixed**: no test confirmed `TodaySummary` renders correctly (all zeros, no crash) when wired into the actual `Today` page for a zero-bunk day — `summarizeToday([])` and `<TodaySummary>`'s own rendering of a zero-value object were each unit-tested in isolation, but not their integration inside `Today.tsx` for this specific case. Extended the existing "shows an empty state... if an active day has no bunks" test in `Today.test.tsx` rather than adding a near-duplicate.
 
 ---
 

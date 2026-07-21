@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.7 — Build Today Screen Tests (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.6 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+**EPIC 5 (Today Screen and Snack Day Initialization) is complete.** Next up per the plan's Recommended Execution Order: **EPIC 6 — Pickup Workflow**, starting with Task 6.1 (Design Pickup Interaction). Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -761,6 +761,36 @@ Scoped down from the plan's original filter/search list before starting, with th
 **Sign-off**
 
 EPIC 5 — Today Screen and Snack Day Initialization is complete except for Task 5.7 (Build Today Screen Tests), which is a dedicated coverage-review pass — following the same approach as Task 4.7 (review what Tasks 5.1–5.6's own tests already cover, close any real gaps, avoid duplicating what's already tested) rather than a separate task bundled into this one.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
+### Task 5.7 — Build Today Screen Tests
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete — **EPIC 5 (Today Screen and Snack Day Initialization) is complete.**
+
+**Summary**
+
+Reviewed existing coverage against this task's criteria before writing anything new, same approach as Task 4.7.
+
+- **Initialization, filters, summaries, error states** — already thoroughly covered by `Today.test.tsx` plus the dedicated fixture-backed component/service test files built incrementally across Tasks 5.1–5.6 (`TodayBunkRow`, `TodayFilters`/`todayFilters`, `TodaySummary`/`todaySummary`, `TodayRefreshControls`, `snackDayInitialization`, `useSnackDays`). All fixture-backed, per the Task 4.7 rule — none touch `src/data/*.json`.
+- **Zero / pending / completed / special-requirement bunks** — all already exercised: the empty-day case, the default all-pending fixture data, the closed-day fixture's `completed` bunk, and bunks with 0/1/N special requirements (singular/plural wording) across multiple test files.
+- **"Responsive rendering" has no automated test, by standing project decision, not oversight.** Playwright is deliberately never added to `package.json`/`package-lock.json` (established in Task 1.8 and reconfirmed at every later task that used it), and the actual test environment (`jsdom`, via Vitest) does not perform real CSS layout — there is no way to assert on real pixel overflow from inside the committed test suite regardless of framework. Responsive rendering for `Today.tsx` has instead been checked via ad hoc Playwright screenshots and `scrollWidth`/`clientWidth` checks at 390–420px widths at every task that touched its layout (5.1, 5.4, 5.5, 5.6) — the same verification method used for every other page in this project (Master Roster, Settings, etc.), so this isn't a gap unique to Today.
+
+**One real gap found and fixed**: `TodaySummary`'s zero-value rendering and `summarizeToday([])`'s zero-value output were each unit-tested in isolation, but nothing confirmed they work correctly *together*, wired into the real `Today` page, for a zero-bunk active day specifically. Extended the existing "shows an empty state... if an active day has no bunks" test in `Today.test.tsx` (rather than adding a near-duplicate) to also assert the summary's "Total bunks" cell reads `0`.
+
+**Verification**
+
+- `npm run verify` (lint + typecheck + test) — clean; 116/116 tests (same count as Task 5.6 — this task strengthened an existing test rather than adding a new one).
+- `npm run build` — succeeds.
+
+**Sign-off**
+
+EPIC 5 — Today Screen and Snack Day Initialization is complete. All seven tasks (5.1–5.7) are done, reviewed, and verified. The screen loads through the repository, initializes a snack day, supports search/filtering and a live summary, and survives navigation without losing state, with manual refresh and error recovery throughout. Pickup completion itself remains out of scope — every bunk honestly shows "Pending" until **EPIC 6 — Pickup Workflow** exists. Proceeding to **EPIC 6**, starting with **Task 6.1 — Design Pickup Interaction**.
 
 **Notes / Deviations**
 
