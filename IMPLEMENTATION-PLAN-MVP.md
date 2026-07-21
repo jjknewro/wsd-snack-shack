@@ -1096,7 +1096,7 @@ Test history retrieval, filters, closed-day write prevention, pending-bunk warni
 
 ## Status
 
-⬜ Not Started
+In Progress — Task 9.1 complete (pulled forward ahead of plan order at the user's request, for real-device installability), 9.2–9.7 remaining.
 
 ## Objective
 
@@ -1106,7 +1106,7 @@ Make the browser application reliable enough for daily operational use on mobile
 
 ### Task 9.1 — Configure Progressive Web Application Support
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Add:
 
@@ -1124,6 +1124,8 @@ Acceptance criteria:
 
 - Application can be added to the home screen on supported devices.
 - Installed application opens in a standalone-like experience where supported.
+
+**Note:** pulled forward out of plan order, ahead of EPIC 7/8, at the user's explicit request — they want a real installable app on their Android phone. Implemented with `vite-plugin-pwa` (new `devDependency` — the standard, actively-maintained Vite plugin for exactly this, chosen over hand-rolling a service worker: unlike Playwright, which is deliberately kept out of `package.json` because it's dev/test-only tooling, this plugin ships code that runs in the actual production app, so it belongs as a real dependency). Generates `manifest.webmanifest` (name "WSD Snack Shack", standalone display, theme color matching `--color-primary`) and a Workbox-based service worker (`registerType: 'autoUpdate'`) precaching the built app shell and bundled data files. Two new icons (`public/icon-192.png`, `public/icon-512.png`) — a simple blue "WSD" monogram matching the app's primary color, generated via Playwright screenshotting an SVG (`public/icon.svg`) at each target size, since no branded icon art existed yet; marked `purpose: "any maskable"` (safe-zone-centered content, works for both plain and Android-adaptive-icon rendering). `index.html` also gained an `apple-touch-icon` link and a `theme-color` meta tag. Explicitly **not** "full offline data synchronization" — there's no network sync to offer in the first place (see `ARCHITECTURE.md`'s Offline Behavior section, already describing this app as fully client-side); caching the static app shell for reload resilience is all this does.
 
 ---
 

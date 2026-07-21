@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 6.4 — Implement Pickup Correction (EPIC 6 — Pickup Workflow, in progress). Tasks 6.1–6.3 are complete (combined) — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Deployment (getting a real HTTPS URL so the now-PWA-ready app can actually be installed on the user's Android phone — not yet a formally numbered task; see the Task 9.1 entry below for why PWA support was pulled forward). After that, resume **Task 6.4 — Implement Pickup Correction** (EPIC 6 — Pickup Workflow, in progress; Tasks 6.1–6.3 complete, combined — see entries below), which was in progress (type changes read, no code written yet) when this was set aside for the deployment request. Task 2.2 remains partially prototyped, unaffected by any of this.
 
 ---
 
@@ -846,6 +846,33 @@ User asked which epic covers editing the roster and special-requirements seed da
 **Notes / Deviations**
 
 - No code changed. This is a scope clarification captured before EPIC 7 is reached, consistent with this plan's practice of recording decisions as soon as they're made rather than waiting until the task starts.
+
+---
+
+### Task 9.1 — Configure Progressive Web Application Support
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete — **pulled forward out of plan order.**
+
+**Summary**
+
+User asked how to deploy the app to their Android phone; after a short back-and-forth (the user's own words: they wanted direct action, not another round of options — see the feedback memory saved this session), they clarified the actual goal plainly: a real, installable standalone app icon on the home screen, not just a browser tab. That requires two things, neither built yet — PWA support (this task) and a real HTTPS-hosted deployment (EPIC 12, Task 12.3-adjacent, not yet a formally scoped/numbered piece of work — see "Current Task" above). Did the PWA half immediately, since it's pure code with no external accounts needed; deployment is the next piece of work, separate from this entry.
+
+- Added `vite-plugin-pwa` as a real `devDependency` (not ad hoc, unlike Playwright — this one ships code that runs in the shipped app itself, so it belongs in `package.json`). Configured in `vite.config.ts`: `registerType: 'autoUpdate'`, Workbox precaching the built app shell and bundled JSON data files, and a `manifest` block (name "WSD Snack Shack", `display: 'standalone'`, `theme_color`/`background_color` matching the app's own design tokens).
+- New `public/icon.svg` (a simple blue "WSD" monogram, matching `--color-primary`) and two generated PNGs, `icon-192.png`/`icon-512.png`, rendered via Playwright screenshotting the SVG at each target size (no existing branded icon art to work from) — both marked `purpose: "any maskable"` (content kept within the safe zone so Android's adaptive-icon cropping doesn't clip it).
+- `index.html` gained an `apple-touch-icon` link and a `theme-color` meta tag alongside the existing favicon.
+- Explicitly does **not** imply full offline data sync (this task's own stated requirement) — there was never any network sync to offer in the first place; `ARCHITECTURE.md`'s Offline Behavior section already describes the app as fully client-side. Caching is scoped to the static app shell for reload resilience only.
+
+**Verification**
+
+- `npm run build` — succeeds; produces `dist/manifest.webmanifest`, `dist/sw.js`, `dist/workbox-*.js`, and confirms `dist/index.html` has both the `<link rel="manifest">` and the service-worker registration script correctly injected.
+- `npm run verify` (lint + typecheck + test) — clean; 143/143 tests, unaffected (no application code changed, only build tooling).
+- Playwright against a real `vite preview` server (the actual production build, not the dev server): confirmed `/manifest.webmanifest` fetches with status 200 and the expected content, and that the service worker registers and reaches `active: true` — the concrete installability signals a browser checks before offering "Add to Home Screen" / "Install app".
+
+**Notes / Deviations**
+
+- **Deliberately out of plan order** — EPIC 9 comes after EPICs 7 and 8 in the Recommended Execution Order, but this single task was pulled forward at the user's explicit, repeated request for real-device installability. The rest of EPIC 9 (9.2–9.7: network status handling, safe retry, error boundary, draft preservation, backup/restore docs, reliability tests) has **not** been pulled forward and stays in its normal sequence.
+- Real installability on the user's phone still requires a deployed HTTPS URL (next piece of work) — this task alone makes the app *capable* of being installed, once served somewhere real.
 
 ---
 
