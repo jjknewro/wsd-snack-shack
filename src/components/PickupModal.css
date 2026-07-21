@@ -1,0 +1,37 @@
+.pickup-modal__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+}
+
+.pickup-modal__details div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pickup-modal__details dt {
+  color: var(--color-text-muted);
+}
+
+.pickup-modal__details dd {
+  margin: 0;
+}
+
+.pickup-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.pickup-modal__completed-note {
+  margin-top: var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.pickup-modal__error {
+  margin: 0;
+  color: var(--color-status-critical);
+  font-size: var(--font-size-body);
+}

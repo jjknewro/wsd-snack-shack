@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { PickupModal } from '@/components/PickupModal'
 import { StatusBadge } from '@/components/StatusBadge'
 import { TodayFilters } from '@/components/TodayFilters'
 import { TodayRefreshControls } from '@/components/TodayRefreshControls'
@@ -11,6 +12,7 @@ import '../components/SnapshotTable.css'
 import { useSnackDays } from '@/hooks/useSnackDays'
 import { createJsonSnackRepository, loadRepositorySafely } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
+import { completePickup } from '@/services/completePickup'
 import { initializeSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
 import { summarizeToday } from '@/services/todaySummary'
@@ -45,6 +47,8 @@ export function Today({
   const { snackDays, setSnackDays } = useSnackDays()
   const [statusFilter, setStatusFilter] = useState<TodayStatusFilter>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedBunk, setSelectedBunk] = useState<string | null>(null)
+  const [completeError, setCompleteError] = useState<string | null>(null)
 
   const [repositoryState, setRepositoryState] = useState(() => loadRepositorySafely(createRepository))
   // Set unconditionally at mount — the initial load already counts as the
@@ -94,6 +98,25 @@ export function Today({
   }
 
   const filteredBunks = filterTodayBunks(activeDay.bunks, statusFilter, searchTerm)
+  const selectedRecord = selectedBunk ? activeDay.bunks.find((record) => record.bunk === selectedBunk) : undefined
+
+  function handleComplete(input: { actualCount?: number; notes?: string }) {
+    if (!selectedBunk) return
+
+    const result = completePickup(snackDays, date, selectedBunk, input, now)
+    if (result.success) {
+      setSnackDays(result.data)
+      setSelectedBunk(null)
+      setCompleteError(null)
+    } else {
+      setCompleteError(result.message)
+    }
+  }
+
+  function closeModal() {
+    setSelectedBunk(null)
+    setCompleteError(null)
+  }
 
   return (
     <div>
@@ -107,9 +130,8 @@ export function Today({
         </p>
       ) : (
         <p className="snapshot-note">
-          Pickup completion isn't built yet (see EPIC 6) — every bunk shows pending for now. Status is
-          tracked for this session only and resets on page reload (see ARCHITECTURE.md, "Persistence
-          — Current State").
+          Click a bunk to record its pickup. Status is tracked for this session only and resets on page
+          reload (see ARCHITECTURE.md, "Persistence — Current State").
         </p>
       )}
 
@@ -147,7 +169,9 @@ export function Today({
                       bunk={record.bunk}
                       campers={record.expectedCount}
                       status={record.status}
-                      specialRequirementCount={record.specialRequirementCount}
+                      specialRequirementCount={record.specialRequirements.length}
+                      pickupTime={record.completedAt}
+                      onSelect={() => setSelectedBunk(record.bunk)}
                     />
                   ))}
                 </tbody>
@@ -156,6 +180,15 @@ export function Today({
           )}
         </>
       )}
+
+      {selectedRecord ? (
+        <PickupModal
+          record={selectedRecord}
+          onClose={closeModal}
+          onComplete={handleComplete}
+          submitError={completeError}
+        />
+      ) : null}
     </div>
   )
 }

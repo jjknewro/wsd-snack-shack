@@ -27,7 +27,7 @@ export function TodaySummary({ summary }: TodaySummaryProps) {
       </div>
       <div className="today-summary__row">
         <dt>Actual served</dt>
-        <dd>{summary.actualTotalServed ?? 'Not tracked yet'}</dd>
+        <dd>{summary.actualTotalServed}</dd>
       </div>
       <div className="today-summary__row">
         <dt>Special requirements</dt>

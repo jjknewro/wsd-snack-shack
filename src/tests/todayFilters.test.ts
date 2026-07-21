@@ -4,9 +4,18 @@ import { filterTodayBunks } from '../services/todayFilters'
 import type { SnackDayBunkRecord } from '../types/snackDay'
 
 const bunks: SnackDayBunkRecord[] = [
-  { bunk: 'A1', counselors: 'Alex Rivera', expectedCount: 8, specialRequirementCount: 2, status: 'pending' },
-  { bunk: 'B2', counselors: 'Bailey Chen', expectedCount: 10, specialRequirementCount: 0, status: 'completed' },
-  { bunk: 'C3', counselors: 'Casey Park', expectedCount: 6, specialRequirementCount: 0, status: 'pending' },
+  {
+    bunk: 'A1',
+    counselors: 'Alex Rivera',
+    expectedCount: 8,
+    specialRequirements: [
+      { bunk: 'A1', requirement: 'No Dairy', quantity: 1 },
+      { bunk: 'A1', requirement: 'Nurse', quantity: 1 },
+    ],
+    status: 'pending',
+  },
+  { bunk: 'B2', counselors: 'Bailey Chen', expectedCount: 10, specialRequirements: [], status: 'completed' },
+  { bunk: 'C3', counselors: 'Casey Park', expectedCount: 6, specialRequirements: [], status: 'pending' },
 ]
 
 describe('filterTodayBunks', () => {

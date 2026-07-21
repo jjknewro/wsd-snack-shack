@@ -23,7 +23,7 @@ function createFixtureRepository(): SnackRepository {
 }
 
 describe('initializeSnackDay', () => {
-  it('creates one pending record per roster bunk, snapshotting expected count and special-requirement count', () => {
+  it('creates one pending record per roster bunk, snapshotting expected count and special requirements', () => {
     const days = initializeSnackDay(createFixtureRepository(), '2026-07-20')
 
     expect(days).toHaveLength(1)
@@ -31,8 +31,14 @@ describe('initializeSnackDay', () => {
       date: '2026-07-20',
       dayStatus: 'active',
       bunks: [
-        { bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 2, status: 'pending' },
-        { bunk: 'B2', counselors: 'Bailey', expectedCount: undefined, specialRequirementCount: 0, status: 'pending' },
+        {
+          bunk: 'A1',
+          counselors: 'Alex',
+          expectedCount: 8,
+          specialRequirements: fixtureRequirements,
+          status: 'pending',
+        },
+        { bunk: 'B2', counselors: 'Bailey', expectedCount: undefined, specialRequirements: [], status: 'pending' },
       ],
     })
   })
@@ -50,7 +56,15 @@ describe('initializeSnackDay', () => {
     const historicalDay: SnackDay = {
       date: '2026-07-19',
       dayStatus: 'closed',
-      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 2, status: 'completed' }],
+      bunks: [
+        {
+          bunk: 'A1',
+          counselors: 'Alex',
+          expectedCount: 8,
+          specialRequirements: fixtureRequirements,
+          status: 'completed',
+        },
+      ],
     }
 
     const days = initializeSnackDay(createFixtureRepository(), '2026-07-20', [historicalDay])

@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-**EPIC 5 (Today Screen and Snack Day Initialization) is complete.** Next up per the plan's Recommended Execution Order: **EPIC 6 — Pickup Workflow**, starting with Task 6.1 (Design Pickup Interaction). Task 2.2 remains partially prototyped, unaffected by this.
+Task 6.4 — Implement Pickup Correction (EPIC 6 — Pickup Workflow, in progress). Tasks 6.1–6.3 are complete (combined) — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -795,6 +795,39 @@ EPIC 5 — Today Screen and Snack Day Initialization is complete. All seven task
 **Notes / Deviations**
 
 - None.
+
+---
+
+### Tasks 6.1, 6.2, 6.3 — Design Pickup Interaction / Implement Complete Pickup Operation / Build Pickup Confirmation UI
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete (all three, implemented together)
+
+**Summary**
+
+First work in EPIC 6. Combined three plan tasks into one implementation cycle — unlike this plan's usual "define, then wire up" staging (Task 4.3→4.4, Task 5.2→5.3), a pickup dialog whose button does nothing isn't a coherent place to pause; the interaction design, the completion logic, and the confirmation UI are inseparably one feature from the operator's point of view.
+
+- **Type evolution, motivated by a real new need**: `SnackDayBunkRecord.specialRequirementCount: number` (Task 5.2) became `specialRequirements: SpecialRequirementEntry[]` — the pickup dialog needs to show requirement *type and notes* ("No Dairy × 2, Nurse × 1 — Daily medication"), not just a count, matching what the original `MasterRoster` popup already showed for exactly this reason. Also added `actualCount?: number`, `completedAt?: string`, `pickupNotes?: string`, all set only once a pickup completes. Every existing consumer of the old count field (`todayFilters.ts`, `todaySummary.ts`, `snackDayInitialization.ts`, `TodayBunkRow`'s call site in `Today.tsx`) was updated to derive it via `.specialRequirements.length` — nothing lost, one fewer redundant source of truth.
+- **`src/services/completePickup.ts`**: `completePickup(snackDays, date, bunk, input, now)`, returning `{ success: true, data: SnackDay[] } | { success: false, message, errorCode }` — `ARCHITECTURE.md`'s prescribed shape, used for the first time in this codebase (Task 4.4's repository intentionally didn't use it, for reasons explained there; this per-call validate-then-mutate operation is exactly the case it was written for). Validates day exists, day is active (not closed), bunk exists, and the bunk isn't already completed (this last check is the real duplicate-submission guard — "request ID" from the original backend-oriented task text doesn't apply without a network to deduplicate over). Pure and immutable: returns new arrays/objects, never mutates its input (tested directly).
+- **`src/components/PickupModal.tsx`** (+ `.css`): opened via a new optional `onSelect` prop on `TodayBunkRow` (the bunk name becomes a `link-button`, same pattern `MasterRoster.tsx` already uses). Shows counselors, expected count, the full special-requirements list, and — for a pending bunk — a form (actual count pre-filled with the expected count, optional notes, "Complete Pickup"). For an **already-completed** bunk, shows a read-only "Picked Up at [time] — corrections aren't supported yet (see EPIC 6, Task 6.4)" note instead of the form, with no way to resubmit from here.
+- **`src/pages/Today.tsx`**: wires selection state, calls `completePickup` on submit, applies the result via `setSnackDays` on success or surfaces `result.message` inside the still-open modal on failure (e.g. the `day-closed` case). The old "Pickup completion isn't built yet" note text is gone, replaced with "Click a bunk to record its pickup."
+- **`src/services/todaySummary.ts`**: `actualTotalServed` changed from always-`null` ("Not tracked yet", Task 5.5) to a real sum of completed bunks' `actualCount` — justified now that real data exists to sum, not a speculative change; `TodaySummary.tsx` simplified to match (no more null-coalescing fallback text).
+- **Deliberately not built in this cycle** (later EPIC 6 tasks): correcting an already-completed pickup (6.4), reopening one (6.5), optimistic/in-flight UI for a real async write boundary (6.6, not yet applicable — see below), and a separate persisted history log distinct from the day itself (EPIC 8, already flagged deferred in Task 2.4's note).
+- **"Blocks accidental repeated submission" reasoning**: not implemented as explicit UI state (a disabled-while-submitting flag). Every mutation here is synchronous on the main thread — there's no async gap between a click and its effect where a second click could race the first and reach `completePickup` before the first call's result has already been applied. `completePickup`'s `already-completed` guard is what actually protects against a genuine duplicate scenario (e.g. two rapid mouse clicks producing two synchronous event dispatches), tested directly.
+
+**Verification**
+
+- New `src/tests/completePickup.test.ts`: successful completion records `actualCount`/`pickupNotes`/`completedAt` correctly and leaves every other bunk untouched; input arrays/objects are not mutated; each failure mode (`day-not-found`, `day-closed`, `bunk-not-found`, `already-completed`, `invalid-count`) produces its own distinct, correct `errorCode`; a second completion attempt on an already-completed bunk is rejected without corrupting the first completion's data (the core duplicate-submission protection).
+- New `src/tests/PickupModal.test.tsx`: full requirement detail (type, quantity, notes) renders; a no-requirements message shows when appropriate; actual count is pre-filled from expected count (or blank when there is none); submit calls `onComplete` with the adjusted, trimmed values; a completed record shows the read-only note with no form and no way to resubmit; a `submitError` prop renders as an alert without hiding or resetting the form.
+- `src/tests/TodayBunkRow.test.tsx`: two new tests for the `onSelect` prop — renders as plain text when absent (existing tests all still pass unchanged, proving backward compatibility), renders as a button and calls the handler when present.
+- `src/tests/Today.test.tsx`: six new integration tests — opening the dialog shows real data; completing with the default count updates status and pickup time; completing with an adjusted count and notes is reflected in the summary's actual-served total (proving the *entered* value was recorded, not the expected one); an already-completed bunk shows the read-only note with no way to resubmit; closing without completing leaves the bunk pending; completing a still-pending bunk on an **already-closed day** is rejected with a clear inline error, dialog remains open, bunk stays pending (the `day-closed` edge case). Existing fixtures across `Today.test.tsx`, `snackDayInitialization.test.ts`, `todayFilters.test.ts`, `todaySummary.test.ts` updated for the `specialRequirements` field rename; `todaySummary.test.ts` gained new cases for real (non-null) `actualTotalServed` sums.
+- `npm run verify` (lint + typecheck + test) — clean; 143/143 tests (27 new).
+- `npm run build` — succeeds.
+- Playwright against the running dev server: opened the pickup dialog for `K3` (real data, 3 special requirements), confirmed all three requirements render with quantities; entered an adjusted actual count (9) and a note; completed the pickup; confirmed the row updated to a green "Picked Up" badge with a real timestamp; re-opened the same bunk and confirmed it now shows the read-only "already picked up" note with no form. Screenshots captured of the open dialog and the updated table.
+
+**Notes / Deviations**
+
+- See the "deliberately not built" list above — all explicitly still-scoped to later EPIC 6 tasks, not gaps.
 
 ---
 

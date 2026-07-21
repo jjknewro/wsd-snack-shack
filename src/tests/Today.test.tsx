@@ -60,11 +60,118 @@ describe('Today', () => {
     expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
   })
 
+  it('opens a pickup dialog showing bunk info and special requirements when a bunk is clicked', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Alex')).toBeVisible()
+    expect(within(dialog).getByText('No Dairy')).toBeVisible()
+    expect(within(dialog).getByLabelText('Actual count')).toHaveValue(8)
+  })
+
+  it('completes a pickup with the default (expected) count, updating status and pickup time', () => {
+    renderToday({ now: () => '10:15:00 AM' })
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    expect(within(a1Row).getByText('Picked Up')).toBeVisible()
+    expect(within(a1Row).getByText('10:15:00 AM')).toBeVisible()
+  })
+
+  it('completes a pickup with an adjusted count and notes', () => {
+    const { container } = renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.change(screen.getByLabelText('Actual count'), { target: { value: '6' } })
+    fireEvent.change(screen.getByLabelText('Notes (optional)'), { target: { value: 'Two campers absent' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+
+    // Reflected in the summary, proving the adjusted count (not the
+    // expected count) was actually recorded.
+    const summary = container.querySelector('.today-summary') as HTMLElement
+    const actualServedRow = within(summary).getByText('Actual served').closest('div') as HTMLElement
+    expect(within(actualServedRow).getByText('6')).toBeVisible()
+  })
+
+  it('shows a read-only note instead of the form for an already-completed bunk, with no way to resubmit', () => {
+    const closedDay: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'active',
+      bunks: [
+        {
+          bunk: 'A1',
+          counselors: 'Alex',
+          expectedCount: 8,
+          specialRequirements: [],
+          status: 'completed',
+          actualCount: 8,
+          completedAt: '9:00:00 AM',
+        },
+      ],
+    }
+
+    renderToday({}, [closedDay])
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText(/corrections aren't supported yet/)).toBeVisible()
+    expect(within(dialog).queryByRole('button', { name: 'Complete Pickup' })).not.toBeInTheDocument()
+  })
+
+  it('closing the pickup dialog without completing leaves the bunk pending', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    expect(within(a1Row).getByText('Pending')).toBeVisible()
+  })
+
+  it('rejects completing a still-pending bunk on a closed day, keeping the dialog open with a clear error', () => {
+    const closedDayWithPendingBunk: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'closed',
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirements: [], status: 'pending' }],
+    }
+
+    renderToday({}, [closedDayWithPendingBunk])
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(screen.getByRole('alert')).toHaveTextContent('closed')
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    expect(within(a1Row).getByText('Pending')).toBeVisible()
+  })
+
   it('shows a read-only closed-day view for a day already marked closed', () => {
     const closedDay: SnackDay = {
       date: FIXED_DATE,
       dayStatus: 'closed',
-      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
+      bunks: [
+        {
+          bunk: 'A1',
+          counselors: 'Alex',
+          expectedCount: 8,
+          specialRequirements: fixtureRequirements,
+          status: 'completed',
+          actualCount: 7,
+          completedAt: '9:00:00 AM',
+        },
+      ],
     }
 
     renderToday({}, [closedDay])
@@ -95,7 +202,17 @@ describe('Today', () => {
     const closedDay: SnackDay = {
       date: FIXED_DATE,
       dayStatus: 'closed',
-      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
+      bunks: [
+        {
+          bunk: 'A1',
+          counselors: 'Alex',
+          expectedCount: 8,
+          specialRequirements: fixtureRequirements,
+          status: 'completed',
+          actualCount: 7,
+          completedAt: '9:00:00 AM',
+        },
+      ],
     }
 
     const { container } = renderToday({}, [closedDay])
@@ -103,7 +220,9 @@ describe('Today', () => {
     const summary = container.querySelector('.today-summary') as HTMLElement
     const completedRow = within(summary).getByText('Completed').closest('div') as HTMLElement
     expect(within(completedRow).getByText('1')).toBeVisible()
-    expect(within(summary).getByText('Not tracked yet')).toBeVisible()
+
+    const actualServedRow = within(summary).getByText('Actual served').closest('div') as HTMLElement
+    expect(within(actualServedRow).getByText('7')).toBeVisible()
   })
 
   it('filters the table by status, and clearing filters restores the full list', () => {

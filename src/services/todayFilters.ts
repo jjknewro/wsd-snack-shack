@@ -14,7 +14,7 @@ export function filterTodayBunks(
       statusFilter === 'all' ||
       (statusFilter === 'pending' && record.status === 'pending') ||
       (statusFilter === 'completed' && record.status === 'completed') ||
-      (statusFilter === 'special-requirements' && record.specialRequirementCount > 0)
+      (statusFilter === 'special-requirements' && record.specialRequirements.length > 0)
 
     if (!matchesStatus) return false
     if (normalizedSearch === '') return true

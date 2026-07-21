@@ -708,7 +708,7 @@ Acceptance criteria:
 
 ## Status
 
-⬜ Not Started
+In Progress — Tasks 6.1–6.3 complete (combined; see their notes), 6.4–6.7 remaining.
 
 ## Objective
 
@@ -718,7 +718,7 @@ Allow the operator to complete, correct, and review each bunk pickup quickly and
 
 ### Task 6.1 — Design Pickup Interaction
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete — implemented together with Tasks 6.2 and 6.3 (see note)
 
 The default workflow should require as few actions as possible.
 
@@ -734,11 +734,13 @@ Acceptance criteria:
 - Standard pickup can be completed quickly.
 - Destructive or corrective actions require explicit confirmation.
 
+**Note:** Tasks 6.1, 6.2, and 6.3 were combined into one implementation cycle rather than staged across three, because — unlike this plan's earlier "define then wire" splits (e.g. Task 4.3 vs. 4.4) — a pickup dialog with an inert "Complete Pickup" button isn't a coherent, useful stopping point on its own; the interaction design, the completion logic, and the confirmation UI are one piece of user-facing behavior. See Task 6.3's note for the full implementation summary. "Destructive or corrective actions require explicit confirmation" doesn't yet apply to anything built in this cycle — completing a pending bunk for the first time isn't destructive or corrective, it's the normal happy path. That acceptance criterion belongs to Tasks 6.4 (correction) and 6.5 (reopen), which explicitly require confirmation, and will be honored when those are built.
+
 ---
 
 ### Task 6.2 — Implement Complete Pickup Backend Operation
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete — implemented together with Tasks 6.1 and 6.3 (see note)
 
 Required inputs:
 
@@ -762,11 +764,13 @@ Acceptance criteria:
 - Completion updates Today and History data.
 - Duplicate submissions do not create duplicate history rows.
 
+**Note:** "Backend operation" is reframed as a pure in-memory function, `completePickup(snackDays, date, bunk, input, now)` in `src/services/completePickup.ts` — there is no backend, and "request ID" doesn't apply (no network call to deduplicate against; the already-completed guard below is what actually protects against duplicates). Returns the `{ success: true, data } | { success: false, message, errorCode }` shape from `ARCHITECTURE.md`'s Error Handling section — the first genuine fit for it in this codebase (Task 4.4's note explains why the repository didn't use it; this per-call, validate-then-mutate operation is exactly what the shape was written for). Validates: day exists (`day-not-found`), day is active not closed (`day-closed`), bunk exists on the day (`bunk-not-found`), bunk isn't already completed (`already-completed` — this is the duplicate-submission guard), and a provided actual count is a non-negative finite number (`invalid-count`). "History" (a separate persisted record distinct from the day itself) doesn't exist yet — that's EPIC 8 territory, already flagged as deferred in Task 2.4's note; today, the bunk's own record in `SnackDay.bunks` **is** the record, updated immutably (new array, new objects — verified by test that the input isn't mutated).
+
 ---
 
 ### Task 6.3 — Build Pickup Confirmation UI
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete — **EPIC 6 is in progress; this closes out its first three tasks together.**
 
 Display:
 
@@ -782,6 +786,13 @@ Acceptance criteria:
 - Count input is optimized for mobile numeric entry.
 - The operator sees a clear success confirmation.
 - The UI blocks accidental repeated submission while a mutation is active.
+
+**Note:** `src/components/PickupModal.tsx`, opened by clicking a bunk's name in `Today.tsx`'s table (`TodayBunkRow` gained an optional `onSelect` prop for this — reusing the same `Modal` component and `link-button` interaction pattern `MasterRoster.tsx` already established). Shows counselors, expected count, and the **full** special-requirement detail (type, quantity, and notes) — not just the count `TodayBunkRow` shows in its table cell. This required a real type change: `SnackDayBunkRecord.specialRequirementCount: number` (Task 5.2) became `specialRequirements: SpecialRequirementEntry[]` (the full snapshot), since a count alone can't render "No Dairy × 2, Nurse × 1 — Daily medication," which is exactly what an operator needs to see before completing a pickup. Every consumer of the old field (`todayFilters.ts`, `todaySummary.ts`, `snackDayInitialization.ts`, and their tests) was updated to derive the count via `.length` instead of storing it redundantly.
+- **Count input**: `type="number"`/`inputMode="numeric"`, pre-filled with the expected count (confirm-by-default, adjust-if-needed — directly serving "standard pickup can be completed quickly").
+- **Success confirmation**: the modal closes and the row immediately shows a distinct green "Picked Up" badge with a real timestamp — judged sufficient for this MVP without adding separate toast/notification infrastructure not otherwise used anywhere in this app.
+- **Blocks accidental repeated submission**: satisfied structurally, not through added UI state. Every mutation in this app runs synchronously on the main thread — there is no async window between a click and its effect where a second click could race the first, and `completePickup`'s `already-completed` guard makes even a hypothetical double-call safe. Full "in-flight" UI behavior (spinners, disabling during a pending write) is Task 6.6's job, for whenever a real write boundary actually exists to be "in flight" against.
+- **`TodaySummary`'s `actualTotalServed`** (Task 5.5) changed from always-`null` ("Not tracked yet") to a real computed sum over completed bunks' `actualCount` — justified now that this task gives that field real data to sum, not a speculative change.
+- Attempting to complete a bunk that's still pending on an already-closed day (a real edge case: EPIC 8's future close-day flow could leave stragglers) is correctly rejected by `completePickup`'s `day-closed` guard, surfaced as an inline error inside the still-open modal — tested directly.
 
 ---
 

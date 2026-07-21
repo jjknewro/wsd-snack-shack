@@ -5,9 +5,7 @@ export type TodaySummaryData = {
   completedBunks: number
   pendingBunks: number
   expectedTotalCampers: number
-  // null = not trackable yet: there is no per-bunk "actual count" field
-  // until EPIC 6 (Pickup Workflow) defines how one gets captured.
-  actualTotalServed: number | null
+  actualTotalServed: number
   specialRequirementCount: number
 }
 
@@ -17,7 +15,9 @@ export function summarizeToday(bunks: SnackDayBunkRecord[]): TodaySummaryData {
     completedBunks: bunks.filter((record) => record.status === 'completed').length,
     pendingBunks: bunks.filter((record) => record.status === 'pending').length,
     expectedTotalCampers: bunks.reduce((sum, record) => sum + (record.expectedCount ?? 0), 0),
-    actualTotalServed: null,
-    specialRequirementCount: bunks.reduce((sum, record) => sum + record.specialRequirementCount, 0),
+    actualTotalServed: bunks
+      .filter((record) => record.status === 'completed')
+      .reduce((sum, record) => sum + (record.actualCount ?? 0), 0),
+    specialRequirementCount: bunks.reduce((sum, record) => sum + record.specialRequirements.length, 0),
   }
 }

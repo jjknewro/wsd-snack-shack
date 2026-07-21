@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
 
@@ -57,5 +57,20 @@ describe('TodayBunkRow', () => {
   it('shows "None" when there are no special requirements', () => {
     renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0 })
     expect(screen.getByText('None')).toBeVisible()
+  })
+
+  it('renders the bunk as plain text when onSelect is not provided', () => {
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0 })
+    expect(screen.queryByRole('button', { name: 'A1' })).not.toBeInTheDocument()
+    expect(screen.getByText('A1')).toBeVisible()
+  })
+
+  it('renders the bunk as a clickable button and calls onSelect when provided', () => {
+    const onSelect = vi.fn()
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0, onSelect })
+
+    const button = screen.getByRole('button', { name: 'A1' })
+    fireEvent.click(button)
+    expect(onSelect).toHaveBeenCalledOnce()
   })
 })

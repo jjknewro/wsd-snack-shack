@@ -11,7 +11,7 @@ describe('TodaySummary', () => {
       completedBunks: 3,
       pendingBunks: 7,
       expectedTotalCampers: 84,
-      actualTotalServed: null,
+      actualTotalServed: 21,
       specialRequirementCount: 5,
     }
 
@@ -25,22 +25,25 @@ describe('TodaySummary', () => {
     expect(screen.getByText('7')).toBeVisible()
     expect(screen.getByText('Expected campers')).toBeVisible()
     expect(screen.getByText('84')).toBeVisible()
+    expect(screen.getByText('Actual served')).toBeVisible()
+    expect(screen.getByText('21')).toBeVisible()
     expect(screen.getByText('Special requirements')).toBeVisible()
     expect(screen.getByText('5')).toBeVisible()
   })
 
-  it('shows "Not tracked yet" instead of a fabricated number when actualTotalServed is null', () => {
+  it('shows 0 for actual served when nothing has been picked up yet, not a placeholder', () => {
     const summary: TodaySummaryData = {
       totalBunks: 1,
       completedBunks: 0,
       pendingBunks: 1,
       expectedTotalCampers: 8,
-      actualTotalServed: null,
+      actualTotalServed: 0,
       specialRequirementCount: 0,
     }
 
     render(<TodaySummary summary={summary} />)
 
-    expect(screen.getByText('Not tracked yet')).toBeVisible()
+    const actualServedRow = screen.getByText('Actual served').closest('div') as HTMLElement
+    expect(actualServedRow).toHaveTextContent('0')
   })
 })
