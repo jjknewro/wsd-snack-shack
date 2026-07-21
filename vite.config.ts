@@ -1,8 +1,28 @@
+import { rm } from 'node:fs/promises'
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vitest/config'
+import { defineConfig, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// The local-only workbook-snapshot viewer (Requirements.tsx) reads real
+// counselor names from public/data/workbook-snapshot.json — gitignored and
+// never meant to leave this machine (see IMPLEMENTATION-LOG-MVP.md). Vite's
+// public-dir copy has no "exclude" option, so without this the file would
+// be silently included — and therefore publicly served — in every
+// production build. Runs after the PWA plugin's own closeBundle (which
+// generates the precache manifest; that manifest is told to skip this file
+// via globIgnores below), so nothing in the shipped app ever references or
+// serves it.
+function excludeLocalWorkbookSnapshot(): Plugin {
+  return {
+    name: 'exclude-local-workbook-snapshot',
+    apply: 'build',
+    closeBundle: async () => {
+      await rm(fileURLToPath(new URL('./dist/data/workbook-snapshot.json', import.meta.url)), { force: true })
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,6 +37,7 @@ export default defineConfig({
       // client-side with no network dependency after first load).
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        globIgnores: ['data/workbook-snapshot.json'],
       },
       manifest: {
         name: 'WSD Snack Shack',
@@ -32,6 +53,7 @@ export default defineConfig({
         ],
       },
     }),
+    excludeLocalWorkbookSnapshot(),
   ],
   resolve: {
     alias: {

@@ -17,4 +17,6 @@ Running list of decisions or clarifications needed from the user, across all tas
 
 ## Resolved
 
-*(none yet)*
+### Real counselor names would have been publicly deployed (found and fixed 2026-07-20)
+
+`ARCHITECTURE.md`'s Security section flagged this risk in the abstract from the start ("real operational data introduces real privacy handling questions... to be resolved before this app is used with real campers' information"). It became concrete while preparing the first real deployment: `public/data/workbook-snapshot.json` (real counselor names, gitignored, used only by `Requirements.tsx`'s temporary local-dev snapshot viewer) is copied verbatim into every production build by Vite's static public-directory handling — gitignored status doesn't stop it from being bundled and publicly served. **Fixed**: `vite.config.ts` now excludes this specific file from the build output (a `closeBundle` hook removes it from `dist/`) and from the PWA service worker's precache manifest (`globIgnores`). Verified: the file is absent from `dist/` after a build, and not referenced anywhere in the generated `sw.js`. See `IMPLEMENTATION-LOG-MVP.md`'s Task 9.1 entry for the full fix.

@@ -876,6 +876,31 @@ User asked how to deploy the app to their Android phone; after a short back-and-
 
 ---
 
+### Ad hoc: Fix a real privacy leak found while preparing the first deployment
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+While building `dist/` in preparation for actually deploying somewhere public, checked its contents before shipping anything (measure-twice discipline for a hard-to-reverse, externally-visible action) and found `dist/data/workbook-snapshot.json` — a full copy of the real counselor-name data. `public/data/workbook-snapshot.json` is gitignored specifically because it holds real names (used only by `Requirements.tsx`'s temporary local-dev snapshot viewer, per that hook's own code comment: "gitignored - not present in a fresh clone"), but gitignore status has no bearing on Vite's static public-directory copy — every build was silently bundling it, and would have publicly served it the moment anything got deployed. This was a real, previously-latent gap between the app's documented privacy intent (`ARCHITECTURE.md`'s Security section already flagged this exact category of risk in the abstract) and its actual build behavior.
+
+- `vite.config.ts`: added a small `excludeLocalWorkbookSnapshot` plugin (`closeBundle` hook) that removes `dist/data/workbook-snapshot.json` after every production build.
+- Added `globIgnores: ['data/workbook-snapshot.json']` to the PWA plugin's Workbox config, so the service worker's precache manifest never references or caches it either (the file needed excluding from **two** places — the raw build output and the SW's own list of what to cache).
+- `open-questions.md`: added this to the **Resolved** section (the first entry there), closing the loop on `ARCHITECTURE.md`'s standing Security-section flag.
+
+**Verification**
+
+- `npm run build`, then confirmed `dist/data/` is empty (the file is gone) and `grep -o "workbook-snapshot" dist/sw.js` finds no matches.
+- `npm run verify` — clean; 143/143 tests, unaffected (build-tooling-only change).
+
+**Notes / Deviations**
+
+- The now-empty `dist/data/` directory is left behind (harmless — no file to serve, nothing exposed) rather than also removing the directory itself; not worth the added complexity.
+- This is exactly the kind of check that matters before any deployment step, and will need re-confirming whenever a *new* local-only/gitignored data file is introduced under `public/` — noted here for future awareness, not turned into an automated check for now (no second occurrence yet to justify the machinery).
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project
