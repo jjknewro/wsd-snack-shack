@@ -24,6 +24,7 @@ export function initializeSnackDay(
     dayStatus: 'active',
     bunks: roster.map((entry) => ({
       bunk: entry.bunk,
+      counselors: entry.counselors,
       expectedCount: entry.campers,
       specialRequirementCount: repository.getSpecialRequirementsForBunk(entry.bunk).length,
       status: 'pending',

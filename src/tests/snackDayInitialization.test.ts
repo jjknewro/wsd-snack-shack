@@ -31,8 +31,8 @@ describe('initializeSnackDay', () => {
       date: '2026-07-20',
       dayStatus: 'active',
       bunks: [
-        { bunk: 'A1', expectedCount: 8, specialRequirementCount: 2, status: 'pending' },
-        { bunk: 'B2', expectedCount: undefined, specialRequirementCount: 0, status: 'pending' },
+        { bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 2, status: 'pending' },
+        { bunk: 'B2', counselors: 'Bailey', expectedCount: undefined, specialRequirementCount: 0, status: 'pending' },
       ],
     })
   })
@@ -50,7 +50,7 @@ describe('initializeSnackDay', () => {
     const historicalDay: SnackDay = {
       date: '2026-07-19',
       dayStatus: 'closed',
-      bunks: [{ bunk: 'A1', expectedCount: 8, specialRequirementCount: 2, status: 'completed' }],
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 2, status: 'completed' }],
     }
 
     const days = initializeSnackDay(createFixtureRepository(), '2026-07-20', [historicalDay])

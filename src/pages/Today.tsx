@@ -1,14 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { StatusBadge } from '@/components/StatusBadge'
+import { TodayFilters } from '@/components/TodayFilters'
 import '../components/SnapshotTable.css'
 import { useSnackDays } from '@/hooks/useSnackDays'
 import { createJsonSnackRepository, DataValidationError } from '@/repositories/jsonSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { initializeSnackDay } from '@/services/snackDayInitialization'
+import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
 
@@ -29,6 +31,8 @@ export type TodayProps = {
 // closed) are the ones actually reachable under the current architecture.
 export function Today({ createRepository = createJsonSnackRepository, today = todayIsoDate }: TodayProps = {}) {
   const { snackDays, setSnackDays } = useSnackDays()
+  const [statusFilter, setStatusFilter] = useState<TodayStatusFilter>('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { repository, loadError } = useMemo(() => {
     try {
@@ -63,6 +67,8 @@ export function Today({ createRepository = createJsonSnackRepository, today = to
     )
   }
 
+  const filteredBunks = filterTodayBunks(activeDay.bunks, statusFilter, searchTerm)
+
   return (
     <div>
       <h2>Today</h2>
@@ -82,30 +88,43 @@ export function Today({ createRepository = createJsonSnackRepository, today = to
       {activeDay.bunks.length === 0 ? (
         <EmptyState message="No bunks found in the roster." />
       ) : (
-        <div className="snapshot-table-wrapper">
-          <table className="snapshot-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Bunk</th>
-                <th># of Campers</th>
-                <th>Special Requirements</th>
-                <th>Pickup Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeDay.bunks.map((record) => (
-                <TodayBunkRow
-                  key={record.bunk}
-                  bunk={record.bunk}
-                  campers={record.expectedCount}
-                  status={record.status}
-                  specialRequirementCount={record.specialRequirementCount}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <TodayFilters
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+          />
+
+          {filteredBunks.length === 0 ? (
+            <EmptyState message="No bunks match your search or filter." />
+          ) : (
+            <div className="snapshot-table-wrapper">
+              <table className="snapshot-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Bunk</th>
+                    <th># of Campers</th>
+                    <th>Special Requirements</th>
+                    <th>Pickup Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBunks.map((record) => (
+                    <TodayBunkRow
+                      key={record.bunk}
+                      bunk={record.bunk}
+                      campers={record.expectedCount}
+                      status={record.status}
+                      specialRequirementCount={record.specialRequirementCount}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

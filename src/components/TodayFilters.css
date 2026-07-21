@@ -1,0 +1,12 @@
+.today-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.today-filters__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}

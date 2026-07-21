@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Task 5.4 — Add Search and Filtering (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1, 5.2, and 5.3 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
+Task 5.5 — Add Daily Summary (EPIC 5 — Today Screen and Snack Day Initialization). Tasks 5.1–5.4 are complete — see entries below. Task 2.2 remains partially prototyped, unaffected by this.
 
 ---
 
@@ -677,6 +677,36 @@ User reported "the site can't be reached" after the dev server had been restarte
 **Notes / Deviations**
 
 - None.
+
+---
+
+### Task 5.4 — Add Search and Filtering
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+Scoped down from the plan's original filter/search list before starting, with the user's explicit sign-off: `division` is dropped from both filters and search — no `division` field has ever existed in this app's data model (the same correction already made once, in Task 5.1's note).
+
+- `src/types/snackDay.ts`: `SnackDayBunkRecord` gained `counselors: string`, snapshotted in `initializeSnackDay` (Task 5.2) alongside the fields already captured there — needed so search-by-counselor works against the day's own snapshot, not a live repository lookup per row (which would defeat the point of snapshotting in the first place).
+- `src/services/todayFilters.ts`: `filterTodayBunks(bunks, statusFilter, searchTerm)`, a pure function — `TodayStatusFilter = 'all' | 'pending' | 'completed' | 'special-requirements'`. Search matches bunk or counselor name, case-insensitive, trimmed; status and search combine with AND (both must match).
+- `src/components/TodayFilters.tsx`: presentational controls — a `TextField` for search, four status buttons (reusing `Button`'s `variant` for the pressed look plus explicit `aria-pressed`, so the active filter is never conveyed by styling alone — each button already carries its own distinct text label regardless), and a "Clear filters" button shown only when `statusFilter !== 'all' || searchTerm !== ''`, resetting both at once.
+- `src/pages/Today.tsx`: wired in above the table (only rendered when the day has at least one bunk — no point showing filter controls over nothing). Added a fourth possible message, `"No bunks match your search or filter."`, kept **distinct** from `"No bunks found in the roster."` (Task 5.1) — the two mean different things (a genuinely empty roster vs. a filter that matched nothing) and collapsing them would be misleading about what the operator should do next (adjust filters vs. nothing to fix).
+
+**Verification**
+
+- New `src/tests/todayFilters.test.ts`: each status filter in isolation, search by bunk name, search by counselor name (case-insensitive, substring, whitespace-trimmed), status+search combined (both must match — a search match under the wrong status filter correctly excludes), empty-result case.
+- New `src/tests/TodayFilters.test.tsx`: search input calls its change handler; status buttons call their handler with the right value; the active button carries `aria-pressed="true"` and others `"false"`; "Clear filters" is hidden when nothing is filtered and appears (resetting both status and search) when something is.
+- `src/tests/Today.test.tsx`: added integration-level tests — filtering by status and then clearing restores the full list; searching by bunk name; searching by counselor name; the "no matches" empty state appears distinctly from the "no bunks at all" one. Existing fixtures updated with the new required `counselors` field.
+- `src/tests/snackDayInitialization.test.ts`: exact-match fixtures updated for the new `counselors` field on `SnackDayBunkRecord`.
+- `npm run verify` (lint + typecheck + test) — clean; 100/100 tests (17 new).
+- `npm run build` — succeeds.
+- Playwright at a 390px (iPhone-ish) viewport against the real bundled data: confirmed no page-level horizontal overflow with the filter controls present (same `scrollWidth`/`clientWidth` check as Tasks 1.8 and 5.1); confirmed the "Special Requirements" filter and a "K3" search each narrow the table correctly, and "Clear filters" restores all 35 bunks (the real roster count — confirmed against Settings' own diagnostics, Task 4.6).
+
+**Notes / Deviations**
+
+- `division` dropped from both filters and search — see Summary. User confirmed this scope directly before implementation started.
 
 ---
 

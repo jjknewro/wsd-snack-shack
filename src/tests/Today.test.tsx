@@ -64,7 +64,7 @@ describe('Today', () => {
     const closedDay: SnackDay = {
       date: FIXED_DATE,
       dayStatus: 'closed',
-      bunks: [{ bunk: 'A1', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirementCount: 1, status: 'completed' }],
     }
 
     renderToday({}, [closedDay])
@@ -72,6 +72,44 @@ describe('Today', () => {
     expect(screen.getByText('Day Closed')).toBeVisible()
     expect(screen.getByText('Picked Up')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
+  })
+
+  it('filters the table by status, and clearing filters restores the full list', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    expect(screen.getByText('A1')).toBeVisible()
+    expect(screen.getByText('B2')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Special Requirements' }))
+    expect(screen.getByText('A1')).toBeVisible()
+    expect(screen.queryByText('B2')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(screen.getByText('A1')).toBeVisible()
+    expect(screen.getByText('B2')).toBeVisible()
+  })
+
+  it('searches by bunk name, and shows an empty state distinct from "no bunks at all" when nothing matches', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'B2' } })
+    expect(screen.queryByText('A1')).not.toBeInTheDocument()
+    expect(screen.getByText('B2')).toBeVisible()
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'nonexistent bunk' } })
+    expect(screen.getByText('No bunks match your search or filter.')).toBeVisible()
+    expect(screen.queryByText('No bunks found in the roster.')).not.toBeInTheDocument()
+  })
+
+  it('searches by counselor name', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Bailey' } })
+    expect(screen.getByText('B2')).toBeVisible()
+    expect(screen.queryByText('A1')).not.toBeInTheDocument()
   })
 
   it('shows an empty state if an active day has no bunks', () => {

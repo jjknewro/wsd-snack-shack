@@ -625,7 +625,7 @@ Acceptance criteria:
 
 ### Task 5.4 — Add Search and Filtering
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 Allow the operator to find bunks quickly.
 
@@ -647,6 +647,8 @@ Acceptance criteria:
 
 - Filters work on phone-sized screens.
 - Clearing filters restores the full active list.
+
+**Note:** implemented against what the data model actually has — `division` is dropped from both filters and search, consistent with the correction already made in Task 5.1 (no `division` field exists in the current roster data; user confirmed this scope before implementation started). Status filters are **All / Pending / Completed / Special Requirements** (as toggle buttons — `aria-pressed`, plus each already has a distinct text label, so the active filter is never conveyed by color alone); search matches bunk name or counselor name, case-insensitively, trimmed. Pure filtering logic lives in `src/services/todayFilters.ts` (`filterTodayBunks`), independently tested; the controls are a presentational `src/components/TodayFilters.tsx`. `SnackDayBunkRecord` (Task 5.2) gained a `counselors: string` field, snapshotted at initialization the same way `expectedCount` and `specialRequirementCount` already were — search needed it, and it wasn't captured before this task. "Clearing filters restores the full active list" is a dedicated "Clear filters" button, shown only while a filter or search term is active, resetting both at once.
 
 ---
 
