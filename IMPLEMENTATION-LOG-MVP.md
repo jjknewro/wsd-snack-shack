@@ -658,6 +658,28 @@ First task of EPIC 5. Scoped deliberately narrowly to what "Define ___ UX" means
 
 ---
 
+### Ad hoc: Fix dev server unreachable via `localhost`/`127.0.0.1`
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+
+**Summary**
+
+User reported "the site can't be reached" after the dev server had been restarted (as part of this session's own Playwright verification for Task 5.3). Found that Vite had bound only to the IPv6 loopback address (`[::1]:5180`), not IPv4 `127.0.0.1` — `netstat` confirmed the listener, and `curl` reproduced the failure (`127.0.0.1` timed out, `localhost` happened to resolve to the IPv6 address and worked). Whether `localhost` resolves to IPv4 or IPv6 first is OS/network-stack dependent and isn't something this project controls, so the fix is to make the dev server bind somewhere predictable regardless. Added `host: '127.0.0.1'` to `vite.config.ts`'s `server` block, next to the existing pinned `port: 5180` (Task 1.1's port-conflict fix — see the earlier port-5180 memory note).
+
+**Verification**
+
+- Vite auto-restarted on the config file change (no manual restart needed); confirmed via `netstat` that the listener moved to `127.0.0.1:5180`.
+- `curl` against both `http://127.0.0.1:5180/` and `http://localhost:5180/` — both now return `200`.
+- Playwright: loaded `http://127.0.0.1:5180/` and confirmed the page actually renders (not just a bare 200), to rule out a false-positive health check.
+- `npm run verify` and `npm run build` — unaffected, both still clean.
+
+**Notes / Deviations**
+
+- None.
+
+---
+
 ## Completed Task History — Retired Track (Expo / React Native / Supabase)
 
 ### Task 1.1 — Create the React Native Expo Project

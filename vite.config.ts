@@ -14,6 +14,7 @@ export default defineConfig({
   // 5173 (Vite's own default) is already in use by another project on this
   // machine (Schmucks Studio) - pinned to a distinct port to avoid colliding.
   server: {
+    host: '127.0.0.1',
     port: 5180,
     strictPort: true,
   },
