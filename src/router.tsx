@@ -23,4 +23,6 @@ export const routes: RouteObject[] = [
   },
 ]
 
-export const router = createBrowserRouter(routes)
+// BASE_URL is '/' in dev and matches vite.config.ts's `base` in production
+// (e.g. '/wsd-snack-shack/' on GitHub Pages, which serves from a subpath).
+export const router = createBrowserRouter(routes, { basename: import.meta.env.BASE_URL })

@@ -1,4 +1,4 @@
-import { rm } from 'node:fs/promises'
+import { copyFile, rm } from 'node:fs/promises'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, type Plugin } from 'vitest/config'
@@ -24,8 +24,37 @@ function excludeLocalWorkbookSnapshot(): Plugin {
   }
 }
 
+// Static hosts like GitHub Pages have no server-side rewrite for
+// client-side routes (React Router) — a direct visit or refresh on
+// /roster would 404 without this. GitHub Pages specifically falls back to
+// serving 404.html for any unmatched path, so a copy of index.html there
+// lets the app boot and React Router take over from window.location as
+// normal. Harmless for other static hosts too, so this always runs, not
+// just for the GH_PAGES build.
+function spaFallback404(): Plugin {
+  return {
+    name: 'spa-fallback-404',
+    apply: 'build',
+    closeBundle: async () => {
+      await copyFile(
+        fileURLToPath(new URL('./dist/index.html', import.meta.url)),
+        fileURLToPath(new URL('./dist/404.html', import.meta.url)),
+      )
+    },
+  }
+}
+
+// Set only for the GitHub Pages deploy build, which is served from a
+// subpath (https://<user>.github.io/wsd-snack-shack/) rather than a domain
+// root — unlike every other build target here (local dev, Netlify), which
+// serve from '/'. Kept as an opt-in env var rather than always using the
+// subpath, so `npm run dev`/`npm run build`/`npm run preview` keep working
+// exactly as they always have.
+const base = process.env.GH_PAGES ? '/wsd-snack-shack/' : '/'
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -43,17 +72,18 @@ export default defineConfig({
         name: 'WSD Snack Shack',
         short_name: 'Snack Shack',
         description: 'Camp snack distribution tracking for a single operator.',
-        start_url: '/',
+        start_url: base,
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#1a5fb4',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
     }),
     excludeLocalWorkbookSnapshot(),
+    spaFallback404(),
   ],
   resolve: {
     alias: {
