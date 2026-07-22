@@ -10,7 +10,8 @@ import { TodayRefreshControls } from '@/components/TodayRefreshControls'
 import { TodaySummary } from '@/components/TodaySummary'
 import '../components/SnapshotTable.css'
 import { useSnackDays } from '@/hooks/useSnackDays'
-import { createJsonSnackRepository, loadRepositorySafely } from '@/repositories/jsonSnackRepository'
+import { loadRepositorySafely } from '@/repositories/jsonSnackRepository'
+import { createLocalStorageSnackRepository } from '@/repositories/localStorageSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { completePickup } from '@/services/completePickup'
 import { initializeSnackDay } from '@/services/snackDayInitialization'
@@ -40,7 +41,7 @@ export type TodayProps = {
 // the full reasoning; the states below (error / not-initialized / active /
 // closed) are the ones actually reachable under the current architecture.
 export function Today({
-  createRepository = createJsonSnackRepository,
+  createRepository = createLocalStorageSnackRepository,
   today = todayIsoDate,
   now = defaultNow,
 }: TodayProps = {}) {
