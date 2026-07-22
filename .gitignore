@@ -1,0 +1,43 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+*.local
+
+# logs
+logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files (real secrets) - .env.example is the only tracked exception
+.env*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+
+# real operational workbook exports (contain counselor names / live camp
+# data) - reference-only, never committed. See WORKBOOK-SCHEMA.md.
+*.xlsx
+*.xls
+public/data/workbook-snapshot.json

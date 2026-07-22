@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/wsd-snack-shack/sw.js', { scope: '/wsd-snack-shack/' })})}
