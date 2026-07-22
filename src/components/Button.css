@@ -33,3 +33,15 @@
   color: var(--color-disabled);
   border-color: var(--color-disabled);
 }
+
+.btn--danger {
+  background: var(--color-background);
+  color: var(--color-status-critical);
+  border-color: var(--color-status-critical);
+}
+
+.btn--danger:disabled {
+  background: var(--color-background);
+  color: var(--color-disabled);
+  border-color: var(--color-disabled);
+}

@@ -51,3 +51,9 @@
 .requirements-list__notes {
   color: var(--color-text-muted);
 }
+
+.snapshot-table__row-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}

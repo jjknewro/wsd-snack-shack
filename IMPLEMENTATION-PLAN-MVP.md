@@ -873,7 +873,7 @@ Acceptance criteria:
 
 ## Status
 
-⬜ Not Started
+In Progress — Task 7.5 complete (pulled forward ahead of plan order at the user's direct request, once the app was deployed and in use on their phone), 7.1–7.4 and 7.6 remaining.
 
 ## Objective
 
@@ -947,7 +947,7 @@ Acceptance criteria:
 
 ### Task 7.5 — Add Roster and Special Requirements Maintenance Workflow
 
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 **Decision confirmed by the user, twice, ahead of this task formally starting:** first generally on 2026-07-19 (in-app editing screens will eventually be needed for the roster and special-requirements seed data), then explicitly on 2026-07-20 — the operator needs to **add, delete, and modify** entries in **both** data sets, not just remove a special requirement as the earlier example implied. See `ARCHITECTURE.md`'s "Future: Editing Seed Data."
 

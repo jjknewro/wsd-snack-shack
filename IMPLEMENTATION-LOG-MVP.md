@@ -14,7 +14,7 @@ EPIC 2 — Data Schema and Contract
 
 ## Current Task
 
-Deployment (getting a real HTTPS URL so the now-PWA-ready app can actually be installed on the user's Android phone — not yet a formally numbered task; see the Task 9.1 entry below for why PWA support was pulled forward). After that, resume **Task 6.4 — Implement Pickup Correction** (EPIC 6 — Pickup Workflow, in progress; Tasks 6.1–6.3 complete, combined — see entries below), which was in progress (type changes read, no code written yet) when this was set aside for the deployment request. Task 2.2 remains partially prototyped, unaffected by any of this.
+Resume **Task 6.4 — Implement Pickup Correction** (EPIC 6 — Pickup Workflow, in progress; Tasks 6.1–6.3 complete, combined — see entries below), which was in progress (type changes read, no code written yet) when it was set aside first for the deployment request, then again for Task 7.5 (both now complete — see entries below). Task 2.2 remains partially prototyped, unaffected by any of this.
 
 ---
 
@@ -898,6 +898,63 @@ While building `dist/` in preparation for actually deploying somewhere public, c
 
 - The now-empty `dist/data/` directory is left behind (harmless — no file to serve, nothing exposed) rather than also removing the directory itself; not worth the added complexity.
 - This is exactly the kind of check that matters before any deployment step, and will need re-confirming whenever a *new* local-only/gitignored data file is introduced under `public/` — noted here for future awareness, not turned into an automated check for now (no second occurrence yet to justify the machinery).
+
+---
+
+### Ad hoc: Deploy to GitHub Pages
+
+**Date:** 2026-07-21
+**Status:** ✅ Complete — pulled forward, same as Task 9.1 (real-device installability), which this directly completes.
+
+**Summary**
+
+Task 9.1 made the app PWA-installable but left it without a real HTTPS URL to install from. Deployed to GitHub Pages, served from the `/wsd-snack-shack/` subpath (`https://jjknewro.github.io/wsd-snack-shack/`) rather than a domain root.
+
+- `vite.config.ts`: `base` is now `/wsd-snack-shack/` only when `GH_PAGES=1` (every other build target — local dev, `npm run preview` — still serves from `/`). The PWA manifest's `start_url` and icon paths were updated to use the same `base`, so they resolve correctly under the subpath too.
+- `src/router.tsx`: `createBrowserRouter` now passes `basename: import.meta.env.BASE_URL`, so React Router's own path matching agrees with the subpath instead of 404ing on every route but `/`.
+- New `spaFallback404` Vite plugin copies `dist/index.html` to `dist/404.html` after build — GitHub Pages has no server-side rewrite for client-side routes, and serves `404.html` for any unmatched path by convention; this lets a direct visit or refresh on e.g. `/roster` still boot the app instead of hitting a real 404.
+- `gh-pages` + `cross-env` added as `devDependencies`; `predeploy`/`deploy` npm scripts build with `GH_PAGES=1` and publish `dist/` to the `gh-pages` branch. `cross-env` specifically because this is a Windows dev machine — inline `VAR=1 command` env-var syntax doesn't work under `cmd.exe`, which is what plain npm scripts shell out to on Windows.
+
+**Verification**
+
+- `npm run predeploy` (the `GH_PAGES=1` build) — confirmed `dist/index.html` and asset paths reference `/wsd-snack-shack/...`, `dist/404.html` exists, and `dist/data/workbook-snapshot.json` is still correctly absent (the privacy fix above is base-path-agnostic, re-checked anyway).
+- `npm run deploy` — published; confirmed live at the GitHub Pages URL.
+- Confirmed working end-to-end on the user's own Android phone: installed via Chrome's "Install and create shortcut," launches standalone with no browser chrome. iPad install was attempted via Chrome's "Add to Home Screen" with "Open as Web App" enabled, but the resulting icon wasn't found on the home screen by the end of this session (troubleshooting steps given: check the last home screen page, Spotlight search, App Library) — unresolved as of this entry. Also worth noting for next time: full PWA behavior (offline caching, standalone launch) on iOS is only available through Safari's own "Add to Home Screen," not Chrome's, regardless of which browser was used to install.
+
+**Notes / Deviations**
+
+- Enabling GitHub Pages itself (Settings → Pages → source) is a one-time manual step in the GitHub UI that couldn't be done via any tool available in this session (no `gh` CLI installed, no token for the API) — the user did this themselves.
+- Ongoing deploys are **manual**: pushing to `master` does *not* automatically update the live site. `npm run deploy` must be re-run after any change that should go live. No CI/CD (e.g. a GitHub Actions workflow) exists yet to automate this — not built, since it wasn't asked for and the manual step is a single command.
+
+---
+
+### Task 7.5 — Add Roster and Special Requirements Maintenance Workflow
+
+**Date:** 2026-07-21
+**Status:** ✅ Complete — pulled forward out of plan order, same as Task 9.1 and the GitHub Pages deployment above (both prerequisites the user hit before EPICs 7/8 were reached in sequence).
+
+**Summary**
+
+User asked directly to be able to edit the Master Roster from the app, now that it's deployed and running on their phone. This is exactly Task 7.5, whose write-back mechanism (`ARCHITECTURE.md`'s "Future: Editing Seed Data") had been deliberately left undecided until the app was in real use — which it now is: live on GitHub Pages, phone-based, single operator. That context settles the question: a static production build has no server to write `masterRoster.json`/`specialRequirements.json` back to, and a phone can't reach a local dev server either, so `localStorage` is the only mechanism that actually works.
+
+- **`src/repositories/snackRepository.ts`**: added `WritableSnackRepository` (extends the existing read-only `SnackRepository` with `add`/`update`/`delete` for both roster entries and special-requirement entries, plus `getSpecialRequirements()`) and `isWritableSnackRepository()` as a runtime type guard. Kept as a separate type rather than adding these methods to `SnackRepository` itself, so every read-only fixture repository already used across the test suite keeps satisfying the interface unmodified.
+- **`src/repositories/localStorageSnackRepository.ts`** (new): seeds from the bundled JSON on first use (assigning each special-requirement entry a generated `id`, since neither JSON file has a natural unique key for a requirement row — a bunk can have several), then reads/writes a single JSON blob under `localStorage` key `wsd-snack-shack:roster-data:v1`. Every mutation re-validates the **entire proposed next state** with the existing Task 2.6 rules (`validateData`) before committing anything — an invalid edit throws the same `DataValidationError` used elsewhere and leaves prior state completely untouched, never partially applied. Deleting a roster entry cascades to delete that bunk's special-requirement entries too (otherwise they'd immediately fail validation by referencing a bunk that no longer exists). Renaming a bunk (via `updateRosterEntry`) cascades the rename to its requirement entries rather than orphaning them.
+- **`src/pages/MasterRoster.tsx`**: now defaults to the writable localStorage repository instead of the read-only JSON one, and uses `isWritableSnackRepository` to decide whether to render any add/edit/delete UI at all — a plain fixture repository (as used by the pre-existing `MasterRoster.test.tsx`) simply doesn't satisfy it, so those tests kept passing unmodified with zero changes. Added: an "Add Bunk" button and per-row Edit/Delete actions in the roster table; a delete confirmation (`ConfirmModal`, new reusable component) that tells the operator up front how many special-requirement entries will cascade-delete; and, inside the existing "Bunk X — Special Requirements" modal, per-entry Edit/Delete and an "Add Requirement" form. The requirement-management form (`RequirementEntryModal`, new) temporarily hides the outer bunk-detail modal while open, rather than stacking two `role="dialog"` elements — avoids both a real UX problem (nested modal overlays) and an accessibility one (two same-role dialogs open at once).
+- **`src/components/RosterEntryModal.tsx`** / **`RequirementEntryModal.tsx`** / **`ConfirmModal.tsx`** (new): plain controlled-form components following the existing `PickupModal.tsx` pattern (inline `useState`, no new form-library dependency — `react-hook-form` was listed in `ARCHITECTURE.md`'s tech stack for this exact future work but was never actually installed or needed).
+- **`Button.tsx`**/`.css`: added a `danger` variant for destructive actions (Delete), the first departure from the existing `primary`/`secondary` set.
+
+**Verification**
+
+- New `src/tests/localStorageSnackRepository.test.ts` (12 tests): seeding, persistence across a simulated reload (constructing a fresh repository instance against the same `localStorage`), rejecting a duplicate bunk / negative camper count / non-positive quantity / requirement referencing an unknown bunk (each confirming prior state is untouched on rejection), bunk-rename cascading to requirements, bunk-delete cascading to requirements, and add/update/delete-by-id for special requirements.
+- New `src/tests/MasterRoster.editing.test.tsx` (5 tests, against the real repository — not a fixture): add-a-bunk-and-it-persists-across-a-fresh-render, duplicate-bunk rejection shown inline without closing the form, edit, delete-with-cascade-warning, and the full add/edit/delete cycle for a special requirement from within a bunk's modal.
+- `npm run verify` (lint + typecheck + test) — clean; 160/160 tests (up from 143 before this session's work), including the 17 new ones above and the pre-existing `MasterRoster.test.tsx`/`MasterRoster.errorState.test.tsx` unmodified.
+- `npm run build` (both the default and `GH_PAGES=1` variants) — succeeds; manually re-confirmed `dist/` still excludes `workbook-snapshot.json`.
+
+**Notes / Deviations**
+
+- **Environment fix, unrelated to this task's own logic but required to run any test that touches `localStorage`**: this machine's Node (v25) ships a global `localStorage` that's non-functional without a configured `--localstorage-file`, which was shadowing jsdom's own working implementation in every Vitest run. Fixed by adding `NODE_OPTIONS=--no-experimental-webstorage` (via `cross-env`, for the same Windows-shell reason as the deploy scripts) to the `test`/`test:watch` npm scripts — see the comment in `src/tests/setup.ts`. This would have silently broken `window.localStorage.clear()` in `afterEach` (and every test in the two new files above) without it.
+- Edits are **device-scoped**, not synced anywhere — a second device (or a cleared browser profile on the same one) sees the original bundled seed data, not this device's edits. Acceptable for a single operator on one phone, which is the actual current usage; explicitly documented as a tradeoff in `ARCHITECTURE.md` rather than left implicit.
+- Task 7.6 ("Build Special Requirements Tests" — grouping, quantities, unmapped records, Today/pickup display) is a distinct, still-unstarted task; the tests added here cover the CRUD editing workflow, not that separate scope.
 
 ---
 

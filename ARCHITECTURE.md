@@ -168,7 +168,7 @@ Additional entities (pickup history, settings) are **not yet defined** — they'
 
 # Persistence — Current State
 
-**Roster and special-requirements data**: read from the bundled JSON files at load time. Read-only from the application's perspective today.
+**Roster and special-requirements data**: seeded from the bundled JSON files on first use, then read from and written to this browser's `localStorage` (Task 7.5 — see "Future: Editing Seed Data" for how that mechanism was chosen). Edits made in the app persist across reloads on the same device, but are device-scoped: they never sync back to `masterRoster.json`/`specialRequirements.json` in git, and a different device (or a fresh browser profile on the same device) sees the original bundled seed data.
 
 **Pickup status** (which bunks are pending vs. processed today): held in **React application state only**. It is:
 - Reset every time the page is reloaded.
@@ -181,7 +181,9 @@ This is intentional for the current stage of the MVP — explicitly called out b
 
 # Future: Editing Seed Data
 
-Not yet architected in detail — a later task, once reached (`IMPLEMENTATION-PLAN-MVP.md` Task 7.5). The user has confirmed the intent, twice: first generally (that in-app editing would eventually be needed), then explicitly (2026-07-20) as full CRUD — the operator needs to **add, delete, and modify** entries in both the roster and special-requirements data, not just remove things. Whatever write-back mechanism that needs (writing to the actual files requires either a small local server or a manual export/import step, since a static site cannot write to its own source files) will be decided **when that task is reached**, informed by how the app is actually being used by then — not speculated on now. Note that this is a different persistence category from pickup status (see "Persistence — Current State" above): seed-data edits must survive a page reload to be useful, whereas pickup status explicitly must not.
+Implemented as Task 7.5 (2026-07-21). The write-back mechanism was left undecided until the app was actually deployed and in use: by the time this task started, the app was live on GitHub Pages and being used from a phone, which settled the question — a static production build has no server of its own to write `masterRoster.json`/`specialRequirements.json` back to, and a phone can't reach a local dev server either. `localStorage` was the only mechanism that actually works under those constraints, so `MasterRoster` now defaults to a `localStorage`-backed `WritableSnackRepository` (`src/repositories/localStorageSnackRepository.ts`) instead of the read-only JSON-backed one. Validation reuses the exact Task 2.6 rules (`src/services/dataValidation.ts`) against the proposed full next state before any write commits, so an invalid edit is rejected with the same `DataValidationError` messaging used elsewhere and never partially applied. Deleting a roster entry cascades to delete that bunk's special-requirement entries too (otherwise they'd fail validation by referencing a bunk that no longer exists); the UI surfaces that count before the operator confirms.
+
+`SnackRepository` itself was left unchanged (read-only) so every existing fixture repository across the test suite keeps satisfying it without modification — the mutation methods live on a separate `WritableSnackRepository` type that only the real repository implements, and `MasterRoster` detects which one it got at runtime (`isWritableSnackRepository`) to decide whether to render edit controls at all, matching this task's acceptance criteria that the UI must not suggest editing is possible before it actually ships.
 
 ---
 

@@ -1,0 +1,11 @@
+.roster-entry-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.roster-entry-modal__error {
+  margin: 0;
+  color: var(--color-status-critical);
+  font-size: var(--font-size-body);
+}
