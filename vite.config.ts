@@ -59,6 +59,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // main.tsx registers the service worker itself via virtual:pwa-register
+      // (so it can force a reload on update) - injectRegister's own auto
+      // <script> tag would otherwise register it a second time redundantly.
+      injectRegister: false,
       // Caches the built app shell (JS/CSS/HTML) and the bundled data files
       // for offline reload — not "full offline data synchronization" (no
       // network sync exists to offer; see ARCHITECTURE.md's Offline
