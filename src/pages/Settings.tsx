@@ -9,7 +9,7 @@ export function Settings() {
   return (
     <div>
       <h2>Settings</h2>
-      <DataDiagnostics frontendVersion={packageJson.version} diagnostics={diagnostics} />
+      <DataDiagnostics frontendVersion={`v${packageJson.version}`} diagnostics={diagnostics} />
     </div>
   )
 }

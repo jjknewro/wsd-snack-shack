@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import { SnackDayProvider } from '../components/SnackDayProvider'
@@ -36,6 +36,10 @@ function renderToday(
 }
 
 describe('Today', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('starts not-initialized, with a clear next action', () => {
     renderToday()
 
@@ -316,7 +320,8 @@ describe('Today', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
-  it('shows the initial load time immediately, and updates it when the operator refreshes', () => {
+  it('shows the initial load time immediately, and updates it when the operator confirms a refresh', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
     let clockValue = '10:00:00 AM'
     renderToday({ now: () => clockValue })
 
@@ -325,7 +330,50 @@ describe('Today', () => {
     clockValue = '10:05:00 AM'
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
 
+    expect(window.confirm).toHaveBeenCalled()
     expect(screen.getByText('Last refreshed: 10:05:00 AM')).toBeVisible()
+  })
+
+  it('does nothing if the operator declines the refresh confirmation', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    let clockValue = '10:00:00 AM'
+    renderToday({ now: () => clockValue })
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    clockValue = '10:05:00 AM'
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(screen.getByText('Last refreshed: 10:00:00 AM')).toBeVisible()
+  })
+
+  it('a confirmed refresh always reloads today from the master roster, even though it was already initialized, discarding recorded pickups', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+
+    const a1RowBefore = screen.getByText('A1').closest('tr') as HTMLElement
+    expect(within(a1RowBefore).getByText('Picked Up')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    // Refresh always rebuilds today from the master roster, so the earlier
+    // completion is gone and the bunk is back to pending — this is exactly
+    // the tradeoff the confirmation above warns about.
+    const a1RowAfter = screen.getByText('A1').closest('tr') as HTMLElement
+    expect(within(a1RowAfter).getByText('Pending')).toBeVisible()
+  })
+
+  it('a confirmed refresh before Start Today only reloads the repository, without starting today', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderToday()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(screen.getByText("Today hasn't been started yet.")).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Start Today' })).toBeVisible()
   })
 
   it('retrying from the error state via the Refresh action recovers once the data loads successfully', () => {
@@ -349,6 +397,7 @@ describe('Today', () => {
   })
 
   it('a failed refresh keeps the previously loaded data visible and reports the failure separately', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
     let shouldFail = false
     const createSometimesFailingRepository = () => {
       if (shouldFail) {

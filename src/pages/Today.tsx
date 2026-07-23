@@ -14,7 +14,7 @@ import { loadRepositorySafely } from '@/repositories/jsonSnackRepository'
 import { createLocalStorageSnackRepository } from '@/repositories/localStorageSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { completePickup } from '@/services/completePickup'
-import { initializeSnackDay } from '@/services/snackDayInitialization'
+import { initializeSnackDay, refreshSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
 import { summarizeToday } from '@/services/todaySummary'
 
@@ -58,7 +58,10 @@ export function Today({
   const [lastRefreshedAt, setLastRefreshedAt] = useState(now)
   const [refreshError, setRefreshError] = useState<string | null>(null)
 
-  function handleRefresh() {
+  // Plain reload, no confirmation - used by the error state's "Try Again"
+  // action, which has no recorded pickups to lose (it fires before any day
+  // has ever loaded successfully).
+  function reloadRepository() {
     const result = loadRepositorySafely(createRepository)
     if (result.repository) {
       setRepositoryState(result)
@@ -69,27 +72,47 @@ export function Today({
       // must not erase previously-good data, it just can't update it.
       setRefreshError(result.error)
     }
+    return result
   }
 
   const { repository, error: loadError } = repositoryState
+  const date = today()
+  const activeDay = snackDays.find((day) => day.date === date)
+
+  // The operator-facing "Refresh" button: confirms first, since a
+  // successful refresh always re-pulls today from the master roster (see
+  // refreshSnackDay) and discards any pickups already recorded today, not
+  // just today's bunk list.
+  function handleRefreshToday() {
+    const confirmed = window.confirm(
+      "Refresh today's list from the master roster? This will discard any pickups already recorded today.",
+    )
+    if (!confirmed) return
+
+    const result = reloadRepository()
+    if (result.repository && activeDay) {
+      setSnackDays((current) => refreshSnackDay(result.repository, date, current))
+    }
+  }
 
   if (!repository) {
     return (
       <div>
         <h2>Today</h2>
-        <ErrorState message={loadError} onRetry={handleRefresh} />
+        <ErrorState message={loadError} onRetry={reloadRepository} />
       </div>
     )
   }
-
-  const date = today()
-  const activeDay = snackDays.find((day) => day.date === date)
 
   if (!activeDay) {
     return (
       <div>
         <h2>Today</h2>
-        <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefresh} />
+        <TodayRefreshControls
+          lastRefreshedAt={lastRefreshedAt}
+          refreshError={refreshError}
+          onRefresh={handleRefreshToday}
+        />
         <EmptyState message="Today hasn't been started yet." />
         <Button onClick={() => setSnackDays((current) => initializeSnackDay(repository, date, current))}>
           Start Today
@@ -123,7 +146,7 @@ export function Today({
     <div>
       <h2>Today</h2>
 
-      <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefresh} />
+      <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefreshToday} />
 
       {activeDay.dayStatus === 'closed' ? (
         <p className="snapshot-note">
