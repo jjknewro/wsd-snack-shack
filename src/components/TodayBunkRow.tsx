@@ -1,5 +1,3 @@
-import { StatusBadge } from './StatusBadge'
-
 export type TodayBunkRowProps = {
   bunk: string
   campers?: number
@@ -9,18 +7,39 @@ export type TodayBunkRowProps = {
   // Omit to render the bunk as plain text (used by tests that don't care
   // about the interaction) — every real call site passes this (Task 6.1).
   onSelect?: () => void
+  // The checkbox's second, quicker way to complete a pickup (or reopen one
+  // by unchecking) - omit for the same reason as onSelect.
+  onToggleComplete?: (checked: boolean) => void
+  // True for a closed (read-only) day - the checkbox stays visible so
+  // completed bunks still show as checked, but can't be toggled.
+  toggleDisabled?: boolean
 }
 
 // One row = everything the operator needs for this bunk at a glance, with no
-// need to open a separate record (Task 5.1 acceptance criteria). Status is
-// never conveyed by color alone — StatusBadge always pairs its dot with a
-// text label (see Task 5.1's note, following the same rule established for
-// Today/StatusBadge generally).
-export function TodayBunkRow({ bunk, campers, status, specialRequirementCount, pickupTime, onSelect }: TodayBunkRowProps) {
+// need to open a separate record (Task 5.1 acceptance criteria). The
+// checkbox's own checked/unchecked state (not color) is what conveys status
+// here, consistent with this project's "never convey status by color alone"
+// rule (see Task 5.1's note).
+export function TodayBunkRow({
+  bunk,
+  campers,
+  status,
+  specialRequirementCount,
+  pickupTime,
+  onSelect,
+  onToggleComplete,
+  toggleDisabled,
+}: TodayBunkRowProps) {
   return (
     <tr>
       <td>
-        <StatusBadge variant={status === 'completed' ? 'completed' : 'pending'} label={status === 'completed' ? 'Picked Up' : 'Pending'} />
+        <input
+          type="checkbox"
+          checked={status === 'completed'}
+          disabled={toggleDisabled}
+          onChange={(event) => onToggleComplete?.(event.target.checked)}
+          aria-label={`Mark ${bunk} picked up`}
+        />
       </td>
       <td>
         {onSelect ? (

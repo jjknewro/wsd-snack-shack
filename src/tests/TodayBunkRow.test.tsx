@@ -14,20 +14,18 @@ function renderRow(props: Parameters<typeof TodayBunkRow>[0]) {
 }
 
 describe('TodayBunkRow', () => {
-  it('shows the bunk, camper count, and a text-labeled Pending badge for a pending bunk', () => {
+  it('shows an unchecked checkbox for a pending bunk', () => {
     renderRow({ bunk: 'A1', campers: 8, status: 'pending', specialRequirementCount: 0 })
 
     expect(screen.getByText('A1')).toBeVisible()
     expect(screen.getByText('8')).toBeVisible()
-    expect(screen.getByText('Pending')).toBeVisible()
-    expect(screen.queryByText('Picked Up')).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Mark A1 picked up' })).not.toBeChecked()
   })
 
-  it('shows a distinct, text-labeled Picked Up badge for a completed bunk, distinguishable from pending', () => {
+  it('shows a checked checkbox for a completed bunk, with the pickup time', () => {
     renderRow({ bunk: 'A1', status: 'completed', specialRequirementCount: 0, pickupTime: '10:15 AM' })
 
-    expect(screen.getByText('Picked Up')).toBeVisible()
-    expect(screen.queryByText('Pending')).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Mark A1 picked up' })).toBeChecked()
     expect(screen.getByText('10:15 AM')).toBeVisible()
   })
 
@@ -72,5 +70,29 @@ describe('TodayBunkRow', () => {
     const button = screen.getByRole('button', { name: 'A1' })
     fireEvent.click(button)
     expect(onSelect).toHaveBeenCalledOnce()
+  })
+
+  it('calls onToggleComplete with true when checking a pending bunk', () => {
+    const onToggleComplete = vi.fn()
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0, onToggleComplete })
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mark A1 picked up' }))
+    expect(onToggleComplete).toHaveBeenCalledOnce()
+    expect(onToggleComplete).toHaveBeenCalledWith(true)
+  })
+
+  it('calls onToggleComplete with false when unchecking a completed bunk', () => {
+    const onToggleComplete = vi.fn()
+    renderRow({ bunk: 'A1', status: 'completed', specialRequirementCount: 0, onToggleComplete })
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Mark A1 picked up' }))
+    expect(onToggleComplete).toHaveBeenCalledOnce()
+    expect(onToggleComplete).toHaveBeenCalledWith(false)
+  })
+
+  it('disables the checkbox when toggleDisabled is set, for a read-only closed day', () => {
+    renderRow({ bunk: 'A1', status: 'completed', specialRequirementCount: 0, toggleDisabled: true })
+
+    expect(screen.getByRole('checkbox', { name: 'Mark A1 picked up' })).toBeDisabled()
   })
 })

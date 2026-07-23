@@ -19,13 +19,13 @@ describe('TodaySummary', () => {
 
     expect(screen.getByText('Total bunks')).toBeVisible()
     expect(screen.getByText('10')).toBeVisible()
-    expect(screen.getByText('Completed')).toBeVisible()
+    expect(screen.getByText('Bunks Done')).toBeVisible()
     expect(screen.getByText('3')).toBeVisible()
     expect(screen.getByText('Pending')).toBeVisible()
     expect(screen.getByText('7')).toBeVisible()
     expect(screen.getByText('Expected campers')).toBeVisible()
     expect(screen.getByText('84')).toBeVisible()
-    expect(screen.getByText('Actual served')).toBeVisible()
+    expect(screen.getByText('Actual campers served')).toBeVisible()
     expect(screen.getByText('21')).toBeVisible()
     expect(screen.getByText('Special requirements')).toBeVisible()
     expect(screen.getByText('5')).toBeVisible()
@@ -43,7 +43,7 @@ describe('TodaySummary', () => {
 
     render(<TodaySummary summary={summary} />)
 
-    const actualServedRow = screen.getByText('Actual served').closest('div') as HTMLElement
+    const actualServedRow = screen.getByText('Actual campers served').closest('div') as HTMLElement
     expect(actualServedRow).toHaveTextContent('0')
   })
 })

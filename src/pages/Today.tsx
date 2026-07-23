@@ -14,9 +14,11 @@ import { loadRepositorySafely } from '@/repositories/jsonSnackRepository'
 import { createLocalStorageSnackRepository } from '@/repositories/localStorageSnackRepository'
 import type { SnackRepository } from '@/repositories/snackRepository'
 import { completePickup } from '@/services/completePickup'
+import { reopenPickup } from '@/services/reopenPickup'
 import { initializeSnackDay, refreshSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
 import { summarizeToday } from '@/services/todaySummary'
+import type { SnackDayBunkRecord } from '@/types/snackDay'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
 
@@ -108,15 +110,15 @@ export function Today({
     return (
       <div>
         <h2>Today</h2>
+        <EmptyState message="Today hasn't been started yet." />
+        <Button onClick={() => setSnackDays((current) => initializeSnackDay(repository, date, current))}>
+          Start Today
+        </Button>
         <TodayRefreshControls
           lastRefreshedAt={lastRefreshedAt}
           refreshError={refreshError}
           onRefresh={handleRefreshToday}
         />
-        <EmptyState message="Today hasn't been started yet." />
-        <Button onClick={() => setSnackDays((current) => initializeSnackDay(repository, date, current))}>
-          Start Today
-        </Button>
       </div>
     )
   }
@@ -142,11 +144,25 @@ export function Today({
     setCompleteError(null)
   }
 
+  // The checkbox's quicker alternative to the pickup dialog: checking it
+  // completes with the expected count (matching what submitting the
+  // dialog's own pre-filled, unedited count would produce), unchecking
+  // reopens. Both are structurally guaranteed to match the bunk's current
+  // status, so the failure branch of each service call can never actually
+  // be reached here (unlike handleComplete's dialog-driven path).
+  function handleToggleComplete(record: SnackDayBunkRecord, checked: boolean) {
+    if (checked) {
+      const result = completePickup(snackDays, date, record.bunk, { actualCount: record.expectedCount }, now)
+      if (result.success) setSnackDays(result.data)
+    } else {
+      const result = reopenPickup(snackDays, date, record.bunk)
+      if (result.success) setSnackDays(result.data)
+    }
+  }
+
   return (
     <div>
       <h2>Today</h2>
-
-      <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefreshToday} />
 
       {activeDay.dayStatus === 'closed' ? (
         <p className="snapshot-note">
@@ -196,6 +212,8 @@ export function Today({
                       specialRequirementCount={record.specialRequirements.length}
                       pickupTime={record.completedAt}
                       onSelect={() => setSelectedBunk(record.bunk)}
+                      onToggleComplete={(checked) => handleToggleComplete(record, checked)}
+                      toggleDisabled={activeDay.dayStatus === 'closed'}
                     />
                   ))}
                 </tbody>
@@ -213,6 +231,8 @@ export function Today({
           submitError={completeError}
         />
       ) : null}
+
+      <TodayRefreshControls lastRefreshedAt={lastRefreshedAt} refreshError={refreshError} onRefresh={handleRefreshToday} />
     </div>
   )
 }

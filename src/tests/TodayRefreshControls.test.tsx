@@ -14,7 +14,7 @@ describe('TodayRefreshControls', () => {
     const onRefresh = vi.fn()
     render(<TodayRefreshControls lastRefreshedAt="10:00:00 AM" refreshError={null} onRefresh={onRefresh} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
     expect(onRefresh).toHaveBeenCalledOnce()
   })
 

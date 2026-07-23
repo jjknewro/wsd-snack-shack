@@ -16,7 +16,7 @@ export function TodayRefreshControls({ lastRefreshedAt, refreshError, onRefresh 
       <div className="today-refresh__row">
         <span className="today-refresh__timestamp">Last refreshed: {lastRefreshedAt}</span>
         <Button variant="secondary" onClick={onRefresh}>
-          Refresh
+          Clear All
         </Button>
       </div>
 

@@ -14,7 +14,7 @@ export function TodaySummary({ summary }: TodaySummaryProps) {
         <dd>{summary.totalBunks}</dd>
       </div>
       <div className="today-summary__row">
-        <dt>Completed</dt>
+        <dt>Bunks Done</dt>
         <dd>{summary.completedBunks}</dd>
       </div>
       <div className="today-summary__row">
@@ -26,7 +26,7 @@ export function TodaySummary({ summary }: TodaySummaryProps) {
         <dd>{summary.expectedTotalCampers}</dd>
       </div>
       <div className="today-summary__row">
-        <dt>Actual served</dt>
+        <dt>Actual campers served</dt>
         <dd>{summary.actualTotalServed}</dd>
       </div>
       <div className="today-summary__row">

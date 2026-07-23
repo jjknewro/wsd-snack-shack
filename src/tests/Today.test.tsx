@@ -54,7 +54,7 @@ describe('Today', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
 
     const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1Row).getByText('Pending')).toBeVisible()
+    expect(within(a1Row).getByRole('checkbox')).not.toBeChecked()
     expect(within(a1Row).getByText('8')).toBeVisible()
     expect(within(a1Row).getByText('1 special requirement')).toBeVisible()
 
@@ -86,7 +86,7 @@ describe('Today', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1Row).getByText('Picked Up')).toBeVisible()
+    expect(within(a1Row).getByRole('checkbox')).toBeChecked()
     expect(within(a1Row).getByText('10:15:00 AM')).toBeVisible()
   })
 
@@ -102,8 +102,54 @@ describe('Today', () => {
     // Reflected in the summary, proving the adjusted count (not the
     // expected count) was actually recorded.
     const summary = container.querySelector('.today-summary') as HTMLElement
-    const actualServedRow = within(summary).getByText('Actual served').closest('div') as HTMLElement
+    const actualServedRow = within(summary).getByText('Actual campers served').closest('div') as HTMLElement
     expect(within(actualServedRow).getByText('6')).toBeVisible()
+  })
+
+  it('checking a bunk\'s checkbox completes it with the expected count, without opening the dialog', () => {
+    renderToday({ now: () => '10:15:00 AM' })
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    fireEvent.click(within(a1Row).getByRole('checkbox'))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(a1Row).getByRole('checkbox')).toBeChecked()
+    expect(within(a1Row).getByText('10:15:00 AM')).toBeVisible()
+
+    // Expected count (8) was used as the actual count, same as submitting
+    // the dialog's own pre-filled, unedited value would produce.
+    const b2Row = screen.getByText('B2').closest('tr') as HTMLElement
+    fireEvent.click(within(b2Row).getByRole('checkbox'))
+    const summary = document.querySelector('.today-summary') as HTMLElement
+    const actualServedRow = within(summary).getByText('Actual campers served').closest('div') as HTMLElement
+    expect(within(actualServedRow).getByText('8')).toBeVisible()
+  })
+
+  it('unchecking a completed bunk\'s checkbox reopens it to pending, clearing its pickup time', () => {
+    renderToday({ now: () => '10:15:00 AM' })
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    fireEvent.click(within(a1Row).getByRole('checkbox'))
+    expect(within(a1Row).getByRole('checkbox')).toBeChecked()
+
+    fireEvent.click(within(a1Row).getByRole('checkbox'))
+
+    expect(within(a1Row).getByRole('checkbox')).not.toBeChecked()
+    expect(within(a1Row).getByText('—')).toBeVisible()
+  })
+
+  it('disables the checkbox on a closed (read-only) day', () => {
+    const closedDay: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'closed',
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirements: [], status: 'completed', actualCount: 8, completedAt: '9:00:00 AM' }],
+    }
+
+    renderToday({}, [closedDay])
+
+    expect(screen.getByRole('checkbox')).toBeDisabled()
   })
 
   it('shows a read-only note instead of the form for an already-completed bunk, with no way to resubmit', () => {
@@ -140,7 +186,7 @@ describe('Today', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1Row).getByText('Pending')).toBeVisible()
+    expect(within(a1Row).getByRole('checkbox')).not.toBeChecked()
   })
 
   it('rejects completing a still-pending bunk on a closed day, keeping the dialog open with a clear error', () => {
@@ -158,7 +204,7 @@ describe('Today', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('closed')
 
     const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1Row).getByText('Pending')).toBeVisible()
+    expect(within(a1Row).getByRole('checkbox')).not.toBeChecked()
   })
 
   it('shows a read-only closed-day view for a day already marked closed', () => {
@@ -181,7 +227,8 @@ describe('Today', () => {
     renderToday({}, [closedDay])
 
     expect(screen.getByText('Day Closed')).toBeVisible()
-    expect(screen.getByText('Picked Up')).toBeVisible()
+    expect(screen.getByRole('checkbox')).toBeChecked()
+    expect(screen.getByRole('checkbox')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Start Today' })).not.toBeInTheDocument()
   })
 
@@ -222,10 +269,10 @@ describe('Today', () => {
     const { container } = renderToday({}, [closedDay])
 
     const summary = container.querySelector('.today-summary') as HTMLElement
-    const completedRow = within(summary).getByText('Completed').closest('div') as HTMLElement
+    const completedRow = within(summary).getByText('Bunks Done').closest('div') as HTMLElement
     expect(within(completedRow).getByText('1')).toBeVisible()
 
-    const actualServedRow = within(summary).getByText('Actual served').closest('div') as HTMLElement
+    const actualServedRow = within(summary).getByText('Actual campers served').closest('div') as HTMLElement
     expect(within(actualServedRow).getByText('7')).toBeVisible()
   })
 
@@ -328,7 +375,7 @@ describe('Today', () => {
     expect(screen.getByText('Last refreshed: 10:00:00 AM')).toBeVisible()
 
     clockValue = '10:05:00 AM'
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
 
     expect(window.confirm).toHaveBeenCalled()
     expect(screen.getByText('Last refreshed: 10:05:00 AM')).toBeVisible()
@@ -341,7 +388,7 @@ describe('Today', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
 
     clockValue = '10:05:00 AM'
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
 
     expect(screen.getByText('Last refreshed: 10:00:00 AM')).toBeVisible()
   })
@@ -355,22 +402,22 @@ describe('Today', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
 
     const a1RowBefore = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1RowBefore).getByText('Picked Up')).toBeVisible()
+    expect(within(a1RowBefore).getByRole('checkbox')).toBeChecked()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
 
     // Refresh always rebuilds today from the master roster, so the earlier
     // completion is gone and the bunk is back to pending — this is exactly
     // the tradeoff the confirmation above warns about.
     const a1RowAfter = screen.getByText('A1').closest('tr') as HTMLElement
-    expect(within(a1RowAfter).getByText('Pending')).toBeVisible()
+    expect(within(a1RowAfter).getByRole('checkbox')).not.toBeChecked()
   })
 
   it('a confirmed refresh before Start Today only reloads the repository, without starting today', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderToday()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
 
     expect(screen.getByText("Today hasn't been started yet.")).toBeVisible()
     expect(screen.getByRole('button', { name: 'Start Today' })).toBeVisible()
@@ -411,7 +458,7 @@ describe('Today', () => {
     expect(screen.getByText('A1')).toBeVisible()
 
     shouldFail = true
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear All' }))
 
     // The previously-loaded active day must still be fully visible...
     expect(screen.getByText('A1')).toBeVisible()
