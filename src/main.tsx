@@ -8,14 +8,16 @@ import App from './App.tsx'
 // navigator.serviceWorker.register() - it never checks for updates or
 // reloads once a new one activates, so a phone can sit on a stale build
 // indefinitely even after a fresh deploy. registerType: 'autoUpdate' (see
-// vite.config.ts) only controls skipWaiting/clientsClaim on the *service
-// worker* side; onNeedRefresh here is what actually reloads the *page* to
-// pick up the new one, which is the missing half for a phone-only,
-// no-app-store app where re-checking manually isn't realistic.
-registerSW({
+// vite.config.ts) makes the *service worker* wait for an explicit
+// SKIP_WAITING message rather than activating unprompted - the callback
+// registerSW() returns is what actually sends that message (a bare
+// window.location.reload() here would just re-fetch the page through the
+// still-old active worker, forever). This is the missing half for a
+// phone-only, no-app-store app where re-checking manually isn't realistic.
+const updateServiceWorker = registerSW({
   immediate: true,
   onNeedRefresh() {
-    window.location.reload()
+    void updateServiceWorker(true)
   },
 })
 
