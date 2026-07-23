@@ -18,6 +18,7 @@ import { reopenPickup } from '@/services/reopenPickup'
 import { initializeSnackDay, refreshSnackDay } from '@/services/snackDayInitialization'
 import { filterTodayBunks, type TodayStatusFilter } from '@/services/todayFilters'
 import { summarizeToday } from '@/services/todaySummary'
+import { updatePickupNotes } from '@/services/updatePickupNotes'
 import type { SnackDayBunkRecord } from '@/types/snackDay'
 
 import { TodayBunkRow } from '../components/TodayBunkRow'
@@ -160,6 +161,13 @@ export function Today({
     }
   }
 
+  // Notes are editable inline for any bunk, pending or completed - unlike
+  // the checkbox and pickup dialog, this isn't tied to completion status.
+  function handleNotesChange(record: SnackDayBunkRecord, notes: string) {
+    const result = updatePickupNotes(snackDays, date, record.bunk, notes)
+    if (result.success) setSnackDays(result.data)
+  }
+
   return (
     <div>
       <h2>Today</h2>
@@ -200,6 +208,7 @@ export function Today({
                     <th># of Campers</th>
                     <th>Special Requirements</th>
                     <th>Pickup Time</th>
+                    <th>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -214,6 +223,9 @@ export function Today({
                       onSelect={() => setSelectedBunk(record.bunk)}
                       onToggleComplete={(checked) => handleToggleComplete(record, checked)}
                       toggleDisabled={activeDay.dayStatus === 'closed'}
+                      notes={record.pickupNotes}
+                      onNotesChange={(notes) => handleNotesChange(record, notes)}
+                      notesDisabled={activeDay.dayStatus === 'closed'}
                     />
                   ))}
                 </tbody>

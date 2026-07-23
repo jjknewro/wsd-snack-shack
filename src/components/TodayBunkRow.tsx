@@ -13,6 +13,11 @@ export type TodayBunkRowProps = {
   // True for a closed (read-only) day - the checkbox stays visible so
   // completed bunks still show as checked, but can't be toggled.
   toggleDisabled?: boolean
+  notes?: string
+  onNotesChange?: (notes: string) => void
+  // Same closed-day read-only treatment as toggleDisabled, but independent
+  // of it - notes can be entered for a pending bunk too.
+  notesDisabled?: boolean
 }
 
 // One row = everything the operator needs for this bunk at a glance, with no
@@ -29,6 +34,9 @@ export function TodayBunkRow({
   onSelect,
   onToggleComplete,
   toggleDisabled,
+  notes,
+  onNotesChange,
+  notesDisabled,
 }: TodayBunkRowProps) {
   return (
     <tr>
@@ -57,6 +65,16 @@ export function TodayBunkRow({
           : 'None'}
       </td>
       <td>{status === 'completed' ? (pickupTime ?? '—') : '—'}</td>
+      <td>
+        <input
+          type="text"
+          className="today-bunk-row__notes-input"
+          value={notes ?? ''}
+          disabled={notesDisabled}
+          onChange={(event) => onNotesChange?.(event.target.value)}
+          aria-label={`Notes for ${bunk}`}
+        />
+      </td>
     </tr>
   )
 }

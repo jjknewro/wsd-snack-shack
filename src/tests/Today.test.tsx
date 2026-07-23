@@ -152,6 +152,49 @@ describe('Today', () => {
     expect(screen.getByRole('checkbox')).toBeDisabled()
   })
 
+  it('typing in a bunk\'s inline Notes field records it, independent of pickup status', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    fireEvent.change(within(a1Row).getByRole('textbox', { name: 'Notes for A1' }), {
+      target: { value: 'Counselor running late' },
+    })
+
+    expect(within(a1Row).getByRole('textbox', { name: 'Notes for A1' })).toHaveValue('Counselor running late')
+    // B2 (still pending) must be unaffected.
+    const b2Row = screen.getByText('B2').closest('tr') as HTMLElement
+    expect(within(b2Row).getByRole('textbox', { name: 'Notes for B2' })).toHaveValue('')
+  })
+
+  it('a note typed inline pre-fills the pickup dialog, and completing from it preserves that note', () => {
+    renderToday()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Today' }))
+
+    const a1Row = screen.getByText('A1').closest('tr') as HTMLElement
+    fireEvent.change(within(a1Row).getByRole('textbox', { name: 'Notes for A1' }), {
+      target: { value: 'Left early' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'A1' }))
+    expect(screen.getByLabelText('Notes (optional)')).toHaveValue('Left early')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+    expect(within(a1Row).getByRole('textbox', { name: 'Notes for A1' })).toHaveValue('Left early')
+  })
+
+  it('disables the notes field on a closed (read-only) day', () => {
+    const closedDay: SnackDay = {
+      date: FIXED_DATE,
+      dayStatus: 'closed',
+      bunks: [{ bunk: 'A1', counselors: 'Alex', expectedCount: 8, specialRequirements: [], status: 'completed', actualCount: 8, completedAt: '9:00:00 AM' }],
+    }
+
+    renderToday({}, [closedDay])
+
+    expect(screen.getByRole('textbox', { name: 'Notes for A1' })).toBeDisabled()
+  })
+
   it('shows a read-only note instead of the form for an already-completed bunk, with no way to resubmit', () => {
     const closedDay: SnackDay = {
       date: FIXED_DATE,

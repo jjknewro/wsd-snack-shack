@@ -57,3 +57,13 @@
   gap: var(--space-sm);
   margin-top: var(--space-xs);
 }
+
+.today-bunk-row__notes-input {
+  width: 12rem;
+  min-height: var(--touch-target-min);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: inherit;
+  font-family: inherit;
+}

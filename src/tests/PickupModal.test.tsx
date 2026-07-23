@@ -50,6 +50,18 @@ describe('PickupModal', () => {
     expect(screen.getByLabelText('Actual count')).toHaveValue(null)
   })
 
+  it('pre-fills notes from the record, so an unedited submit does not wipe out notes entered on Today\'s inline Notes column', () => {
+    const onComplete = vi.fn()
+    render(
+      <PickupModal record={{ ...pendingRecord, pickupNotes: 'Left early' }} onClose={vi.fn()} onComplete={onComplete} />,
+    )
+
+    expect(screen.getByLabelText('Notes (optional)')).toHaveValue('Left early')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Pickup' }))
+    expect(onComplete).toHaveBeenCalledWith({ actualCount: 8, notes: 'Left early' })
+  })
+
   it('calls onComplete with the adjusted count and trimmed notes on submit', () => {
     const onComplete = vi.fn()
     render(<PickupModal record={pendingRecord} onClose={vi.fn()} onComplete={onComplete} />)

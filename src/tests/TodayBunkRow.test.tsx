@@ -95,4 +95,30 @@ describe('TodayBunkRow', () => {
 
     expect(screen.getByRole('checkbox', { name: 'Mark A1 picked up' })).toBeDisabled()
   })
+
+  it('shows an empty notes field by default', () => {
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0 })
+
+    expect(screen.getByRole('textbox', { name: 'Notes for A1' })).toHaveValue('')
+  })
+
+  it('shows existing notes', () => {
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0, notes: 'Ran late' })
+
+    expect(screen.getByRole('textbox', { name: 'Notes for A1' })).toHaveValue('Ran late')
+  })
+
+  it('calls onNotesChange as the notes field is edited', () => {
+    const onNotesChange = vi.fn()
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0, onNotesChange })
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Notes for A1' }), { target: { value: 'Left early' } })
+    expect(onNotesChange).toHaveBeenCalledWith('Left early')
+  })
+
+  it('disables the notes field when notesDisabled is set, for a read-only closed day', () => {
+    renderRow({ bunk: 'A1', status: 'pending', specialRequirementCount: 0, notesDisabled: true })
+
+    expect(screen.getByRole('textbox', { name: 'Notes for A1' })).toBeDisabled()
+  })
 })

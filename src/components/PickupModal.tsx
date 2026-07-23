@@ -27,7 +27,10 @@ export function PickupModal({ record, onClose, onComplete, submitError = null }:
   const [actualCount, setActualCount] = useState(
     record.expectedCount !== undefined ? String(record.expectedCount) : '',
   )
-  const [notes, setNotes] = useState('')
+  // Pre-filled from the record, not always blank - Today's inline Notes
+  // column (see TodayBunkRow) can already have set this before the dialog
+  // is opened, and an unedited submit here must not silently wipe it.
+  const [notes, setNotes] = useState(record.pickupNotes ?? '')
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
